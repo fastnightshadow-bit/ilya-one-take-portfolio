@@ -10,6 +10,7 @@
     "dev": "vite --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:dist-seo": "node scripts/verify-dist-seo.mjs",
     "typecheck": "tsc --noEmit",
     "assets:build": "node scripts/build-assets.mjs",
     "build": "npm run assets:build && npm run typecheck && vite build",
