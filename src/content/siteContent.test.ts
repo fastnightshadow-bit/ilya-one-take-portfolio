@@ -2,12 +2,44 @@ import { describe, expect, it } from 'vitest';
 import { siteContent } from './siteContent';
 
 describe('siteContent', () => {
-  it('contains the approved contact and exactly three approved projects', () => {
+  it('contains the approved contact and four verified project destinations', () => {
     expect(siteContent.telegramUrl).toBe('https://t.me/girtopw');
-    expect(siteContent.projects.map((project) => project.title)).toEqual([
-      'Пивной Донер',
-      'Автошкола',
-      'Telegram-бот-магазин',
+    expect(siteContent.githubUrl).toBe('https://github.com/fastnightshadow-bit');
+    expect(siteContent.projects.map((project) => ({
+      id: project.id,
+      title: project.title,
+      href: project.action.href,
+      presentation: project.presentation.kind,
+      primary: project.presentation.primary,
+    }))).toEqual([
+      {
+        id: 'pivnoy-doner',
+        title: 'Пивной Донер',
+        href: 'https://pivdoner.ru/',
+        presentation: 'responsive',
+        primary: 'desktop',
+      },
+      {
+        id: 'driving-school',
+        title: 'Автошкола «Перекрёсток»',
+        href: 'https://perekrestok-yaroslavl.netlify.app/',
+        presentation: 'responsive',
+        primary: 'mobile',
+      },
+      {
+        id: 'shaurma-mobile',
+        title: 'Шаурма Халяль 1',
+        href: 'https://fastnightshadow-bit.github.io/chaurma/',
+        presentation: 'phone',
+        primary: 'mobile',
+      },
+      {
+        id: 'telegram-shop',
+        title: 'VeachelSell',
+        href: 'https://t.me/veachelsell_bot',
+        presentation: 'phone',
+        primary: 'mobile',
+      },
     ]);
   });
 

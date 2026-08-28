@@ -59,23 +59,27 @@ const handoffConfigs: Readonly<Record<string, HandoffConfig>> = {
   },
   'pivnoy-doner': {
     steps: [
-      { scope: 'target', selector: '.doner-poster', from: { desktop: { xPercent: 18, y: 28, rotation: 8, opacity: 0.62 }, mobile: { xPercent: 7, y: 10, rotation: 5, opacity: 0.76 } }, to: { desktop: { xPercent: 0, y: 0, rotation: 3, opacity: 1 } } },
+      { scope: 'target', selector: '[data-project-media]', from: { desktop: { xPercent: 16, y: 28, rotation: 4, opacity: 0.62 }, mobile: { xPercent: 6, y: 12, rotation: 2, opacity: 0.76 } }, to: { desktop: { xPercent: 0, y: 0, rotation: 0, opacity: 1 } } },
     ],
   },
   'driving-school': {
     steps: [
-      { scope: 'target', selector: '.school-road', from: { desktop: { xPercent: 10, y: 20, opacity: 0.45 }, mobile: { xPercent: 4, y: 10, opacity: 0.24 } }, to: { desktop: { xPercent: 0, y: 0, opacity: 0.92 }, mobile: { opacity: 0.46 } } },
+      { scope: 'target', selector: '[data-project-media]', from: { desktop: { xPercent: -10, y: 24, rotation: -3, opacity: 0.54 }, mobile: { xPercent: -4, y: 12, rotation: -1, opacity: 0.72 } }, to: { desktop: { xPercent: 0, y: 0, rotation: 0, opacity: 1 } } },
+    ],
+  },
+  'shaurma-mobile': {
+    steps: [
+      { scope: 'target', selector: '[data-project-media]', from: { desktop: { y: 52, scale: 0.9, rotation: 3, opacity: 0.52 }, mobile: { y: 20, scale: 0.96, rotation: 1, opacity: 0.72 } }, to: { desktop: { y: 0, scale: 1, rotation: 0, opacity: 1 } } },
     ],
   },
   'telegram-shop': {
     steps: [
-      { scope: 'target', selector: '.bot-phone', from: { desktop: { xPercent: 17, y: 30, rotation: -10, opacity: 0.58 }, mobile: { xPercent: 7, y: 12, rotation: -5, opacity: 0.7 } }, to: { desktop: { xPercent: 0, y: 0, rotation: -2, opacity: 1 } } },
-      { scope: 'target', selector: '.bot-phone i', from: { desktop: { y: 18, opacity: 0.45 } }, to: { desktop: { y: 0, opacity: 1, stagger: 0.06 } }, desktopOnly: true },
+      { scope: 'target', selector: '[data-project-media]', from: { desktop: { xPercent: 14, y: 34, rotation: -4, opacity: 0.56 }, mobile: { xPercent: 5, y: 14, rotation: -2, opacity: 0.72 } }, to: { desktop: { xPercent: 0, y: 0, rotation: 0, opacity: 1 } } },
     ],
   },
   contact: {
     steps: [
-      { scope: 'source', selector: '.bot-phone', from: { desktop: { xPercent: 0, yPercent: 0, scale: 1, rotation: -2, opacity: 1 } }, to: { desktop: { xPercent: -8, yPercent: 12, scale: 0.84, rotation: -1, opacity: 0.62 }, mobile: { xPercent: -3, yPercent: 5, scale: 0.94, rotation: -1, opacity: 0.72 } } },
+      { scope: 'source', selector: '[data-project-media]', from: { desktop: { xPercent: 0, yPercent: 0, scale: 1, opacity: 1 } }, to: { desktop: { xPercent: -7, yPercent: 10, scale: 0.86, opacity: 0.62 }, mobile: { xPercent: -3, yPercent: 5, scale: 0.95, opacity: 0.72 } } },
       { scope: 'target', selector: 'h2', from: { desktop: { y: 58, opacity: 0.48 }, mobile: { y: 24, opacity: 0.7 } }, to: { desktop: { y: 0, opacity: 1 } } },
       { scope: 'target', selector: '.button--contact', from: { desktop: { y: 24, opacity: 0.45 } }, to: { desktop: { y: 0, opacity: 1 } }, desktopOnly: true },
     ],
@@ -100,7 +104,7 @@ const ownedStyleRules = [
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait, [data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait img', properties: ['filter'] },
-  { selector: '.doner-poster, .school-road, .bot-phone, .bot-phone i', properties: ['opacity', 'transform'] },
+  { selector: '[data-project-media]', properties: ['opacity', 'transform'] },
   { selector: '[data-scene="contact"] h2, [data-scene="contact"] .button--contact', properties: ['opacity', 'transform'] },
 ] as const;
 

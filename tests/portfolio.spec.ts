@@ -1,14 +1,142 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
-const approvedScenes = ['hero', 'about', 'pivnoy-doner', 'driving-school', 'telegram-shop', 'contact'];
+const approvedScenes = ['hero', 'about', 'pivnoy-doner', 'driving-school', 'shaurma-mobile', 'telegram-shop', 'contact'];
+
+const approvedProjects = [
+  {
+    id: 'pivnoy-doner',
+    primary: 'desktop',
+    action: { name: 'Открыть сайт', href: 'https://pivdoner.ru/' },
+    shots: [
+      { role: 'desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
+      { role: 'mobile', alt: 'Главная страница «Пивного Донера» на телефоне' },
+    ],
+  },
+  {
+    id: 'driving-school',
+    primary: 'mobile',
+    action: { name: 'Открыть сайт', href: 'https://perekrestok-yaroslavl.netlify.app/' },
+    shots: [
+      { role: 'mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
+      { role: 'desktop', alt: 'Главная страница автошколы «Перекрёсток» на компьютере' },
+    ],
+  },
+  {
+    id: 'shaurma-mobile',
+    primary: 'mobile',
+    action: { name: 'Открыть mobile-сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
+    shots: [
+      { role: 'mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
+    ],
+  },
+  {
+    id: 'telegram-shop',
+    primary: 'mobile',
+    action: { name: 'Запустить бота', href: 'https://t.me/veachelsell_bot' },
+    shots: [
+      { role: 'mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
+    ],
+  },
+] as const;
+
+const proofViewports = [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+] as const;
+
+const schoolHierarchyViewports = [
+  { width: 390, height: 844 },
+  { width: 700, height: 900 },
+  { width: 701, height: 900 },
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1199, height: 900 },
+  { width: 1200, height: 900 },
+  { width: 1440, height: 900 },
+  { width: 1600, height: 1000 },
+] as const;
+
+const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
+
+async function expectImageLoaded(image: Locator, projectId: string, role: string) {
+  await expect.poll(
+    () => image.evaluate((element: HTMLImageElement) =>
+      element.complete && Boolean(element.currentSrc) && element.naturalHeight > 0 && element.naturalWidth > 0,
+    ),
+    { message: `${projectId}/${role} should load a real responsive asset` },
+  ).toBe(true);
+
+  const loaded = await image.evaluate((element: HTMLImageElement) => ({
+    currentSrc: element.currentSrc,
+    naturalHeight: element.naturalHeight,
+    naturalWidth: element.naturalWidth,
+  }));
+  expect(loaded.currentSrc, `${projectId}/${role} current source`).toMatch(
+    new RegExp(`/assets/projects/${projectId}-${role}-(?:390|720|1280)\\.(?:avif|webp|jpg)$`),
+  );
+  expect(loaded.naturalWidth, `${projectId}/${role} natural width`).toBeGreaterThan(0);
+  expect(loaded.naturalHeight, `${projectId}/${role} natural height`).toBeGreaterThan(0);
+}
+
+async function expectRealProjectProofs(page: Page, viewportWidth: number) {
+  for (const project of approvedProjects) {
+    const scene = page.locator(`[data-scene="${project.id}"]`);
+    const media = scene.locator('[data-project-media]');
+    const action = scene.locator('[data-project-action]');
+    const shots = media.locator('[data-project-shot]');
+
+    await expect(scene).toBeVisible();
+    await expect(media).toBeVisible();
+    await expect(media).toHaveClass(new RegExp(`\\bcase__media--primary-${project.primary}\\b`));
+    await expect(shots).toHaveCount(project.shots.length);
+    expect(await shots.evaluateAll((elements) => elements.map((element) => element.getAttribute('data-project-shot')))).toEqual(
+      project.shots.map(({ role }) => role),
+    );
+    await expect(shots.first()).toHaveClass(/\bproject-shot--primary\b/);
+
+    await media.scrollIntoViewIfNeeded();
+    for (const [index, expectedShot] of project.shots.entries()) {
+      const shot = shots.nth(index);
+      const image = shot.locator('img');
+      await expect(shot).toBeVisible();
+      await expect(image).toBeVisible();
+      await expect(image).toHaveAttribute('alt', expectedShot.alt);
+      await expect(image).toHaveAttribute('loading', 'lazy');
+      await expect(image).toHaveAttribute('decoding', 'async');
+      await expect(shot.locator('source')).toHaveCount(2);
+      await expectImageLoaded(image, project.id, expectedShot.role);
+
+      const imageBox = await image.boundingBox();
+      expect(imageBox, `${viewportWidth}px ${project.id}/${expectedShot.role} box`).not.toBeNull();
+      expect(imageBox!.width, `${viewportWidth}px ${project.id}/${expectedShot.role} width`).toBeGreaterThan(44);
+      expect(imageBox!.height, `${viewportWidth}px ${project.id}/${expectedShot.role} height`).toBeGreaterThan(44);
+      expect(imageBox!.x, `${viewportWidth}px ${project.id}/${expectedShot.role} left edge`).toBeGreaterThanOrEqual(-0.5);
+      expect(imageBox!.x + imageBox!.width, `${viewportWidth}px ${project.id}/${expectedShot.role} right edge`).toBeLessThanOrEqual(viewportWidth + 0.5);
+    }
+
+    await expect(action).toBeVisible();
+    await expect(action).toHaveAccessibleName(project.action.name);
+    await expect(action).toHaveAttribute('href', project.action.href);
+    await expect(action).not.toHaveAttribute('target', /.+/);
+    const actionBox = await action.boundingBox();
+    expect(actionBox?.width, `${viewportWidth}px ${project.id} action width`).toBeGreaterThanOrEqual(44);
+    expect(actionBox?.height, `${viewportWidth}px ${project.id} action height`).toBeGreaterThanOrEqual(44);
+  }
+}
 
 test('story is ordered, readable, and has no horizontal overflow', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Сайты, которые');
   expect(await page.locator('[data-scene]').evaluateAll((scenes) => scenes.map((scene) => scene.getAttribute('data-scene')))).toEqual(approvedScenes);
+  await expect(page.locator('[data-transition]')).toHaveCount(6);
   const projects = page.locator('[data-project]');
-  await expect(projects).toHaveCount(3);
+  await expect(projects).toHaveCount(4);
   for (const project of await projects.all()) await expect(project).toBeVisible();
+  await expect(page.locator('[data-project-media]')).toHaveCount(4);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+  await expect(page.locator('[data-project-action]')).toHaveCount(4);
+  await expect(page.locator('[data-github-link]')).toHaveCount(1);
+  await expect(page.locator(oldMockups)).toHaveCount(0);
 
   const microcopyMetrics = await page.evaluate(() => {
     const channels = (color: string) => {
@@ -47,24 +175,8 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
 });
 
-test('clean compositions keep the hero CTA and school road deliberately placed', async ({ page }) => {
-  const viewports = [
-    { width: 390, height: 844 },
-    { width: 430, height: 900 },
-    { width: 701, height: 900 },
-    { width: 768, height: 1024 },
-    { width: 900, height: 900 },
-    { width: 844, height: 390 },
-    { width: 1024, height: 768 },
-    { width: 1051, height: 900 },
-    { width: 1100, height: 900 },
-    { width: 1150, height: 900 },
-    { width: 1199, height: 900 },
-    { width: 1200, height: 900 },
-    { width: 1440, height: 900 },
-  ] as const;
-
-  for (const viewport of viewports) {
+test('real project proofs load, stay visible, and expose approved actions at 390 and 1440', async ({ page }) => {
+  for (const viewport of proofViewports) {
     await page.setViewportSize(viewport);
     await page.goto('/');
 
@@ -75,25 +187,51 @@ test('clean compositions keep the hero CTA and school road deliberately placed',
     });
     expect(heroGap, `${viewport.width}px hero copy-to-CTA gap`).toBeGreaterThanOrEqual(24);
 
-    const roadGeometry = await page.locator('.case--school').evaluate((school) => {
-      const scene = school.getBoundingClientRect();
-      const road = school.querySelector('.school-road')!.getBoundingClientRect();
-      const headline = school.querySelector('.case__headline')!.getBoundingClientRect();
-      const overlapWidth = Math.max(0, Math.min(road.right, headline.right) - Math.max(road.left, headline.left));
-      const overlapHeight = Math.max(0, Math.min(road.bottom, headline.bottom) - Math.max(road.top, headline.top));
-      return {
-        left: road.left - scene.left,
-        top: road.top - scene.top,
-        right: scene.right - road.right,
-        bottom: scene.bottom - road.bottom,
-        headlineOverlap: overlapWidth * overlapHeight,
-      };
-    });
-    expect(roadGeometry.left, `${viewport.width}px road left`).toBeGreaterThanOrEqual(0);
-    expect(roadGeometry.top, `${viewport.width}px road top`).toBeGreaterThanOrEqual(0);
-    expect(roadGeometry.right, `${viewport.width}px road right`).toBeGreaterThanOrEqual(0);
-    expect(roadGeometry.bottom, `${viewport.width}px road bottom`).toBeGreaterThanOrEqual(0);
-    expect(roadGeometry.headlineOverlap, `${viewport.width}px road/headline overlap`).toBe(0);
+    await expectRealProjectProofs(page, viewport.width);
+
+    const githubLink = page.locator('[data-github-link]');
+    await githubLink.scrollIntoViewIfNeeded();
+    await expect(githubLink).toBeVisible();
+    await expect(githubLink).toHaveAccessibleName('GitHub Ильи');
+    await expect(githubLink).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
+    await expect(githubLink).not.toHaveAttribute('target', /.+/);
+    const githubBox = await githubLink.boundingBox();
+    expect(githubBox?.width, `${viewport.width}px GitHub action width`).toBeGreaterThanOrEqual(44);
+    expect(githubBox?.height, `${viewport.width}px GitHub action height`).toBeGreaterThanOrEqual(44);
+
+    const compactProjectActions = page.locator('.case--mobile .case__action, .case--telegram .case__action');
+    for (const action of await compactProjectActions.all()) {
+      expect(
+        await action.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)),
+        `${viewport.width}px compact project CTA font size`,
+      ).toBeGreaterThanOrEqual(10.5);
+    }
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+});
+
+test('AutoSchool keeps its mobile proof visually primary at every supported layout tier', async ({ page }) => {
+  for (const viewport of schoolHierarchyViewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const scene = page.locator('[data-scene="driving-school"]');
+    const primary = scene.locator('[data-project-shot="mobile"]');
+    const secondary = scene.locator('[data-project-shot="desktop"]');
+    await primary.scrollIntoViewIfNeeded();
+    await expect(primary).toBeVisible();
+    await expect(secondary).toBeVisible();
+
+    const primaryBox = await primary.boundingBox();
+    const secondaryBox = await secondary.boundingBox();
+    expect(primaryBox, `${viewport.width}px AutoSchool mobile box`).not.toBeNull();
+    expect(secondaryBox, `${viewport.width}px AutoSchool desktop box`).not.toBeNull();
+    expect(primaryBox!.height, `${viewport.width}px mobile proof height`).toBeGreaterThan(secondaryBox!.height);
+    expect(
+      primaryBox!.width * primaryBox!.height,
+      `${viewport.width}px mobile proof visual area`,
+    ).toBeGreaterThan(secondaryBox!.width * secondaryBox!.height);
   }
 });
 
@@ -120,10 +258,11 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
 
   const handoffs = [
     { bridge: 0, target: '.about__portrait' },
-    { bridge: 1, target: '.doner-poster' },
-    { bridge: 2, target: '.school-road' },
-    { bridge: 3, target: '.bot-phone' },
-    { bridge: 4, target: '[data-scene="contact"] h2', source: '.case--telegram .bot-phone' },
+    { bridge: 1, target: '[data-scene="pivnoy-doner"] [data-project-media]' },
+    { bridge: 2, target: '[data-scene="driving-school"] [data-project-media]' },
+    { bridge: 3, target: '[data-scene="shaurma-mobile"] [data-project-media]' },
+    { bridge: 4, target: '[data-scene="telegram-shop"] [data-project-media]' },
+    { bridge: 5, target: '[data-scene="contact"] h2', source: '[data-scene="telegram-shop"] [data-project-media]' },
   ] as const;
 
   const promiseLines = page.locator('[data-about-promise] .about__promise-line > span');
@@ -178,7 +317,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     }
   }
 
-  const promotedLayers = await page.locator('[data-transition] strong, [data-project] .case__copy, [data-about-promise] .about__promise-line > span').evaluateAll(
+  const promotedLayers = await page.locator('[data-transition] strong, [data-project] .case__copy, [data-project-media], [data-about-promise] .about__promise-line > span').evaluateAll(
     (elements) => elements.filter((element) => getComputedStyle(element).willChange !== 'auto').length,
   );
   expect(promotedLayers).toBe(0);
@@ -195,7 +334,12 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
 
-  await expect(page.locator('[data-project]')).toHaveCount(3);
+  await expect(page.locator('[data-scene]')).toHaveCount(7);
+  await expect(page.locator('[data-transition]')).toHaveCount(6);
+  await expect(page.locator('[data-project]')).toHaveCount(4);
+  await expect(page.locator('[data-project-media]')).toHaveCount(4);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+  await expect(page.locator(oldMockups)).toHaveCount(0);
   await expect(page.locator('[data-scene="contact"]')).toBeVisible();
   await expect(page.locator('#app')).not.toHaveAttribute('data-motion-ready', '');
   const fallback = page.locator('[data-hero-fallback]');
@@ -207,6 +351,11 @@ test('reduced motion keeps final compositions visible and static', async ({ page
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
   }
+  for (const media of await page.locator('[data-project-media]').all()) {
+    expect(await media.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
+    expect(await media.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
+  }
+  await expectRealProjectProofs(page, page.viewportSize()!.width);
   const promise = page.locator('[data-about-promise]');
   await expect(promise).toBeVisible();
   await expect(promise).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
@@ -220,6 +369,7 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   const staticWord = await word.textContent();
   await page.waitForTimeout(2100);
   await expect(word).toHaveText(staticWord ?? '');
+  await expect(page.locator('[data-github-link]')).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
   expect(errors).toEqual([]);
 });
 
@@ -254,10 +404,13 @@ test('styled static story remains complete when the application script fails', a
   await expect(fallback).toContainText('помнят.');
   await expect(page.locator('[data-rotating-word]')).toBeHidden();
 
-  await expect(page.locator('[data-scene]')).toHaveCount(6);
-  await expect(page.locator('[data-project]')).toHaveCount(3);
+  await expect(page.locator('[data-scene]')).toHaveCount(7);
+  await expect(page.locator('[data-transition]')).toHaveCount(6);
+  await expect(page.locator('[data-project]')).toHaveCount(4);
+  await expect(page.locator('[data-project-media]')).toHaveCount(4);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
   for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
-  await expect(page.locator('[data-transition-carrier], .bridge small, .about__scribble, .school-sign')).toHaveCount(0);
+  await expect(page.locator(`[data-transition-carrier], .bridge small, .about__scribble, ${oldMockups}`)).toHaveCount(0);
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
@@ -265,6 +418,9 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator('[data-about-promise]')).toBeVisible();
   await expect(page.locator('[data-about-promise]')).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
+  await expectRealProjectProofs(page, expectedWidth);
+  await expect(page.locator('[data-github-link]')).toHaveAccessibleName('GitHub Ильи');
+  await expect(page.locator('[data-github-link]')).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(abortedScripts.length).toBeGreaterThanOrEqual(1);

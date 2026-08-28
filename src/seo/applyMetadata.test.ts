@@ -54,7 +54,7 @@ describe('portfolio metadata', () => {
       '@type': 'Person',
       name: 'Илья',
       jobTitle: 'Веб-разработчик',
-      sameAs: ['https://t.me/girtopw'],
+      sameAs: ['https://t.me/girtopw', 'https://github.com/fastnightshadow-bit'],
     });
   });
 

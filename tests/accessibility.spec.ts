@@ -5,8 +5,22 @@ const expectedLinks = [
   { name: 'ILYA / WEB DEVELOPER', href: '#top' },
   { name: '@girtopw ↗', href: 'https://t.me/girtopw' },
   { name: 'Смотреть дальше ↓', href: '#about' },
+  { name: 'Открыть сайт', href: 'https://pivdoner.ru/' },
+  { name: 'Открыть сайт', href: 'https://perekrestok-yaroslavl.netlify.app/' },
+  { name: 'Открыть mobile-сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
+  { name: 'Запустить бота', href: 'https://t.me/veachelsell_bot' },
+  { name: 'GitHub Ильи', href: 'https://github.com/fastnightshadow-bit' },
   { name: 'Написать в Telegram →', href: 'https://t.me/girtopw' },
   { name: '@girtopw', href: 'https://t.me/girtopw' },
+] as const;
+
+const projectAlternatives = [
+  { scene: 'pivnoy-doner', role: 'desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
+  { scene: 'pivnoy-doner', role: 'mobile', alt: 'Главная страница «Пивного Донера» на телефоне' },
+  { scene: 'driving-school', role: 'mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
+  { scene: 'driving-school', role: 'desktop', alt: 'Главная страница автошколы «Перекрёсток» на компьютере' },
+  { scene: 'shaurma-mobile', role: 'mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
+  { scene: 'telegram-shop', role: 'mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
 ] as const;
 
 const requiredViewports = {
@@ -28,6 +42,7 @@ test('exposes one banner, named navigation, and main landmark', async ({ page })
   await expect(page.getByRole('banner')).toHaveCount(1);
   await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toHaveCount(1);
   await expect(page.getByRole('main')).toHaveCount(1);
+  await expect(page.getByRole('complementary', { name: 'Код тоже можно посмотреть.' })).toHaveCount(1);
 });
 
 test('uses one h1 and never skips a heading level', async ({ page }) => {
@@ -173,22 +188,30 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
   }
 });
 
-test('portrait promise is readable and remaining project visuals stay out of the accessibility tree', async ({ page }) => {
+test('portrait and six real project screenshots expose meaningful alternatives while transitions stay decorative', async ({ page }) => {
   await expect(page.locator('.about__portrait img')).toHaveAttribute('alt', 'Илья, веб-разработчик');
   const promise = page.locator('[data-about-promise]');
   await expect(promise).toBeVisible();
   await expect(promise).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
   await expect(promise).not.toHaveAttribute('aria-hidden', /.+/);
 
-  const decorativeSelectors = [
-    '[data-transition]',
-    '.doner-poster',
-    '.school-road',
-    '.bot-phone',
-  ];
-  for (const selector of decorativeSelectors) {
-    const decorations = page.locator(selector);
-    expect(await decorations.count(), `${selector} should exist`).toBeGreaterThan(0);
-    for (const decoration of await decorations.all()) await expect(decoration).toHaveAttribute('aria-hidden', 'true');
+  const images = page.locator('[data-project-media] img');
+  await expect(images).toHaveCount(6);
+  for (const expectedImage of projectAlternatives) {
+    const image = page.locator(
+      `[data-scene="${expectedImage.scene}"] [data-project-shot="${expectedImage.role}"] img`,
+    );
+    await expect(image).toHaveCount(1);
+    await expect(image).toHaveAttribute('alt', expectedImage.alt);
+    await expect(image).not.toHaveAttribute('aria-hidden', /.+/);
   }
+
+  const schoolShots = page.locator('[data-scene="driving-school"] [data-project-shot]');
+  expect(await schoolShots.evaluateAll((elements) => elements.map((element) => element.getAttribute('data-project-shot')))).toEqual(['mobile', 'desktop']);
+  await expect(schoolShots.first()).toHaveClass(/\bproject-shot--primary\b/);
+
+  const transitions = page.locator('[data-transition]');
+  await expect(transitions).toHaveCount(6);
+  for (const transition of await transitions.all()) await expect(transition).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('.doner-poster, .school-road, .bot-phone, .school-sign')).toHaveCount(0);
 });

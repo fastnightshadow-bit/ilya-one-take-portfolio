@@ -6,4 +6,5 @@
   .about__portrait img { filter: grayscale(0) contrast(1.02) !important; }
   .about__promise-line > span { opacity: 1 !important; transform: none !important; }
   [data-project] .case__copy { opacity: 1 !important; transform: none !important; }
+  [data-project-media] { opacity: 1 !important; transform: none !important; }
 }

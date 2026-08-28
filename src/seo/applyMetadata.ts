@@ -37,7 +37,7 @@ function personJsonLd(content: SiteContent): string {
     '@type': 'Person',
     name: 'Илья',
     jobTitle: 'Веб-разработчик',
-    sameAs: [content.telegramUrl],
+    sameAs: [content.telegramUrl, content.githubUrl],
   }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 }
 

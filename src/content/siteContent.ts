@@ -1,4 +1,28 @@
-export type ProjectTheme = 'doner' | 'school' | 'telegram';
+export type ProjectTheme = 'doner' | 'school' | 'mobile' | 'telegram';
+
+export interface ProjectScreenshot {
+  readonly alt: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+export type ProjectPresentation =
+  | {
+      readonly kind: 'responsive';
+      readonly primary: 'desktop' | 'mobile';
+      readonly desktop: ProjectScreenshot;
+      readonly mobile: ProjectScreenshot;
+    }
+  | {
+      readonly kind: 'phone';
+      readonly primary: 'mobile';
+      readonly mobile: ProjectScreenshot;
+    };
+
+export interface ProjectAction {
+  readonly href: `https://${string}`;
+  readonly label: string;
+}
 
 export interface ProjectContent {
   readonly id: string;
@@ -9,16 +33,19 @@ export interface ProjectContent {
   readonly description: string;
   readonly chapterLabel: string;
   readonly theme: ProjectTheme;
+  readonly action: ProjectAction;
+  readonly presentation: ProjectPresentation;
 }
 
 export interface TransitionContent {
   readonly phrase: string;
-  readonly variant: 'ink' | 'route' | 'chat' | 'final';
+  readonly variant: 'ink' | 'route' | 'mobile' | 'chat' | 'final';
 }
 
 export interface SiteContent {
   readonly telegramUrl: string;
   readonly telegramHandle: string;
+  readonly githubUrl: `https://${string}`;
   readonly rotatingWords: readonly string[];
   readonly process: readonly { number: string; title: string; detail: string }[];
   readonly projects: readonly ProjectContent[];
@@ -28,6 +55,7 @@ export interface SiteContent {
 export const siteContent: SiteContent = {
   telegramUrl: 'https://t.me/girtopw',
   telegramHandle: '@girtopw',
+  githubUrl: 'https://github.com/fastnightshadow-bit',
   rotatingWords: ['цепляют.', 'продают.', 'помнят.'],
   process: [
     { number: '01', title: 'Знакомство', detail: 'Цель, бизнес, аудитория' },
@@ -45,33 +73,70 @@ export const siteContent: SiteContent = {
       description: 'Сайт для «Пивного Донера»: сильный образ, понятное меню и короткий путь до заказа.',
       chapterLabel: 'Brand × Web × Order',
       theme: 'doner',
+      action: { href: 'https://pivdoner.ru/', label: 'Открыть сайт' },
+      presentation: {
+        kind: 'responsive',
+        primary: 'desktop',
+        desktop: { alt: 'Главная страница «Пивного Донера» на компьютере', width: 1280, height: 720 },
+        mobile: { alt: 'Главная страница «Пивного Донера» на телефоне', width: 390, height: 844 },
+      },
     },
     {
       id: 'driving-school',
-      title: 'Автошкола',
+      title: 'Автошкола «Перекрёсток»',
       eyebrow: 'Case 02 · Service / Education',
       headline: 'Понятный путь',
       accent: 'к первым правам.',
       description: 'Сайт автошколы, который объясняет обучение, снимает сомнения и ведёт к записи.',
       chapterLabel: 'Service × Education',
       theme: 'school',
+      action: { href: 'https://perekrestok-yaroslavl.netlify.app/', label: 'Открыть сайт' },
+      presentation: {
+        kind: 'responsive',
+        primary: 'mobile',
+        desktop: { alt: 'Главная страница автошколы «Перекрёсток» на компьютере', width: 1280, height: 720 },
+        mobile: { alt: 'Главная страница автошколы «Перекрёсток» на телефоне', width: 390, height: 844 },
+      },
+    },
+    {
+      id: 'shaurma-mobile',
+      title: 'Шаурма Халяль 1',
+      eyebrow: 'Case 03 · Mobile / Commerce',
+      headline: 'Заказ еды',
+      accent: 'с телефона.',
+      description: 'Mobile-first сайт с меню, корзиной, точкой продаж и маршрутом без лишних экранов.',
+      chapterLabel: 'Mobile × Menu × Cart',
+      theme: 'mobile',
+      action: { href: 'https://fastnightshadow-bit.github.io/chaurma/', label: 'Открыть mobile-сайт' },
+      presentation: {
+        kind: 'phone',
+        primary: 'mobile',
+        mobile: { alt: 'Главная страница «Шаурма Халяль 1» на телефоне', width: 390, height: 844 },
+      },
     },
     {
       id: 'telegram-shop',
-      title: 'Telegram-бот-магазин',
-      eyebrow: 'Case 03 · Product / Telegram',
-      headline: 'Магазин, который живёт',
-      accent: 'в диалоге.',
-      description: 'Telegram-бот с каталогом, корзиной и оформлением заказа внутри привычного мессенджера.',
+      title: 'VeachelSell',
+      eyebrow: 'Case 04 · Telegram / Commerce',
+      headline: 'Магазин внутри',
+      accent: 'Telegram.',
+      description: 'Telegram-магазин техники, одежды и обуви с поиском, фильтрами, избранным и корзиной.',
       chapterLabel: 'Bot × Catalog × Order',
       theme: 'telegram',
+      action: { href: 'https://t.me/veachelsell_bot', label: 'Запустить бота' },
+      presentation: {
+        kind: 'phone',
+        primary: 'mobile',
+        mobile: { alt: 'Каталог Telegram-магазина VeachelSell', width: 390, height: 844 },
+      },
     },
   ],
   transitions: [
     { phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
     { phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
     { phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
-    { phrase: 'ROAD → FLOW → CHAT → SHOP', variant: 'chat' },
+    { phrase: 'ROAD → MOBILE → MENU → ORDER', variant: 'mobile' },
+    { phrase: 'WEB → CHAT → CATALOG → SHOP', variant: 'chat' },
     { phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
   ],
 };

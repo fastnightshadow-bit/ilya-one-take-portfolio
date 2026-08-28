@@ -49,7 +49,7 @@ assert.deepEqual(person, {
   '@type': 'Person',
   name: 'Илья',
   jobTitle: 'Веб-разработчик',
-  sameAs: ['https://t.me/girtopw'],
+  sameAs: ['https://t.me/girtopw', 'https://github.com/fastnightshadow-bit'],
 });
 
 await access(new URL('favicon.svg', dist));

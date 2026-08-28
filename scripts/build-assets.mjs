@@ -1,10 +1,13 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, rm } from 'node:fs/promises';
 import opentype from 'opentype.js';
 import sharp from 'sharp';
+import { buildProjectAssets } from './build-project-assets.mjs';
 
 const input = 'src/assets/source/portrait-clean-neutral.png';
 const output = 'public/assets/portrait';
+const projectOutput = 'public/assets/projects';
 const socialFont = 'src/assets/fonts/Montserrat-Black.ttf';
+await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 
 const render = (width, format) => {
@@ -24,6 +27,8 @@ await Promise.all([
   render(1200, 'webp'),
   render(1200, 'png'),
 ]);
+
+await buildProjectAssets({ outputRoot: projectOutput });
 
 const fontBuffer = await readFile(socialFont);
 const font = opentype.parse(fontBuffer.buffer.slice(fontBuffer.byteOffset, fontBuffer.byteOffset + fontBuffer.byteLength));

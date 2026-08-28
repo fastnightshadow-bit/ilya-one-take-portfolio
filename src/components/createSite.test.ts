@@ -8,10 +8,46 @@ describe('createSite', () => {
     document.body.replaceChildren(site);
 
     expect([...document.querySelectorAll<HTMLElement>('[data-scene]')].map((node) => node.dataset.scene)).toEqual([
-      'hero', 'about', 'pivnoy-doner', 'driving-school', 'telegram-shop', 'contact',
+      'hero', 'about', 'pivnoy-doner', 'driving-school', 'shaurma-mobile', 'telegram-shop', 'contact',
     ]);
-    expect(document.querySelectorAll('[data-project]')).toHaveLength(3);
+    expect(document.querySelectorAll('[data-project]')).toHaveLength(4);
     expect(document.querySelector('h1')?.textContent).toContain('Сайты, которые');
+  });
+
+  it('renders real project media, verified actions, and a single GitHub profile link', () => {
+    const site = createSite(siteContent);
+    const projectLinks = [...site.querySelectorAll<HTMLAnchorElement>('[data-project-action]')];
+    const projectImages = [...site.querySelectorAll<HTMLImageElement>('[data-project-media] img')];
+    const schoolMedia = site.querySelector<HTMLElement>('[data-scene="driving-school"] [data-project-media]');
+    const githubLinks = [...site.querySelectorAll<HTMLAnchorElement>('[data-github-link]')];
+    const githubLink = githubLinks[0];
+
+    expect(projectLinks.map((link) => ({ text: link.textContent?.trim(), href: link.href }))).toEqual([
+      { text: 'Открыть сайт ↗', href: 'https://pivdoner.ru/' },
+      { text: 'Открыть сайт ↗', href: 'https://perekrestok-yaroslavl.netlify.app/' },
+      { text: 'Открыть mobile-сайт ↗', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
+      { text: 'Запустить бота ↗', href: 'https://t.me/veachelsell_bot' },
+    ]);
+    expect(projectLinks.every((link) => !link.hasAttribute('target'))).toBe(true);
+    expect(site.querySelectorAll('[data-project-media]')).toHaveLength(4);
+    expect(projectImages).toHaveLength(6);
+    expect([...site.querySelectorAll('[data-project]')].map((project) =>
+      [...project.querySelectorAll<HTMLElement>('[data-project-shot]')].map((shot) => shot.dataset.projectShot),
+    )).toEqual([
+      ['desktop', 'mobile'],
+      ['mobile', 'desktop'],
+      ['mobile'],
+      ['mobile'],
+    ]);
+    expect(projectImages.every((image) => Boolean(image.alt.trim()))).toBe(true);
+    expect(projectImages.every((image) => image.getAttribute('loading') === 'lazy' && image.getAttribute('decoding') === 'async')).toBe(true);
+    expect(projectImages.every((image) => Number(image.getAttribute('width')) > 0 && Number(image.getAttribute('height')) > 0)).toBe(true);
+    expect(schoolMedia?.classList.contains('case__media--primary-mobile')).toBe(true);
+    expect(schoolMedia?.querySelector('img')?.alt).toBe('Главная страница автошколы «Перекрёсток» на телефоне');
+    expect(githubLink?.textContent?.trim()).toBe('GitHub Ильи ↗');
+    expect(githubLink?.href).toBe('https://github.com/fastnightshadow-bit');
+    expect(githubLink?.hasAttribute('target')).toBe(false);
+    expect(githubLinks).toHaveLength(1);
   });
 
   it('renders all three primary contacts as safe Telegram links', () => {
@@ -25,6 +61,7 @@ describe('createSite', () => {
     expect(finalHandle?.tagName).toBe('A');
     expect(finalHandle?.textContent?.trim()).toBe('@girtopw');
     expect(finalHandle?.href).toBe('https://t.me/girtopw');
+    expect(site.querySelector('[data-scene="contact"] .scene__meta')?.textContent).toContain('07 / Contact');
   });
 
   it('renders the approved title for every case chapter', () => {
@@ -72,8 +109,8 @@ describe('createSite', () => {
   it('renders clean typographic story handoffs without detached ornaments or captions', () => {
     const site = createSite(siteContent);
 
-    expect(site.querySelectorAll('[data-transition]')).toHaveLength(5);
-    expect(site.querySelectorAll('[data-transition] strong')).toHaveLength(5);
+    expect(site.querySelectorAll('[data-transition]')).toHaveLength(siteContent.transitions.length);
+    expect(site.querySelectorAll('[data-transition] strong')).toHaveLength(siteContent.transitions.length);
     expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(0);
     expect(site.querySelectorAll('[data-transition] small')).toHaveLength(0);
   });
@@ -82,19 +119,21 @@ describe('createSite', () => {
     const site = createSite(siteContent);
     const projectMetadata = [...site.querySelectorAll<HTMLElement>('[data-project] .scene__meta')];
 
-    expect(projectMetadata).toHaveLength(3);
+    expect(projectMetadata).toHaveLength(4);
     expect(projectMetadata.every((metadata) => metadata.children.length === 1)).toBe(true);
     expect(projectMetadata.every((metadata) => !/\bproject\b/i.test(metadata.textContent ?? ''))).toBe(true);
   });
 
-  it('replaces the portrait scribble and school sticker with purposeful visuals', () => {
+  it('replaces old decorative project mockups with real project showcases', () => {
     const site = createSite(siteContent);
     const promise = site.querySelector<HTMLElement>('[data-about-promise]');
 
     expect(site.querySelector('.about__scribble')).toBeNull();
     expect(promise?.textContent?.trim().replace(/\s+/g, ' ')).toBe('ОДИН ЧЕЛОВЕК. ВЕСЬ САЙТ.');
     expect(promise?.getAttribute('aria-hidden')).toBeNull();
-    expect(site.querySelector('.school-road')).not.toBeNull();
+    expect(site.querySelector('.doner-poster')).toBeNull();
+    expect(site.querySelector('.school-road')).toBeNull();
+    expect(site.querySelector('.bot-phone')).toBeNull();
     expect(site.querySelector('.school-sign')).toBeNull();
   });
 });

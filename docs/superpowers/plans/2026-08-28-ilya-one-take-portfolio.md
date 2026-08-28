@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a production-ready, mobile-first personal portfolio for Ilya that presents him, three projects, and a direct Telegram CTA as one continuous animated story.
+**Goal:** Build a production-ready, mobile-first personal portfolio for Ilya that presents him, four real projects, a public GitHub profile, and a direct Telegram CTA as one continuous animated story.
 
-**Architecture:** A static Vite and strict TypeScript site renders semantic HTML from one typed content module. Focused renderer modules own each scene, while a separate GSAP/ScrollTrigger controller progressively enhances the already-readable page with motion and cleanly disables it for reduced-motion users.
+**Architecture:** A static Vite and strict TypeScript site renders seven semantic scenes from one typed content module. Focused renderer modules own each scene, four project presentations and the GitHub strip, while a separate GSAP/ScrollTrigger controller progressively enhances the already-readable page with six transitions and cleanly disables motion for reduced-motion users. Six approved source captures are built deterministically into 24 AVIF/WebP/JPG delivery files.
 
 **Tech Stack:** Vite, TypeScript, semantic HTML, modular CSS, GSAP with ScrollTrigger, Vitest with jsdom, Playwright, axe-core, Sharp, Lighthouse CI.
 
@@ -15,13 +15,16 @@
 - Build one long adaptive page with no router, backend, database, CMS, form, blog, authentication, or multilingual layer.
 - Do not add React or any second animation library.
 - Use only `https://t.me/girtopw` for the primary CTA.
-- Present exactly these three projects: `Пивной Донер`, `Автошкола`, and `Telegram-бот-магазин`.
-- Do not invent reviews, years of experience, metrics, awards, client outcomes, or public project URLs.
+- Present exactly these four projects: `Пивной Донер`, `Автошкола «Перекрёсток»`, `Шаурма Халяль 1`, and `VeachelSell`.
+- Use only the approved public project URLs from `siteContent.ts`; do not invent reviews, years of experience, metrics, awards, or client outcomes.
+- Keep the AutoSchool mobile capture visually primary at every supported layout tier; keep Shaurma and VeachelSell phone-only instead of inventing desktop versions.
+- Link the GitHub strip to `https://github.com/fastnightshadow-bit`.
 - The site must remain readable and navigable when JavaScript fails and when `prefers-reduced-motion: reduce` is active.
 - Support 360–430 px mobile, 768–1024 px tablet, and 1280–1600 px desktop layouts without horizontal scrolling.
 - Maintain WCAG AA text contrast, visible keyboard focus, semantic heading order, and targets of at least 44×44 px.
 - Production Lighthouse targets: Performance ≥85, Accessibility ≥95, Best Practices ≥95, SEO ≥95.
-- Use `work/assets/portrait-clean-neutral.png` as the approved source portrait; generated delivery assets live under `public/assets/portrait/`.
+- Use `src/assets/source/portrait-clean-neutral.png` as the approved source portrait; generated delivery assets live under `public/assets/portrait/`.
+- Keep the six approved source captures under `src/assets/source/projects/`; generate exactly 24 project delivery assets under `public/assets/projects/` and remove stale generated project files on rebuild.
 - Keep `.superpowers/`, `work/`, `dist/`, test output, and dependency directories out of Git.
 
 ## File Structure
@@ -38,12 +41,18 @@
 ├── playwright.config.ts               # Browser projects and local web server
 ├── lighthouserc.json                  # Production quality budgets
 ├── scripts/
-│   └── build-assets.mjs               # Deterministic AVIF/WebP/PNG portrait pipeline
+│   ├── build-assets.mjs               # Orchestrates portrait and project asset pipelines
+│   ├── build-project-assets.mjs       # Six captures → exact 24-file delivery matrix
+│   ├── build-project-assets.test.mjs  # Isolated cleanup and asset-matrix test
+│   ├── run-lighthouse.mjs             # Production Lighthouse gate
+│   └── verify-dist-seo.mjs            # Built-HTML metadata verification
 ├── public/
 │   ├── favicon.svg                    # Simple Ilya mark
 │   ├── robots.txt                     # Search crawler policy
 │   ├── social-card.png                # 1200×630 social preview image
-│   └── assets/portrait/               # Generated delivery images
+│   └── assets/
+│       ├── portrait/                  # Generated portrait delivery images
+│       └── projects/                  # 24 generated AVIF/WebP/JPG project images
 ├── src/
 │   ├── main.ts                        # Application bootstrap
 │   ├── content/
@@ -57,6 +66,7 @@
 │   │   ├── processStrip.ts             # Four-step process
 │   │   ├── transitionBridge.ts         # Semantic visual bridges
 │   │   ├── caseChapter.ts              # Shared project chapter renderer
+│   │   ├── githubStrip.ts              # Public code/profile proof
 │   │   ├── contactScene.ts             # Telegram close
 │   │   ├── renderSiteMarkup.ts          # Server-safe full-page HTML string
 │   │   ├── createSite.ts               # Page composition
@@ -75,9 +85,11 @@
 │   │   ├── scenes.css                  # Hero, about, project, CTA visuals
 │   │   └── motion.css                  # Initial animated states and reduced motion
 │   └── assets/source/
-│       └── portrait-clean-neutral.png  # Versioned approved portrait source
+│       ├── portrait-clean-neutral.png  # Versioned approved portrait source
+│       └── projects/                   # Six approved desktop/mobile source captures
 └── tests/
     ├── portfolio.spec.ts               # Content, CTA, scrolling, responsive behavior
+    ├── portrait-layout.spec.ts          # Portrait layout regression coverage
     └── accessibility.spec.ts           # Axe and keyboard checks
 ```
 
@@ -212,12 +224,14 @@ import { describe, expect, it } from 'vitest';
 import { siteContent } from './siteContent';
 
 describe('siteContent', () => {
-  it('contains the approved contact and exactly three approved projects', () => {
+  it('contains the approved contact and four verified project destinations', () => {
     expect(siteContent.telegramUrl).toBe('https://t.me/girtopw');
-    expect(siteContent.projects.map((project) => project.title)).toEqual([
-      'Пивной Донер',
-      'Автошкола',
-      'Telegram-бот-магазин',
+    expect(siteContent.githubUrl).toBe('https://github.com/fastnightshadow-bit');
+    expect(siteContent.projects.map((project) => [project.id, project.action.href, project.presentation.primary])).toEqual([
+      ['pivnoy-doner', 'https://pivdoner.ru/', 'desktop'],
+      ['driving-school', 'https://perekrestok-yaroslavl.netlify.app/', 'mobile'],
+      ['shaurma-mobile', 'https://fastnightshadow-bit.github.io/chaurma/', 'mobile'],
+      ['telegram-shop', 'https://t.me/veachelsell_bot', 'mobile'],
     ]);
   });
 
@@ -237,10 +251,20 @@ Expected: FAIL because `./siteContent` does not exist.
 
 - [ ] **Step 5: Implement the typed content module**
 
-Create `src/content/siteContent.ts`:
+Create `src/content/siteContent.ts`. The current contract includes screenshot metadata, real destinations, responsive/phone presentation modes, GitHub, and six transition descriptors:
 
 ```ts
-export type ProjectTheme = 'doner' | 'school' | 'telegram';
+export type ProjectTheme = 'doner' | 'school' | 'mobile' | 'telegram';
+
+export interface ProjectScreenshot {
+  readonly alt: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+export type ProjectPresentation =
+  | { readonly kind: 'responsive'; readonly primary: 'desktop' | 'mobile'; readonly desktop: ProjectScreenshot; readonly mobile: ProjectScreenshot }
+  | { readonly kind: 'phone'; readonly primary: 'mobile'; readonly mobile: ProjectScreenshot };
 
 export interface ProjectContent {
   readonly id: string;
@@ -251,17 +275,19 @@ export interface ProjectContent {
   readonly description: string;
   readonly chapterLabel: string;
   readonly theme: ProjectTheme;
+  readonly action: { readonly href: `https://${string}`; readonly label: string };
+  readonly presentation: ProjectPresentation;
 }
 
 export interface TransitionContent {
-  readonly label: string;
   readonly phrase: string;
-  readonly variant: 'ink' | 'route' | 'chat' | 'final';
+  readonly variant: 'ink' | 'route' | 'mobile' | 'chat' | 'final';
 }
 
 export interface SiteContent {
   readonly telegramUrl: string;
   readonly telegramHandle: string;
+  readonly githubUrl: `https://${string}`;
   readonly rotatingWords: readonly string[];
   readonly process: readonly { number: string; title: string; detail: string }[];
   readonly projects: readonly ProjectContent[];
@@ -271,51 +297,50 @@ export interface SiteContent {
 export const siteContent: SiteContent = {
   telegramUrl: 'https://t.me/girtopw',
   telegramHandle: '@girtopw',
+  githubUrl: 'https://github.com/fastnightshadow-bit',
   rotatingWords: ['цепляют.', 'продают.', 'помнят.'],
-  process: [
-    { number: '01', title: 'Знакомство', detail: 'Цель, бизнес, аудитория' },
-    { number: '02', title: 'Концепция', detail: 'Структура и сильная идея' },
-    { number: '03', title: 'Разработка', detail: 'Код, адаптив, проверка' },
-    { number: '04', title: 'Запуск', detail: 'Домен, аналитика, передача' },
-  ],
+  process: [/* four approved steps */],
   projects: [
     {
       id: 'pivnoy-doner',
       title: 'Пивной Донер',
-      eyebrow: 'Case 01 · Food / Commerce',
-      headline: 'Из локального места',
-      accent: 'в цифровой бренд.',
-      description: 'Сайт для «Пивного Донера»: сильный образ, понятное меню и короткий путь до заказа.',
-      chapterLabel: 'Brand × Web × Order',
       theme: 'doner',
+      action: { href: 'https://pivdoner.ru/', label: 'Открыть сайт' },
+      presentation: { kind: 'responsive', primary: 'desktop', desktop: {/* 1280×720 */}, mobile: {/* 390×844 */} },
+      // approved copy fields omitted here for brevity
     },
     {
       id: 'driving-school',
-      title: 'Автошкола',
-      eyebrow: 'Case 02 · Service / Education',
-      headline: 'Понятный путь',
-      accent: 'к первым правам.',
-      description: 'Сайт автошколы, который объясняет обучение, снимает сомнения и ведёт к записи.',
-      chapterLabel: 'Service × Education',
+      title: 'Автошкола «Перекрёсток»',
       theme: 'school',
+      action: { href: 'https://perekrestok-yaroslavl.netlify.app/', label: 'Открыть сайт' },
+      presentation: { kind: 'responsive', primary: 'mobile', desktop: {/* 1280×720 */}, mobile: {/* 390×844 */} },
+      // approved copy fields omitted here for brevity
+    },
+    {
+      id: 'shaurma-mobile',
+      title: 'Шаурма Халяль 1',
+      theme: 'mobile',
+      action: { href: 'https://fastnightshadow-bit.github.io/chaurma/', label: 'Открыть mobile-сайт' },
+      presentation: { kind: 'phone', primary: 'mobile', mobile: {/* 390×844 */} },
+      // approved copy fields omitted here for brevity
     },
     {
       id: 'telegram-shop',
-      title: 'Telegram-бот-магазин',
-      eyebrow: 'Case 03 · Product / Telegram',
-      headline: 'Магазин, который живёт',
-      accent: 'в диалоге.',
-      description: 'Telegram-бот с каталогом, корзиной и оформлением заказа внутри привычного мессенджера.',
-      chapterLabel: 'Bot × Catalog × Order',
+      title: 'VeachelSell',
       theme: 'telegram',
+      action: { href: 'https://t.me/veachelsell_bot', label: 'Запустить бота' },
+      presentation: { kind: 'phone', primary: 'mobile', mobile: {/* 390×844 */} },
+      // approved copy fields omitted here for brevity
     },
   ],
   transitions: [
-    { label: 'Буквы становятся линиями портрета', phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
-    { label: 'Линия становится графикой кейса', phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
-    { label: 'Красная линия становится дорогой', phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
-    { label: 'Дорожные метки становятся сообщениями', phrase: 'ROAD → FLOW → CHAT → SHOP', variant: 'chat' },
-    { label: 'Проекты становятся приглашением', phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
+    { phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
+    { phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
+    { phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
+    { phrase: 'ROAD → MOBILE → MENU → ORDER', variant: 'mobile' },
+    { phrase: 'WEB → CHAT → CATALOG → SHOP', variant: 'chat' },
+    { phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
   ],
 };
 ```
@@ -345,6 +370,7 @@ git commit -m "chore: scaffold typed portfolio foundation"
 - Create: `src/components/processStrip.ts`
 - Create: `src/components/transitionBridge.ts`
 - Create: `src/components/caseChapter.ts`
+- Create: `src/components/githubStrip.ts`
 - Create: `src/components/contactScene.ts`
 - Create: `src/components/renderSiteMarkup.ts`
 - Create: `src/components/createSite.test.ts`
@@ -371,17 +397,24 @@ describe('createSite', () => {
     document.body.replaceChildren(site);
 
     expect([...document.querySelectorAll<HTMLElement>('[data-scene]')].map((node) => node.dataset.scene)).toEqual([
-      'hero', 'about', 'pivnoy-doner', 'driving-school', 'telegram-shop', 'contact',
+      'hero', 'about', 'pivnoy-doner', 'driving-school', 'shaurma-mobile', 'telegram-shop', 'contact',
     ]);
-    expect(document.querySelectorAll('[data-project]')).toHaveLength(3);
+    expect(document.querySelectorAll('[data-project]')).toHaveLength(4);
+    expect(document.querySelectorAll('[data-project-media] img')).toHaveLength(6);
+    expect(document.querySelectorAll('[data-transition]')).toHaveLength(6);
     expect(document.querySelector('h1')?.textContent).toContain('Сайты, которые');
   });
 
-  it('renders every primary contact as the approved Telegram URL', () => {
+  it('renders verified project, GitHub, and Telegram destinations', () => {
     const site = createSite(siteContent);
-    const links = [...site.querySelectorAll<HTMLAnchorElement>('[data-primary-cta]')];
-    expect(links.length).toBeGreaterThanOrEqual(2);
-    expect(links.every((link) => link.href === 'https://t.me/girtopw')).toBe(true);
+    expect([...site.querySelectorAll<HTMLAnchorElement>('[data-project-action]')].map((link) => link.href)).toEqual([
+      'https://pivdoner.ru/',
+      'https://perekrestok-yaroslavl.netlify.app/',
+      'https://fastnightshadow-bit.github.io/chaurma/',
+      'https://t.me/veachelsell_bot',
+    ]);
+    expect(site.querySelector<HTMLAnchorElement>('[data-github-link]')?.href).toBe('https://github.com/fastnightshadow-bit');
+    expect([...site.querySelectorAll<HTMLAnchorElement>('[data-primary-cta]')].every((link) => link.href === 'https://t.me/girtopw')).toBe(true);
   });
 });
 ```
@@ -446,14 +479,14 @@ export const aboutScene = () => `
     <div class="about__copy">
       <p class="eyebrow">Привет. Я — Илья.</p>
       <h2 id="about-title">Делаю сайты <span>лично.</span></h2>
-      <p>Разбираюсь в задаче, предлагаю идею, проектирую интерфейс и пишу код. Ты общаешься со мной напрямую — от первого разговора до запуска.</p>
+      <p class="about__lede">Разбираюсь в задаче, предлагаю идею, проектирую интерфейс и пишу код. Ты общаешься со мной напрямую — от первого разговора до запуска.</p>
+      <p class="about__promise" data-about-promise><span class="about__promise-line"><span>ОДИН ЧЕЛОВЕК.</span></span> <span class="about__promise-line"><span>ВЕСЬ САЙТ.</span></span></p>
     </div>
     <picture class="about__portrait">
-      <source type="image/avif" srcset="/assets/portrait/portrait-720.avif 720w, /assets/portrait/portrait-1200.avif 1200w">
-      <source type="image/webp" srcset="/assets/portrait/portrait-720.webp 720w, /assets/portrait/portrait-1200.webp 1200w">
-      <img src="/assets/portrait/portrait-1200.png" width="1200" height="1500" alt="Илья, веб-разработчик" fetchpriority="high">
+      <source type="image/avif" srcset="/assets/portrait/portrait-720.avif 720w, /assets/portrait/portrait-1200.avif 1200w" sizes="(max-width: 700px) 98vw, 47vw">
+      <source type="image/webp" srcset="/assets/portrait/portrait-720.webp 720w, /assets/portrait/portrait-1200.webp 1200w" sizes="(max-width: 700px) 98vw, 47vw">
+      <img src="/assets/portrait/portrait-1200.png" width="1200" height="1500" sizes="(max-width: 700px) 98vw, 47vw" alt="Илья, веб-разработчик" loading="lazy" decoding="async">
     </picture>
-    <svg class="about__scribble" viewBox="0 0 550 740" aria-hidden="true"><path class="scribble--coral" d="M500 80 C400 25 290 52 220 126 C150 202 125 330 150 450 C172 560 250 640 400 695"/><path class="scribble--blue" d="M92 170 C180 98 285 88 374 135 C464 184 491 290 455 405 C425 515 335 598 215 630"/></svg>
     <div class="about__facts">
       <p><b>01</b><span>Общение напрямую<small>Без потерянных деталей между людьми</small></span></p>
       <p><b>02</b><span>Дизайн и код в одних руках<small>Идея сохраняется до готового сайта</small></span></p>
@@ -480,7 +513,7 @@ import type { TransitionContent } from '../content/siteContent';
 
 export const transitionBridge = (transition: TransitionContent) => `
   <div class="bridge bridge--${transition.variant}" data-transition="${transition.variant}" aria-hidden="true">
-    <small>${transition.label}</small><strong>${transition.phrase} → ${transition.phrase}</strong><i></i>
+    <strong>${transition.phrase} → ${transition.phrase}</strong>
   </div>`;
 ```
 
@@ -489,18 +522,37 @@ Create `src/components/caseChapter.ts`:
 ```ts
 import type { ProjectContent } from '../content/siteContent';
 
-const projectVisual = (theme: ProjectContent['theme']) => ({
-  doner: '<div class="doner-poster" aria-hidden="true"><b>ПИВНОЙ<br>ДОНЕР</b><small>BRAND × WEB × ORDER</small></div>',
-  school: '<div class="school-road" aria-hidden="true"></div><span class="school-sign" aria-hidden="true">START<br>HERE</span>',
-  telegram: '<div class="bot-phone" aria-hidden="true"><i>Привет! Что ищем?</i><i>Каталог товаров →</i><i>Добавлено в корзину ✓</i></div>',
-})[theme];
+const screenshotPath = (project: ProjectContent, role: 'desktop' | 'mobile') =>
+  `/assets/projects/${project.id}-${role}`;
 
-export const caseChapter = (project: ProjectContent, index: number) => `
+const projectMedia = (project: ProjectContent) => {
+  // Render AVIF/WebP/JPG <picture> sources from project.presentation.
+  // Responsive projects include both roles in primary-first order;
+  // phone projects render only the confirmed mobile capture.
+};
+
+export const caseChapter = (project: ProjectContent) => `
   <section class="scene case case--${project.theme}" id="${project.id}" data-scene="${project.id}" data-project aria-labelledby="${project.id}-title">
-    <div class="scene__meta"><span>${project.eyebrow}</span><span>0${index + 3} / Project</span></div>
-    ${projectVisual(project.theme)}
-    <div class="case__copy"><h2 id="${project.id}-title">${project.headline} <span>${project.accent}</span></h2><p>${project.description}</p><span class="case__label">${project.chapterLabel}</span></div>
+    <div class="scene__meta"><span>${project.eyebrow}</span></div>
+    <div class="case__layout">
+      <div class="case__copy"><h2 id="${project.id}-title" class="case__title">${project.title}</h2><p class="case__headline">${project.headline} <span class="case__accent">${project.accent}</span></p><p>${project.description}</p><a class="case__action" data-project-action href="${project.action.href}">${project.action.label} <span aria-hidden="true">↗</span></a><span class="case__label">${project.chapterLabel}</span></div>
+      ${projectMedia(project)}
+    </div>
   </section>`;
+```
+
+`projectMedia` is implemented in full in `src/components/caseChapter.ts`; its contract is covered by tests for six semantic images, source formats, dimensions, lazy loading, primary role order, and verified destinations.
+
+Create `src/components/githubStrip.ts`:
+
+```ts
+import type { SiteContent } from '../content/siteContent';
+
+export const githubStrip = (content: SiteContent) => `
+  <aside class="github-strip" aria-labelledby="github-strip-title">
+    <div><h2 id="github-strip-title">Код тоже можно посмотреть.</h2><p>Публичные репозитории и новые работы — в профиле Ильи.</p></div>
+    <a class="github-strip__link" data-github-link href="${content.githubUrl}">GitHub Ильи <span aria-hidden="true">↗</span></a>
+  </aside>`;
 ```
 
 Create `src/components/contactScene.ts`:
@@ -510,11 +562,11 @@ import type { SiteContent } from '../content/siteContent';
 
 export const contactScene = (content: SiteContent) => `
   <section class="scene contact" data-scene="contact" aria-labelledby="contact-title">
-    <div class="scene__meta"><span>Есть задача?</span><span>06 / Contact</span></div>
+    <div class="scene__meta"><span>Есть задача?</span><span>07 / Contact</span></div>
     <h2 id="contact-title">Давай сделаем <span>твой сайт.</span></h2>
     <p>Напиши пару слов о проекте. Я отвечу лично и предложу, с чего лучше начать.</p>
     <a class="button button--contact" data-primary-cta href="${content.telegramUrl}">Написать в Telegram →</a>
-    <strong class="contact__handle" aria-hidden="true">${content.telegramHandle}</strong>
+    <a class="contact__handle" data-primary-cta href="${content.telegramUrl}">${content.telegramHandle}</a>
   </section>`;
 ```
 
@@ -528,15 +580,16 @@ import { aboutScene } from './aboutScene';
 import { caseChapter } from './caseChapter';
 import { contactScene } from './contactScene';
 import { heroScene } from './heroScene';
+import { githubStrip } from './githubStrip';
 import { processStrip } from './processStrip';
 import { siteHeader } from './siteHeader';
 import { transitionBridge } from './transitionBridge';
 
 export function renderSiteMarkup(content: SiteContent): string {
-  const [doner, school, telegram] = content.projects;
-  if (!doner || !school || !telegram) throw new Error('Exactly three projects are required');
-  const [toAbout, toDoner, toSchool, toTelegram, toContact] = content.transitions;
-  if (!toAbout || !toDoner || !toSchool || !toTelegram || !toContact) throw new Error('Five transitions are required');
+  const [doner, school, shaurma, telegram] = content.projects;
+  if (!doner || !school || !shaurma || !telegram || content.projects.length !== 4) throw new Error('Exactly four projects are required');
+  const [toAbout, toDoner, toSchool, toShaurma, toTelegram, toContact] = content.transitions;
+  if (!toAbout || !toDoner || !toSchool || !toShaurma || !toTelegram || !toContact || content.transitions.length !== 6) throw new Error('Six transitions are required');
 
   return `<div class="site-shell" data-site-static>
     ${siteHeader(content)}
@@ -546,11 +599,14 @@ export function renderSiteMarkup(content: SiteContent): string {
       ${aboutScene()}
       ${processStrip(content)}
       ${transitionBridge(toDoner)}
-      ${caseChapter(doner, 0)}
+      ${caseChapter(doner)}
       ${transitionBridge(toSchool)}
-      ${caseChapter(school, 1)}
+      ${caseChapter(school)}
+      ${transitionBridge(toShaurma)}
+      ${caseChapter(shaurma)}
       ${transitionBridge(toTelegram)}
-      ${caseChapter(telegram, 2)}
+      ${caseChapter(telegram)}
+      ${githubStrip(content)}
       ${transitionBridge(toContact)}
       ${contactScene(content)}
     </main>
@@ -619,10 +675,10 @@ Run:
 npm test -- src/components/createSite.test.ts
 npm run typecheck
 npm run build
-rg -n "data-site-static|Пивной Донер|Автошкола|Telegram-бот-магазин" dist/index.html
+rg -n "data-site-static|Пивной Донер|Автошкола|Шаурма Халяль 1|VeachelSell|GitHub Ильи" dist/index.html
 ```
 
-Expected: structure tests PASS, TypeScript exits 0, and all four approved static-content markers are present in `dist/index.html`.
+Expected: structure tests PASS, TypeScript exits 0, and all seven approved static-content markers are present in `dist/index.html`.
 
 - [ ] **Step 7: Commit the semantic page**
 
@@ -676,7 +732,9 @@ import { expect, test } from '@playwright/test';
 test('story is ordered, readable, and has no horizontal overflow', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Сайты, которые');
-  await expect(page.locator('[data-project]')).toHaveCount(3);
+  await expect(page.locator('[data-project]')).toHaveCount(4);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+  await expect(page.locator('[data-transition]')).toHaveCount(6);
   expect(await page.locator('.site-header').evaluate((element) => getComputedStyle(element).position)).toBe('sticky');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
@@ -753,101 +811,43 @@ Create `src/styles/layout.css` with these exact layout rules:
 Create `src/styles/scenes.css`:
 
 ```css
-.hero { min-height: 790px; background: var(--ink); color: var(--paper); }
-.hero__ghost { position: absolute; right: -.04em; top: .16em; z-index: -1; color: #1b1b22; font: 900 clamp(12rem, 36vw, 30rem)/.8 Arial, sans-serif; letter-spacing: -.1em; }
-.hero__copy { position: relative; z-index: 2; padding-top: clamp(5rem, 11vh, 8rem); }
-.hero h1 { max-width: 62rem; margin: 0; font-size: clamp(3.8rem, 11vw, 9rem); line-height: .78; letter-spacing: -.08em; text-transform: uppercase; }
+/* Non-exhaustive layout contract; src/styles/scenes.css is authoritative. */
 .hero__word { display: inline-block; min-width: 5.2ch; color: var(--coral); }
-.hero p { max-width: 29rem; margin: 1.75rem 0 0; color: var(--text-muted-dark); font-size: .95rem; line-height: 1.55; }
-.hero__scroll { position: absolute; right: var(--page-pad); bottom: 1.75rem; color: #77747d; font: 800 .55rem/1 ui-monospace, monospace; letter-spacing: .12em; writing-mode: vertical-rl; }
-
 .about { min-height: 840px; background: var(--paper); color: var(--ink); }
-.about__copy { position: relative; z-index: 8; width: 52%; padding-top: clamp(4rem, 9vh, 6rem); }
-.eyebrow { display: flex; align-items: center; gap: .65rem; font: 900 .65rem/1 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
-.eyebrow::before { content: ''; width: 35px; height: 2px; background: var(--coral); }
-.about h2 { margin: 1.25rem 0; font-size: clamp(4.1rem, 9vw, 7.5rem); line-height: .82; letter-spacing: -.08em; }
-.about h2 span { display: block; color: var(--coral); }
-.about__copy > p:last-child { max-width: 29rem; color: var(--text-muted-light); font-size: .95rem; line-height: 1.55; }
-.about__portrait { position: absolute; right: 2%; bottom: 0; width: 47%; height: min(720px, 82svh); overflow: hidden; clip-path: polygon(12% 0,100% 0,100% 100%,0 100%,0 12%); background: #d2cfca; }
-.about__portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: grayscale(1) contrast(1.08); }
-.about__scribble { position: absolute; right: 0; bottom: 0; z-index: 4; width: 52%; height: 740px; pointer-events: none; }
-.about__scribble path { fill: none; stroke-width: 2.2; stroke-linecap: round; }
-.scribble--coral { stroke: var(--coral); }
-.scribble--blue { stroke: var(--blue); }
-.about__facts { position: absolute; left: var(--page-pad); bottom: 2rem; z-index: 9; width: 45%; border-top: 1px solid #aaa69f; }
-.about__facts p { display: grid; grid-template-columns: 2.7rem 1fr; margin: 0; padding: .8rem 0; border-bottom: 1px solid #cec9c0; font-size: .82rem; }
-.about__facts b { color: var(--blue); font: 900 .65rem/1.5 ui-monospace, monospace; }
-.about__facts small { display: block; margin-top: .2rem; color: #77736b; font-size: .65rem; }
-
-.process em { display: block; margin-bottom: 2rem; color: var(--coral); font: 900 .7rem/1 ui-monospace, monospace; font-style: normal; }
-.process h2 { margin: 0; font-size: .95rem; }
-.process p { margin: .45rem 0 0; color: #77747d; font: 700 .6rem/1.4 ui-monospace, monospace; }
-
-.case { min-height: 720px; }
-.case__copy { position: relative; z-index: 5; padding-top: clamp(5rem, 12vh, 7.5rem); }
-.case h2 { max-width: 46rem; margin: 0 0 1.1rem; font-size: clamp(4rem, 9vw, 7.6rem); line-height: .79; letter-spacing: -.075em; }
-.case h2 span { display: block; }
-.case__copy > p { max-width: 25rem; font-size: .9rem; line-height: 1.55; }
-.case__label { display: inline-flex; margin-top: .8rem; padding: .7rem .85rem; border: 1px solid currentColor; font: 900 .6rem/1 ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; }
-.case--doner { background: var(--doner-paper); color: var(--ink); }
-.case--doner h2 { font-family: Georgia, serif; font-style: italic; font-weight: 500; }
-.case--doner h2 span { color: var(--doner-red); font-family: Arial, sans-serif; font-size: .68em; font-style: normal; font-weight: 900; text-transform: uppercase; }
-.doner-poster { position: absolute; right: 7%; top: 75px; width: 31%; height: 460px; border: 2px solid var(--ink); background: var(--doner-red); box-shadow: 14px 14px 0 var(--ink); color: #fff; transform: rotate(3deg); }
-.doner-poster b { position: absolute; left: 1.35rem; top: 1.5rem; font: 900 clamp(2rem, 4vw, 3.4rem)/.82 Arial, sans-serif; letter-spacing: -.06em; }
-.doner-poster small { position: absolute; left: 1.35rem; bottom: 1.35rem; padding: .5rem; background: var(--doner-paper); color: var(--ink); font: 900 .5rem/1 ui-monospace, monospace; }
-
-.case--school { background: var(--blue); color: #f7f3e9; }
-.case--school h2 { text-transform: uppercase; }
-.case--school h2 span { color: var(--yellow); }
-.case--school .case__label { border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); box-shadow: 6px 6px 0 var(--ink); }
-.school-road { position: absolute; right: -70px; top: 30px; width: 500px; height: 500px; border: 50px solid #f7f3e9; border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(20deg); }
-.school-road::after { content: ''; position: absolute; inset: -32px; border: 4px dashed var(--blue); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; }
-.school-sign { position: absolute; right: 95px; bottom: 72px; display: grid; width: 102px; height: 102px; place-items: center; border: 5px solid var(--ink); border-radius: 50%; background: var(--yellow); color: var(--ink); font: 900 .75rem/1.1 ui-monospace, monospace; text-align: center; transform: rotate(7deg); }
-
-.case--telegram { background: var(--mint); color: var(--ink); }
-.case--telegram h2 span { color: #2476f2; }
-.bot-phone { position: absolute; right: 8%; top: 55px; width: 275px; height: 470px; padding: 4.5rem 1rem 1rem; border: 3px solid var(--ink); border-radius: 40px; background: #2476f2; box-shadow: 13px 13px 0 var(--ink); transform: rotate(-2deg); }
-.bot-phone::before { content: ''; position: absolute; left: 50%; top: 1.5rem; width: 64px; height: 9px; border-radius: 999px; background: var(--ink); transform: translateX(-50%); }
-.bot-phone i { display: block; margin: .75rem 0; padding: .85rem .75rem; border: 2px solid var(--ink); border-radius: 15px; background: #fff; color: var(--ink); font: 900 .65rem/1.3 ui-monospace, monospace; font-style: normal; }
-.bot-phone i:nth-child(2) { margin-left: 1.8rem; background: var(--yellow); }
-.bot-phone i:nth-child(3) { margin-right: 1.25rem; background: #ff846e; }
-
-.contact { min-height: 700px; background: var(--coral); color: var(--ink); }
-.contact h2 { position: relative; z-index: 2; max-width: 70rem; margin: clamp(5rem, 12vh, 7rem) 0 1.25rem; font: 900 clamp(4.8rem, 13vw, 10.5rem)/.73 Impact, 'Arial Narrow Bold', Arial, sans-serif; letter-spacing: -.035em; text-transform: uppercase; }
-.contact h2 span { display: inline-block; padding: 0 .08em; background: var(--ink); color: var(--coral); transform: rotate(-1deg); }
-.contact > p { max-width: 27rem; font-size: .95rem; line-height: 1.5; }
-.button--contact { border: 2px solid var(--ink); border-radius: 0; background: #fff; box-shadow: 7px 7px 0 var(--ink); }
-.contact__handle { position: absolute; right: var(--page-pad); bottom: 1.8rem; color: #d73524; font: 900 clamp(3.4rem, 10vw, 8rem)/.8 Arial, sans-serif; letter-spacing: -.075em; text-transform: uppercase; }
+.about__promise-line { display: block; overflow: hidden; }
+.case__layout { display: grid; grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr); gap: clamp(2rem, 5vw, 5rem); }
+.case__media { position: relative; min-width: 0; }
+.project-shot img { display: block; width: 100%; height: auto; object-fit: cover; object-position: top; }
+.project-shot--desktop { border: 3px solid var(--ink); border-radius: 18px; background: var(--ink); }
+.project-shot--mobile { border: 4px solid var(--ink); border-radius: 36px; background: var(--ink); }
+.case--doner .project-shot--desktop { width: 100%; }
+.case--school .project-shot--mobile { position: relative; z-index: 2; }
+.case__media--phone .project-shot--mobile { width: clamp(15rem, 48%, 17rem); }
+.case__action, .github-strip__link { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; }
+.github-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
 
 @media (max-width: 700px) {
-  .hero h1 { font-size: clamp(3.65rem, 17vw, 5.2rem); }
-  .hero p { max-width: 86%; }
-  .about { min-height: 970px; }
-  .about__copy { width: 100%; padding-top: 3rem; }
-  .about h2 { font-size: clamp(4rem, 18vw, 5.4rem); }
-  .about__portrait { right: -23%; bottom: 218px; width: 98%; height: 535px; opacity: .74; }
-  .about__scribble { right: -22%; bottom: 210px; width: 112%; height: 555px; }
-  .about__facts { left: 22px; right: 22px; bottom: 18px; width: auto; }
-  .about__facts p { background: rgb(241 238 230 / .88); }
-  .case__copy > p { max-width: 72%; }
-  .doner-poster { right: -70px; top: 190px; width: 61%; height: 390px; opacity: .48; }
-  .school-road { right: -210px; top: 115px; opacity: .4; }
-  .school-sign { right: 25px; }
-  .bot-phone { right: -90px; top: 185px; opacity: .5; }
-  .contact h2 { font-size: clamp(4.8rem, 21vw, 6.3rem); }
-  .contact > p { max-width: 82%; }
+  .case__layout { grid-template-columns: minmax(0, 1fr); }
+  .case__media--responsive { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
+  .case__media--phone .project-shot--mobile { width: 100%; max-width: 12rem; }
+  .case__action, .github-strip__link { min-height: 44px; }
+  .github-strip { grid-template-columns: 1fr; }
 }
 ```
+
+The complete stylesheet assigns a distinct palette to all four chapters, keeps AutoSchool mobile-first at mobile/tablet/desktop tiers, composes Doner desktop-first, and uses only real project media instead of the superseded decorative mockups.
 
 Create `src/styles/motion.css`:
 
 ```css
-[data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; }
+[data-motion-ready] .about__portrait img { filter: grayscale(1) contrast(1.08); }
+[data-motion-ready] .about__promise-line > span { opacity: 0; }
 [data-motion-ready] [data-project] .case__copy { will-change: transform, opacity; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-  .about__scribble path { stroke-dashoffset: 0 !important; }
+  .about__portrait img { filter: grayscale(0) contrast(1.02) !important; }
+  .about__promise-line > span, [data-project-media], [data-project] .case__copy { opacity: 1 !important; transform: none !important; }
 }
 ```
 
@@ -871,7 +871,7 @@ import './styles/index.css';
 
 Run: `npm run e2e`
 
-Expected: 2 project variants PASS; no horizontal overflow and three project chapters visible.
+Expected: both viewport projects PASS; no horizontal overflow, seven scenes, four project chapters, six real captures, and six transitions are visible.
 
 - [ ] **Step 5: Commit the responsive visual system**
 
@@ -1024,7 +1024,7 @@ git commit -m "feat: add responsive portrait asset pipeline"
 - Modify: `src/styles/motion.css`
 
 **Interfaces:**
-- Consumes: `[data-scene]`, `[data-transition]`, `[data-rotating-word]`, `.about__scribble path`, and project theme classes.
+- Consumes: `[data-scene]`, `[data-transition]`, `[data-rotating-word]`, `[data-about-promise]`, `.about__portrait`, `[data-project-media]`, and project theme classes.
 - Produces: `MotionController` with `mount(root: HTMLElement): void` and `destroy(): void`.
 
 - [ ] **Step 1: Write the failing motion lifecycle tests**
@@ -1126,7 +1126,8 @@ export function createMotionController(dependencies = defaultDependencies): Moti
         });
 
         dependencies.timeline({ scrollTrigger: { trigger: '.about', start: 'top 75%', end: 'center 42%', scrub: .6 } })
-          .fromTo('.about__scribble path', { strokeDashoffset: 1100 }, { strokeDashoffset: 0 });
+          .fromTo('[data-about-promise] .about__promise-line > span', { yPercent: 115, opacity: 0 }, { yPercent: 0, opacity: 1 })
+          .fromTo('.about__portrait img', { filter: 'grayscale(1)' }, { filter: 'grayscale(0)' }, 0);
       }, root);
 
       const word = root.querySelector<HTMLElement>('[data-rotating-word]');
@@ -1172,7 +1173,7 @@ test('reduced motion keeps all content visible', async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await page.goto('/');
-  await expect(page.locator('[data-project]')).toHaveCount(3);
+  await expect(page.locator('[data-project]')).toHaveCount(4);
   await expect(page.locator('[data-scene="contact"]')).toBeVisible();
   expect(await page.locator('#app').getAttribute('data-motion-ready')).toBeNull();
   await context.close();
@@ -1527,10 +1528,12 @@ Run:
 test -f dist/index.html
 test -f dist/favicon.svg
 test -f dist/assets/portrait/portrait-720.avif
-rg -n "girtopw|Пивной Донер|Автошкола|Telegram-бот-магазин" dist
+test -f dist/assets/projects/pivnoy-doner-desktop-1280.avif
+test "$(find dist/assets/projects -type f | wc -l | tr -d ' ')" = "24"
+rg -n "girtopw|Пивной Донер|Автошкола|Шаурма Халяль 1|VeachelSell|fastnightshadow-bit" dist
 ```
 
-Expected: all file checks exit 0 and every approved content term is found in the built artifact.
+Expected: all file checks exit 0, the project asset matrix contains exactly 24 files, and every approved content term is found in the built artifact.
 
 - [ ] **Step 4: Record the final verification commit if cleanup was required**
 
