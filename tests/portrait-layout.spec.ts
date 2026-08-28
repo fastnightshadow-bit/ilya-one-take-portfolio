@@ -33,3 +33,20 @@ test('keeps About copy clear of the portrait at supported breakpoints', async ({
     expect(titleRight, `${width}px heading should clear portrait`).toBeLessThanOrEqual(portraitLeft - 12);
   }
 });
+
+test('selects the 720 portrait source for desktop Chromium at DPR 1', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'DPR 1 source selection is covered by the desktop project');
+  expect(await page.evaluate(() => window.devicePixelRatio)).toBe(1);
+
+  for (const width of [1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const image = page.locator('.about__portrait img');
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate((node) => (node as HTMLImageElement).decode());
+    await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).currentSrc.endsWith('/assets/portrait/portrait-720.avif'))).toBe(true);
+
+    await page.locator('.about__portrait source[type="image/avif"]').evaluate((source) => source.remove());
+    await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).currentSrc.endsWith('/assets/portrait/portrait-720.webp'))).toBe(true);
+  }
+});

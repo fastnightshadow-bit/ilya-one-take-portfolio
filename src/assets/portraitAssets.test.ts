@@ -10,14 +10,29 @@ const outputs = [
   { path: 'public/assets/portrait/portrait-1200.png', width: 1200, height: 1500, format: 'png', mediaType: 'image/png' },
 ];
 
-async function colorBounds(file: string, yStart: number, yEnd: number, color: readonly [number, number, number]) {
+interface TextBounds {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+  readonly pixelCount?: number;
+}
+
+function assertVisibleTextBounds(bounds: TextBounds, label: string) {
+  if (bounds.pixelCount === undefined || bounds.pixelCount <= 500) throw new Error(`${label} has enough exact fill pixels`);
+  expect(bounds.left, `${label} left safe margin`).toBeGreaterThanOrEqual(64);
+  expect(bounds.right, `${label} right safe margin`).toBeLessThanOrEqual(1136);
+}
+
+async function colorBounds(file: string, yStart: number, yEnd: number, color: readonly [number, number, number]): Promise<TextBounds> {
   const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
-  const bounds = { left: info.width, right: -1, top: info.height, bottom: -1 };
+  const bounds = { left: info.width, right: -1, top: info.height, bottom: -1, pixelCount: 0 };
 
   for (let y = yStart; y <= yEnd; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
       const offset = (y * info.width + x) * info.channels;
       if (data[offset] === color[0] && data[offset + 1] === color[1] && data[offset + 2] === color[2]) {
+        bounds.pixelCount += 1;
         bounds.left = Math.min(bounds.left, x);
         bounds.right = Math.max(bounds.right, x);
         bounds.top = Math.min(bounds.top, y);
@@ -50,13 +65,21 @@ describe('portrait delivery assets', () => {
     expect(statSync('public/assets/portrait/portrait-1200.png').size).toBeLessThan(1_500_000);
   });
 
-  it('keeps each social-card headline inside a 64px horizontal safe area', async () => {
-    const lightHeadline = await colorBounds('public/social-card.png', 170, 350, [241, 238, 230]);
-    const coralHeadline = await colorBounds('public/social-card.png', 350, 500, [255, 85, 61]);
+  it('fails closed when a controlled required text band has no pixels', () => {
+    expect(() => assertVisibleTextBounds({ left: 1200, right: -1, top: 630, bottom: -1 }, 'controlled blank band'))
+      .toThrow(/has enough exact fill pixels/);
+  });
 
-    for (const bounds of [lightHeadline, coralHeadline]) {
-      expect(bounds.left).toBeGreaterThanOrEqual(64);
-      expect(bounds.right).toBeLessThanOrEqual(1136);
-    }
+  it('keeps every social-card headline band visible inside a 64px horizontal safe area', async () => {
+    const bands = [
+      { label: 'light title', yStart: 170, yEnd: 300, color: [241, 238, 230] as const },
+      { label: 'coral headline line one', yStart: 300, yEnd: 410, color: [255, 85, 61] as const },
+      { label: 'coral headline line two', yStart: 410, yEnd: 520, color: [255, 85, 61] as const },
+    ];
+
+    for (const band of bands) assertVisibleTextBounds(
+      await colorBounds('public/social-card.png', band.yStart, band.yEnd, band.color),
+      band.label,
+    );
   });
 });
