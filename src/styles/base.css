@@ -1,5 +1,5 @@
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; background: var(--ink); }
+html { scroll-behavior: smooth; scroll-padding-top: 4.75rem; background: var(--ink); }
 body { margin: 0; overflow-x: clip; background: var(--ink); color: var(--paper); font-family: Inter, Arial, sans-serif; }
 button, a { font: inherit; }
 a { color: inherit; }

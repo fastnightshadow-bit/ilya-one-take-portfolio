@@ -8,6 +8,17 @@ const expectedLinks = [
   { name: 'Написать в Telegram →', href: 'https://t.me/girtopw' },
 ] as const;
 
+const requiredViewports = {
+  mobile: [
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ],
+  desktop: [
+    { width: 768, height: 1024 },
+    { width: 1440, height: 900 },
+  ],
+} as const;
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
@@ -43,36 +54,85 @@ test('has no automatically detectable accessibility violations', async ({ page }
   expect(results.violations).toEqual([]);
 });
 
-test('keyboard traversal reaches every interactive link with visible, unobscured focus', async ({ page }) => {
-  const header = page.locator('.site-header');
-  for (const expectedLink of expectedLinks) {
+test('keyboard traversal keeps every complete focus ring visible at required viewports', async ({ page }, testInfo) => {
+  const viewports = requiredViewports[testInfo.project.name as keyof typeof requiredViewports];
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    for (const expectedLink of expectedLinks) {
+      await page.keyboard.press('Tab');
+      const focused = page.locator(':focus-visible');
+      await expect(focused).toHaveAccessibleName(expectedLink.name);
+      await expect(focused).toBeVisible();
+
+      await expect.poll(() => focused.evaluate((element) => {
+        const styles = getComputedStyle(element);
+        const bounds = element.getBoundingClientRect();
+        const ringExpansion = Number.parseFloat(styles.outlineWidth) + Number.parseFloat(styles.outlineOffset);
+        return bounds.bottom + ringExpansion;
+      })).toBeLessThanOrEqual(viewport.height);
+
+      const focusMetrics = await focused.evaluate((element) => {
+        const styles = getComputedStyle(element);
+        const bounds = element.getBoundingClientRect();
+        const stickyHeader = document.querySelector('.site-header')!.getBoundingClientRect();
+        const outlineWidth = Number.parseFloat(styles.outlineWidth);
+        const outlineOffset = Number.parseFloat(styles.outlineOffset);
+        const ringExpansion = outlineWidth + outlineOffset;
+        return {
+          outlineStyle: styles.outlineStyle,
+          outlineWidth,
+          outlineOffset,
+          withinHeader: element.closest('.site-header') !== null,
+          ringTop: bounds.top - ringExpansion,
+          ringRight: bounds.right + ringExpansion,
+          ringBottom: bounds.bottom + ringExpansion,
+          ringLeft: bounds.left - ringExpansion,
+          headerBottom: stickyHeader.bottom,
+        };
+      });
+
+      expect(focusMetrics.outlineStyle).not.toBe('none');
+      expect(focusMetrics.outlineWidth).toBeGreaterThanOrEqual(3);
+      expect(focusMetrics.ringTop, `${viewport.width}×${viewport.height} ${expectedLink.name} ring top`).toBeGreaterThanOrEqual(0);
+      expect(focusMetrics.ringRight, `${viewport.width}×${viewport.height} ${expectedLink.name} ring right`).toBeLessThanOrEqual(viewport.width);
+      expect(focusMetrics.ringBottom, `${viewport.width}×${viewport.height} ${expectedLink.name} ring bottom`).toBeLessThanOrEqual(viewport.height);
+      expect(focusMetrics.ringLeft, `${viewport.width}×${viewport.height} ${expectedLink.name} ring left`).toBeGreaterThanOrEqual(0);
+      if (!focusMetrics.withinHeader) expect(focusMetrics.ringTop).toBeGreaterThanOrEqual(focusMetrics.headerBottom + 4);
+    }
+  }
+});
+
+test('keyboard activation scrolls the About target clear of the sticky header', async ({ page }, testInfo) => {
+  const viewports = requiredViewports[testInfo.project.name as keyof typeof requiredViewports];
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
     await page.keyboard.press('Tab');
-    const focused = page.locator(':focus-visible');
-    await expect(focused).toHaveAccessibleName(expectedLink.name);
-    await expect(focused).toBeVisible();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    const aboutLink = page.locator(':focus-visible');
+    await expect(aboutLink).toHaveAccessibleName('Смотреть дальше ↓');
 
-    await expect.poll(() => focused.evaluate((element) => element.getBoundingClientRect().bottom)).toBeLessThanOrEqual(page.viewportSize()!.height);
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('#about');
+    await expect.poll(() => page.evaluate(() => {
+      const headerBottom = document.querySelector('.site-header')!.getBoundingClientRect().bottom;
+      return document.querySelector('#about')!.getBoundingClientRect().top - headerBottom;
+    })).toBeLessThanOrEqual(40);
 
-    const focusMetrics = await focused.evaluate((element) => {
-      const styles = getComputedStyle(element);
-      const bounds = element.getBoundingClientRect();
-      const stickyHeader = document.querySelector('.site-header')!.getBoundingClientRect();
+    const geometry = await page.evaluate(() => {
+      const headerBottom = document.querySelector('.site-header')!.getBoundingClientRect().bottom;
       return {
-        outlineStyle: styles.outlineStyle,
-        outlineWidth: Number.parseFloat(styles.outlineWidth),
-        withinHeader: element.closest('.site-header') !== null,
-        top: bounds.top,
-        bottom: bounds.bottom,
-        headerBottom: stickyHeader.bottom,
+        headerBottom,
+        targetTop: document.querySelector('#about')!.getBoundingClientRect().top,
+        metaTop: document.querySelector('#about .scene__meta')!.getBoundingClientRect().top,
       };
     });
 
-    expect(focusMetrics.outlineStyle).not.toBe('none');
-    expect(focusMetrics.outlineWidth).toBeGreaterThanOrEqual(3);
-    if (!focusMetrics.withinHeader) expect(focusMetrics.top).toBeGreaterThanOrEqual(focusMetrics.headerBottom + 4);
+    expect(geometry.targetTop - geometry.headerBottom, `${viewport.width}×${viewport.height} target gap`).toBeGreaterThanOrEqual(12);
+    expect(geometry.metaTop - geometry.headerBottom, `${viewport.width}×${viewport.height} meta gap`).toBeGreaterThanOrEqual(12);
   }
-
-  await expect(header).toBeVisible();
 });
 
 test('portrait is described and visual carriers stay out of the accessibility tree', async ({ page }) => {
