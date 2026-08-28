@@ -46,3 +46,63 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
 });
+
+test('story motion progresses without shifting the rotating hero word', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+
+  await page.goto('/');
+  await expect(page.locator('#app')).toHaveAttribute('data-motion-ready', '');
+
+  const rotatingWord = page.locator('[data-rotating-word]');
+  const firstWord = await rotatingWord.textContent();
+  const firstWidth = await rotatingWord.evaluate((element) => element.getBoundingClientRect().width);
+  await expect.poll(() => rotatingWord.textContent()).not.toBe(firstWord);
+  const secondWidth = await rotatingWord.evaluate((element) => element.getBoundingClientRect().width);
+  expect(Math.abs(secondWidth - firstWidth)).toBeLessThanOrEqual(0.5);
+
+  const scribble = page.locator('.about__scribble path').first();
+  expect(Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeGreaterThan(1000);
+  await page.locator('.about').evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
+  });
+  await expect.poll(async () => Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeLessThan(10);
+
+  const caseCopy = page.locator('[data-project] .case__copy').first();
+  await page.locator('[data-project]').first().evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight * 0.2);
+  });
+  await expect.poll(async () => Number.parseFloat(await caseCopy.evaluate((element) => getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
+  await expect.poll(async () => await caseCopy.evaluate((element) => getComputedStyle(element).transform)).toMatch(/matrix\([^)]*, 0\)$/);
+
+  const bridgePhrase = page.locator('[data-transition] strong').nth(2);
+  const bridgeStart = await bridgePhrase.evaluate((element) => getComputedStyle(element).transform);
+  await page.locator('[data-transition]').nth(2).evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    window.scrollTo(0, window.scrollY + bounds.bottom - window.innerHeight * 0.1);
+  });
+  await expect.poll(async () => await bridgePhrase.evaluate((element) => getComputedStyle(element).transform)).not.toBe(bridgeStart);
+
+  expect(errors).toEqual([]);
+});
+
+test('reduced motion keeps all content visible and static', async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto('/');
+
+  await expect(page.locator('[data-project]')).toHaveCount(3);
+  await expect(page.locator('[data-scene="contact"]')).toBeVisible();
+  await expect(page.locator('#app')).not.toHaveAttribute('data-motion-ready', '');
+  const word = page.locator('[data-rotating-word]');
+  const staticWord = await word.textContent();
+  await page.waitForTimeout(2100);
+  await expect(word).toHaveText(staticWord ?? '');
+
+  await context.close();
+});

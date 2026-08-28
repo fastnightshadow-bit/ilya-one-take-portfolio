@@ -1,4 +1,5 @@
-[data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; }
+[data-motion-ready] [data-transition] strong { will-change: transform; }
+[data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; will-change: stroke-dashoffset; }
 [data-motion-ready] [data-project] .case__copy { will-change: transform, opacity; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

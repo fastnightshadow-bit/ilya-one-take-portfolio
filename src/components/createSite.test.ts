@@ -48,4 +48,14 @@ describe('createSite', () => {
     expect(image?.getAttribute('decoding')).toBe('async');
     expect(image?.getAttribute('fetchpriority')).toBeNull();
   });
+
+  it('keeps the rotating hero phrase stable for assistive technology', () => {
+    const site = createSite(siteContent);
+    const heading = site.querySelector<HTMLElement>('#hero-title');
+    const rotatingWord = site.querySelector<HTMLElement>('[data-rotating-word]');
+
+    expect(heading?.getAttribute('aria-label')).toBe(`Сайты, которые ${siteContent.rotatingWords[0]}`);
+    expect(rotatingWord?.getAttribute('aria-hidden')).toBe('true');
+    expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
+  });
 });
