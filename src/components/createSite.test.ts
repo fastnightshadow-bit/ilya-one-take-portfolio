@@ -24,8 +24,8 @@ describe('createSite', () => {
   it('renders the approved title for every case chapter', () => {
     const site = createSite(siteContent);
 
-    expect([...site.querySelectorAll<HTMLElement>('[data-project]')].map((project) => project.textContent)).toEqual(
-      expect.arrayContaining(siteContent.projects.map((project) => expect.stringContaining(project.title))),
+    expect([...site.querySelectorAll<HTMLElement>('[data-project] h2')].map((heading) => heading.textContent)).toEqual(
+      siteContent.projects.map((project) => expect.stringContaining(project.title)),
     );
   });
 });
