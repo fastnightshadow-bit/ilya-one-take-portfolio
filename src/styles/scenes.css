@@ -4,7 +4,7 @@
 .hero h1 { max-width: 62rem; margin: 0; font-size: clamp(3.8rem, 11vw, 9rem); line-height: .78; letter-spacing: -.08em; text-transform: uppercase; }
 .hero__word { display: inline-block; min-width: 5.2ch; color: var(--coral); }
 .hero p { max-width: 29rem; margin: 1.75rem 0 0; color: var(--text-muted-dark); font-size: .95rem; line-height: 1.55; }
-.hero__scroll { position: absolute; right: var(--page-pad); bottom: 1.75rem; color: #77747d; font: 800 .55rem/1 ui-monospace, monospace; letter-spacing: .12em; writing-mode: vertical-rl; }
+.hero__scroll { position: absolute; right: var(--page-pad); bottom: 1.75rem; color: var(--text-muted-dark); font: 800 .55rem/1 ui-monospace, monospace; letter-spacing: .12em; writing-mode: vertical-rl; }
 
 .about { min-height: 840px; background: var(--paper); color: var(--ink); }
 .about__copy { position: relative; z-index: 8; width: 52%; padding-top: clamp(4rem, 9vh, 6rem); }
@@ -22,11 +22,11 @@
 .about__facts { position: absolute; left: var(--page-pad); bottom: 2rem; z-index: 9; width: 45%; border-top: 1px solid #aaa69f; }
 .about__facts p { display: grid; grid-template-columns: 2.7rem 1fr; margin: 0; padding: .8rem 0; border-bottom: 1px solid #cec9c0; font-size: .82rem; }
 .about__facts b { color: var(--blue); font: 900 .65rem/1.5 ui-monospace, monospace; }
-.about__facts small { display: block; margin-top: .2rem; color: #77736b; font-size: .65rem; }
+.about__facts small { display: block; margin-top: .2rem; color: var(--text-muted-light); font-size: .75rem; }
 
 .process em { display: block; margin-bottom: 2rem; color: var(--coral); font: 900 .7rem/1 ui-monospace, monospace; font-style: normal; }
 .process h2 { margin: 0; font-size: .95rem; }
-.process p { margin: .45rem 0 0; color: #77747d; font: 700 .6rem/1.4 ui-monospace, monospace; }
+.process p { margin: .45rem 0 0; color: var(--text-muted-dark); font: 700 .75rem/1.45 ui-monospace, monospace; }
 
 .case { min-height: 720px; }
 .case__copy { position: relative; z-index: 5; padding-top: clamp(5rem, 12vh, 7.5rem); }
