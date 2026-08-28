@@ -106,24 +106,32 @@ describe('createSite', () => {
     expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
   });
 
-  it('renders six substantial and structurally distinct visual handoffs', () => {
+  it('renders the selected six-bridge kind/from/to contract with one source, target, and morph layer each', () => {
     const site = createSite(siteContent);
     const transitions = [...site.querySelectorAll<HTMLElement>('[data-transition]')];
 
     expect(transitions).toHaveLength(6);
-    expect(transitions.map((transition) => transition.dataset.transition)).toEqual([
-      'portrait', 'brand', 'route', 'mobile', 'chat', 'final',
+    expect(transitions.map((transition) => [
+      transition.dataset.transition,
+      transition.dataset.transitionFrom,
+      transition.dataset.transitionTo,
+    ])).toEqual([
+      ['ticker-to-about', 'hero', 'about'],
+      ['personal-to-poster', 'about', 'pivnoy-doner'],
+      ['clean-takeover', 'pivnoy-doner', 'driving-school'],
+      ['road-to-phone', 'driving-school', 'shaurma-mobile'],
+      ['phone-to-telegram', 'shaurma-mobile', 'telegram-shop'],
+      ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
-    expect(new Set(transitions.map((transition) => transition.className)).size).toBe(6);
     expect(site.querySelectorAll('[data-transition-stage]')).toHaveLength(6);
     expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(6);
     expect(site.querySelectorAll('[data-transition-copy]')).toHaveLength(6);
-    expect([...site.querySelectorAll<HTMLElement>('[data-transition-source]')].map((node) => node.dataset.transitionShape)).toEqual([
-      'type', 'line', 'frame', 'road', 'phone', 'chat',
-    ]);
-    expect([...site.querySelectorAll<HTMLElement>('[data-transition-target]')].map((node) => node.dataset.transitionShape)).toEqual([
-      'portrait', 'frame', 'road', 'phone', 'chat', 'wipe',
-    ]);
+    for (const transition of transitions) {
+      expect(transition.querySelectorAll('[data-transition-source]')).toHaveLength(1);
+      expect(transition.querySelectorAll('[data-transition-target]')).toHaveLength(1);
+      expect(transition.querySelectorAll('[data-transition-morph]')).toHaveLength(1);
+    }
+    expect(site.querySelectorAll('[data-transition-accent]')).toHaveLength(0);
     expect(transitions.map((transition) => transition.querySelector('[data-transition-copy]')?.textContent?.trim())).toEqual(
       siteContent.transitions.map(({ phrase }) => phrase),
     );

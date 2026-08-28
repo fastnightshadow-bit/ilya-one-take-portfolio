@@ -49,15 +49,22 @@ describe('siteContent', () => {
     expect(serialized).not.toMatch(/\d+%|отзыв|наград|лет опыта/i);
   });
 
-  it('defines six unique visual handoffs instead of repeated ticker variants', () => {
-    expect(siteContent.transitions.map(({ variant, phrase }) => ({ variant, phrase }))).toEqual([
-      { variant: 'portrait', phrase: 'ИДЕЯ → ЛИЧНОСТЬ' },
-      { variant: 'brand', phrase: 'ЛИНИЯ → РАМКА → БРЕНД' },
-      { variant: 'route', phrase: 'РАМКА → МАРШРУТ' },
-      { variant: 'mobile', phrase: 'ДОРОГА → ТЕЛЕФОН' },
-      { variant: 'chat', phrase: 'ЭКРАН → ДИАЛОГ' },
-      { variant: 'final', phrase: 'ПРОЕКТЫ → ТВОЙ САЙТ' },
+  it('defines the selected six-bridge kind/from/to story contract without legacy variants', () => {
+    const transitions = siteContent.transitions as ReadonlyArray<{
+      kind?: string;
+      from?: string;
+      to?: string;
+      variant?: string;
+    }>;
+
+    expect(transitions.map(({ kind, from, to }) => [kind, from, to])).toEqual([
+      ['ticker-to-about', 'hero', 'about'],
+      ['personal-to-poster', 'about', 'pivnoy-doner'],
+      ['clean-takeover', 'pivnoy-doner', 'driving-school'],
+      ['road-to-phone', 'driving-school', 'shaurma-mobile'],
+      ['phone-to-telegram', 'shaurma-mobile', 'telegram-shop'],
+      ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
-    expect(new Set(siteContent.transitions.map(({ variant }) => variant)).size).toBe(6);
+    expect(transitions.every(({ variant }) => variant === undefined)).toBe(true);
   });
 });

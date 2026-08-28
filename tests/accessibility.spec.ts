@@ -70,8 +70,9 @@ test('has no automatically detectable accessibility violations', async ({ page }
   expect(results.violations).toEqual([]);
 });
 
-test('final transition copy keeps readable contrast after the coral wipe completes', async ({ page }) => {
-  const finalTransition = page.locator('[data-transition="final"]');
+test('message-to-contact transition copy keeps readable contrast when the story completes', async ({ page }) => {
+  const finalTransition = page.locator('[data-transition="message-to-contact"]');
+  expect(await finalTransition.count()).toBe(1);
   await finalTransition.evaluate((element) => {
     const bounds = element.getBoundingClientRect();
     window.scrollTo(0, window.scrollY + bounds.bottom - window.innerHeight * .18);
@@ -221,7 +222,7 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
   }
 });
 
-test('portrait and six real project screenshots expose meaningful alternatives while transitions stay decorative', async ({ page }) => {
+test('portrait and six real project screenshots expose meaningful alternatives while selected transitions stay decorative', async ({ page }) => {
   await expect(page.locator('.about__portrait img')).toHaveAttribute('alt', 'Илья, веб-разработчик');
   const promise = page.locator('[data-about-promise]');
   await expect(promise).toBeVisible();
@@ -245,10 +246,23 @@ test('portrait and six real project screenshots expose meaningful alternatives w
 
   const transitions = page.locator('[data-transition]');
   await expect(transitions).toHaveCount(6);
+  expect(await transitions.evaluateAll((elements) => elements.map((element) => [
+    element.getAttribute('data-transition'),
+    element.getAttribute('data-transition-from'),
+    element.getAttribute('data-transition-to'),
+  ]))).toEqual([
+    ['ticker-to-about', 'hero', 'about'],
+    ['personal-to-poster', 'about', 'pivnoy-doner'],
+    ['clean-takeover', 'pivnoy-doner', 'driving-school'],
+    ['road-to-phone', 'driving-school', 'shaurma-mobile'],
+    ['phone-to-telegram', 'shaurma-mobile', 'telegram-shop'],
+    ['message-to-contact', 'telegram-shop', 'contact'],
+  ]);
   for (const transition of await transitions.all()) {
     await expect(transition).toHaveAttribute('aria-hidden', 'true');
     await expect(transition.locator('[data-transition-source]')).toHaveCount(1);
     await expect(transition.locator('[data-transition-target]')).toHaveCount(1);
+    await expect(transition.locator('[data-transition-morph]')).toHaveCount(1);
     await expect(transition.locator('a, button, input, select, textarea, [tabindex]')).toHaveCount(0);
   }
   await expect(page.locator('.doner-poster, .school-road, .bot-phone, .school-sign')).toHaveCount(0);
