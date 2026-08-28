@@ -73,6 +73,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
   ] as const;
 
   const scribble = page.locator('.about__scribble path').first();
+  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(1\)/);
   expect(Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeGreaterThan(1000);
   for (const [index, handoff] of handoffs.entries()) {
     const bridge = page.locator('[data-transition]').nth(handoff.bridge);
@@ -153,16 +154,49 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   expect(errors).toEqual([]);
 });
 
-test('static story remains complete when the application script fails', async ({ page }) => {
+test('styled static story remains complete when the application script fails', async ({ page }, testInfo) => {
+  const errors: string[] = [];
+  const abortedScripts: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.route('**/*', async (route) => {
-    if (route.request().resourceType() === 'script') await route.abort();
-    else await route.continue();
+    if (route.request().resourceType() !== 'script') {
+      await route.continue();
+      return;
+    }
+    abortedScripts.push(route.request().url());
+    await route.abort();
   });
   await page.goto('/');
+
+  const expectedWidth = testInfo.project.name === 'mobile' ? 390 : 1440;
+  expect(page.viewportSize()?.width).toBe(expectedWidth);
+  expect(await page.evaluate(() => window.innerWidth)).toBe(expectedWidth);
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveCount(1);
+  expect(await page.evaluate(() => document.styleSheets.length)).toBeGreaterThanOrEqual(1);
+  await expect(page.locator('[data-scene="hero"]')).toHaveCSS('background-color', 'rgb(12, 12, 16)');
+  await expect(page.locator('[data-scene="about"]')).toHaveCSS('background-color', 'rgb(241, 238, 230)');
 
   await expect(page.locator('[data-scene]')).toHaveCount(6);
   await expect(page.locator('[data-project]')).toHaveCount(3);
   for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
+  for (const carrier of await page.locator('[data-transition-carrier]').all()) {
+    const bounds = await carrier.boundingBox();
+    expect(bounds?.width).toBeGreaterThan(20);
+    expect(bounds?.height).toBeGreaterThan(3);
+  }
+  for (const copy of await page.locator('[data-project] .case__copy').all()) {
+    expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
+    expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
+  }
+  expect(Number.parseFloat(await page.locator('.about__scribble path').first().evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBe(0);
+  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(abortedScripts.length).toBeGreaterThanOrEqual(1);
+  const expectedAbortError = 'Failed to load resource: net::ERR_FAILED';
+  expect(errors.filter((message) => message === expectedAbortError)).toHaveLength(abortedScripts.length);
+  expect(errors.filter((message) => message !== expectedAbortError)).toEqual([]);
 });

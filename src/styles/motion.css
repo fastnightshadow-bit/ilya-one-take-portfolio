@@ -1,3 +1,4 @@
+[data-motion-ready] .about__portrait img { filter: grayscale(1) contrast(1.08); }
 [data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
