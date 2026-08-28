@@ -10,5 +10,5 @@ export const caseChapter = (project: ProjectContent, index: number) => `
   <section class="scene case case--${project.theme}" id="${project.id}" data-scene="${project.id}" data-project aria-labelledby="${project.id}-title">
     <div class="scene__meta"><span>${project.eyebrow}</span><span>0${index + 3} / Project</span></div>
     ${projectVisual(project.theme)}
-    <div class="case__copy"><h2 id="${project.id}-title"><span class="case__title">${project.title}</span><span class="case__headline">${project.headline} <span class="case__accent">${project.accent}</span></span></h2><p>${project.description}</p><span class="case__label">${project.chapterLabel}</span></div>
+    <div class="case__copy"><h2 id="${project.id}-title" class="case__title">${project.title}</h2><p class="case__headline">${project.headline} <span class="case__accent">${project.accent}</span></p><p>${project.description}</p><span class="case__label">${project.chapterLabel}</span></div>
   </section>`;
