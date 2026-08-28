@@ -70,6 +70,8 @@ const selectedTransitionContract = [
   ['message-to-contact', 'telegram-shop', 'contact'],
 ] as const;
 
+const rejectedCleanTakeoverCompositions = /^(?:d1?|split-shutter|diagonal-split|horizontal-strips|3d-flip|camera-fly-through)$/;
+
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
 async function expectImageLoaded(image: Locator, projectId: string, role: string) {
@@ -243,6 +245,32 @@ test('selected transition handoffs expose the literal kind/from/to contract and 
     expect(new Set(visualSignatures).size, `${viewport.width}px distinct transition compositions`).toBe(6);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
+});
+
+test('third bridge is the approved T1 clean poster takeover rather than a rejected composition', async ({ page }) => {
+  await page.goto('/');
+  const cleanTakeover = page.locator('[data-transition]').nth(2);
+  const t1Contract = await cleanTakeover.evaluate((element) => ({
+    composition: element.getAttribute('data-transition-composition'),
+    source: element.querySelector('[data-transition-source]')?.getAttribute('data-transition-source'),
+    target: element.querySelector('[data-transition-target]')?.getAttribute('data-transition-target'),
+    morph: element.querySelector('[data-transition-morph]')?.getAttribute('data-transition-morph'),
+  }));
+  const rejectedMarkers = await cleanTakeover.evaluate((element) => [element, ...element.querySelectorAll<HTMLElement>(
+    '[data-transition-composition], [data-transition-effect], [data-transition-mode]',
+  )].flatMap((node) => [
+    node.getAttribute('data-transition-composition'),
+    node.getAttribute('data-transition-effect'),
+    node.getAttribute('data-transition-mode'),
+  ].filter((value): value is string => value !== null && rejectedCleanTakeoverCompositions.test(value))));
+
+  expect(t1Contract).toEqual({
+    composition: 't1-clean-takeover',
+    source: 'doner-poster',
+    target: 'school-road',
+    morph: 'poster-takeover',
+  });
+  expect(rejectedMarkers).toEqual([]);
 });
 
 test('every selected transition moves its source, target, and morph artwork through scroll', async ({ page }) => {
@@ -535,9 +563,11 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator(`.bridge small, .about__scribble, ${oldMockups}`)).toHaveCount(0);
   for (const transition of await page.locator('[data-transition]').all()) {
     await expect(transition.locator('[data-transition-stage]')).toBeVisible();
+    await expect(transition.locator('[data-transition-carrier]')).toBeVisible();
+    await expect(transition.locator('[data-transition-copy]')).toBeVisible();
     await expect(transition.locator('[data-transition-source]')).toBeVisible();
     await expect(transition.locator('[data-transition-target]')).toBeVisible();
-    expect(await transition.locator('[data-transition-morph]').count()).toBe(1);
+    await expect(transition.locator('[data-transition-morph]')).toBeVisible();
   }
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
