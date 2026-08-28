@@ -14,11 +14,17 @@ describe('createSite', () => {
     expect(document.querySelector('h1')?.textContent).toContain('Сайты, которые');
   });
 
-  it('renders every primary contact as the approved Telegram URL', () => {
+  it('renders all three primary contacts as safe Telegram links', () => {
     const site = createSite(siteContent);
     const links = [...site.querySelectorAll<HTMLAnchorElement>('[data-primary-cta]')];
-    expect(links.length).toBeGreaterThanOrEqual(2);
+    const finalHandle = site.querySelector<HTMLAnchorElement>('.contact__handle');
+
+    expect(links).toHaveLength(3);
     expect(links.every((link) => link.href === 'https://t.me/girtopw')).toBe(true);
+    expect(links.every((link) => !link.hasAttribute('target'))).toBe(true);
+    expect(finalHandle?.tagName).toBe('A');
+    expect(finalHandle?.textContent?.trim()).toBe('@girtopw');
+    expect(finalHandle?.href).toBe('https://t.me/girtopw');
   });
 
   it('renders the approved title for every case chapter', () => {
@@ -49,12 +55,16 @@ describe('createSite', () => {
     expect(image?.getAttribute('fetchpriority')).toBeNull();
   });
 
-  it('keeps the rotating hero phrase stable for assistive technology', () => {
+  it('renders every hero idea as stable semantic fallback content', () => {
     const site = createSite(siteContent);
     const heading = site.querySelector<HTMLElement>('#hero-title');
+    const fallback = site.querySelector<HTMLElement>('[data-hero-fallback]');
     const rotatingWord = site.querySelector<HTMLElement>('[data-rotating-word]');
 
-    expect(heading?.getAttribute('aria-label')).toBe(`Сайты, которые ${siteContent.rotatingWords[0]}`);
+    expect(heading?.hasAttribute('aria-label')).toBe(false);
+    expect(fallback?.getAttribute('aria-hidden')).toBeNull();
+    expect(fallback?.textContent?.trim().replace(/\s+/g, ' ')).toBe(siteContent.rotatingWords.join(' '));
+    for (const word of siteContent.rotatingWords) expect(heading?.textContent).toContain(word);
     expect(rotatingWord?.getAttribute('aria-hidden')).toBe('true');
     expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
   });

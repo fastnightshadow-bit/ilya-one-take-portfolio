@@ -7,11 +7,13 @@
 Нужен Node.js версии 22.13 или новее. В папке проекта выполните:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 После запуска откройте адрес, который Vite покажет в терминале (обычно `http://localhost:5173`).
+
+`npm ci` воспроизводит точные версии из `package-lock.json`. `npm install` используйте только когда намеренно меняете зависимости и обновляете lock-файл.
 
 ## Просмотр по Wi-Fi
 
@@ -29,21 +31,27 @@ npm run preview
 Полный повторяемый release gate:
 
 ```bash
+npm ci
 npm run check
 ```
 
-Он последовательно запускает unit-тесты, создаёт свежую production-сборку, проверяет SEO в `dist`, выполняет браузерные E2E/accessibility-тесты и mobile Lighthouse CI.
+Он последовательно запускает Vitest и Node script-тесты, создаёт свежую production-сборку, проверяет SEO в `dist`, поднимает `vite preview` без переиспользования dev-сервера, выполняет на production-сборке тот же набор E2E/accessibility-тестов и затем mobile Lighthouse CI.
 
 Отдельные проверки:
 
 ```bash
 npm run test
+npm run test:unit
+npm run test:scripts
 npm run typecheck
 npm run build
 npm run verify:dist-seo
 npm run e2e
+npm run e2e:prod
 npm run audit
 ```
+
+`npm run e2e` поднимает Vite dev-сервер для быстрой разработки. `npm run e2e:prod` тестирует уже собранную папку `dist/`; перед отдельным запуском этой команды выполните `npm run build`.
 
 `npm run audit` — это Lighthouse CI с порогами Performance ≥ 85, Accessibility/Best Practices/SEO ≥ 95 и CLS ≤ 0.1. Для самостоятельного Lighthouse-запуска сначала выполните `npm run build`, чтобы аудитировать свежую папку `dist`.
 

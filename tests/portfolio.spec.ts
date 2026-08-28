@@ -57,7 +57,11 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
   await page.goto('/');
   await expect(page.locator('#app')).toHaveAttribute('data-motion-ready', '');
 
+  const fallback = page.locator('[data-hero-fallback]');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Сайты, которые цепляют. продают. помнят.');
+  await expect(fallback).toHaveCSS('position', 'absolute');
   const rotatingWord = page.locator('[data-rotating-word]');
+  await expect(rotatingWord).toBeVisible();
   const firstWord = await rotatingWord.textContent();
   const firstWidth = await rotatingWord.evaluate((element) => element.getBoundingClientRect().width);
   await expect.poll(() => rotatingWord.textContent()).not.toBe(firstWord);
@@ -141,6 +145,11 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   await expect(page.locator('[data-project]')).toHaveCount(3);
   await expect(page.locator('[data-scene="contact"]')).toBeVisible();
   await expect(page.locator('#app')).not.toHaveAttribute('data-motion-ready', '');
+  const fallback = page.locator('[data-hero-fallback]');
+  await expect(fallback).toBeVisible();
+  await expect(fallback).toContainText('цепляют.');
+  await expect(fallback).toContainText('продают.');
+  await expect(fallback).toContainText('помнят.');
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
@@ -148,6 +157,7 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   expect(Number.parseFloat(await page.locator('.about__scribble path').first().evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBe(0);
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
   const word = page.locator('[data-rotating-word]');
+  await expect(word).toBeHidden();
   const staticWord = await word.textContent();
   await page.waitForTimeout(2100);
   await expect(word).toHaveText(staticWord ?? '');
@@ -178,6 +188,12 @@ test('styled static story remains complete when the application script fails', a
   expect(await page.evaluate(() => document.styleSheets.length)).toBeGreaterThanOrEqual(1);
   await expect(page.locator('[data-scene="hero"]')).toHaveCSS('background-color', 'rgb(12, 12, 16)');
   await expect(page.locator('[data-scene="about"]')).toHaveCSS('background-color', 'rgb(241, 238, 230)');
+  const fallback = page.locator('[data-hero-fallback]');
+  await expect(fallback).toBeVisible();
+  await expect(fallback).toContainText('цепляют.');
+  await expect(fallback).toContainText('продают.');
+  await expect(fallback).toContainText('помнят.');
+  await expect(page.locator('[data-rotating-word]')).toBeHidden();
 
   await expect(page.locator('[data-scene]')).toHaveCount(6);
   await expect(page.locator('[data-project]')).toHaveCount(3);
@@ -210,15 +226,19 @@ test('all primary CTAs use the approved safe Telegram destination without browse
 
   await page.goto('/');
   const links = page.locator('[data-primary-cta]');
-  await expect(links).toHaveCount(2);
+  await expect(links).toHaveCount(3);
   for (const link of await links.all()) {
     await expect(link).toHaveAttribute('href', 'https://t.me/girtopw');
     await expect(link).not.toHaveAttribute('target', /.+/);
+    const bounds = await link.boundingBox();
+    expect(bounds?.width).toBeGreaterThanOrEqual(44);
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
   }
+  await expect(page.locator('.contact__handle')).toHaveAccessibleName('@girtopw');
   expect(errors).toEqual([]);
 });
 
-test('supported mobile, landscape, tablet, and desktop geometries do not overflow or hide the final CTA', async ({ page }) => {
+test('supported mobile, landscape, tablet, and desktop geometries do not overflow or hide either final CTA', async ({ page }) => {
   const viewports = [
     { width: 390, height: 844 },
     { width: 844, height: 390 },
@@ -238,11 +258,14 @@ test('supported mobile, landscape, tablet, and desktop geometries do not overflo
     expect(geometry.documentWidth, `${viewport.width}×${viewport.height} document width`).toBeLessThanOrEqual(geometry.viewportWidth);
     expect(geometry.bodyWidth, `${viewport.width}×${viewport.height} body width`).toBeLessThanOrEqual(geometry.viewportWidth);
 
-    const finalCta = page.locator('[data-scene="contact"] [data-primary-cta]');
-    await finalCta.scrollIntoViewIfNeeded();
-    await expect(finalCta, `${viewport.width}×${viewport.height} final CTA`).toBeVisible();
-    const ctaBox = await finalCta.boundingBox();
-    expect(ctaBox!.x).toBeGreaterThanOrEqual(0);
-    expect(ctaBox!.x + ctaBox!.width).toBeLessThanOrEqual(viewport.width);
+    const finalCtas = page.locator('[data-scene="contact"] [data-primary-cta]');
+    await expect(finalCtas).toHaveCount(2);
+    for (const finalCta of await finalCtas.all()) {
+      await finalCta.scrollIntoViewIfNeeded();
+      await expect(finalCta, `${viewport.width}×${viewport.height} final CTA`).toBeVisible();
+      const ctaBox = await finalCta.boundingBox();
+      expect(ctaBox!.x).toBeGreaterThanOrEqual(0);
+      expect(ctaBox!.x + ctaBox!.width).toBeLessThanOrEqual(viewport.width);
+    }
   }
 });

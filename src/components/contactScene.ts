@@ -6,5 +6,5 @@ export const contactScene = (content: SiteContent) => `
     <h2 id="contact-title">Давай сделаем <span>твой сайт.</span></h2>
     <p>Напиши пару слов о проекте. Я отвечу лично и предложу, с чего лучше начать.</p>
     <a class="button button--contact" data-primary-cta href="${content.telegramUrl}">Написать в Telegram →</a>
-    <strong class="contact__handle" aria-hidden="true">${content.telegramHandle}</strong>
+    <a class="contact__handle" data-primary-cta href="${content.telegramUrl}">${content.telegramHandle}</a>
   </section>`;

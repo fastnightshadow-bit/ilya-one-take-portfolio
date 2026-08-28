@@ -5,7 +5,7 @@ export const heroScene = (content: SiteContent) => `
     <div class="scene__meta"><span>Independent web developer</span><span>01 / Intro</span></div>
     <span class="hero__ghost" aria-hidden="true">01</span>
     <div class="hero__copy">
-      <h1 id="hero-title" aria-label="Сайты, которые ${content.rotatingWords[0]}">Сайты, <br>которые <span class="hero__word" data-rotating-word data-words="${content.rotatingWords.join('|')}" aria-hidden="true">${content.rotatingWords[0]}</span></h1>
+      <h1 id="hero-title">Сайты, <br>которые <span class="hero__fallback" data-hero-fallback>${content.rotatingWords.map((word) => `<span>${word}</span>`).join(' ')}</span><span class="hero__word" data-rotating-word data-words="${content.rotatingWords.join('|')}" aria-hidden="true">${content.rotatingWords[0]}</span></h1>
       <p>Я Илья. Придумываю, проектирую и разрабатываю сайты для бизнеса — от первой идеи до запуска.</p>
       <a class="button" href="#about">Смотреть дальше ↓</a>
     </div>

@@ -6,6 +6,7 @@ const expectedLinks = [
   { name: '@girtopw ↗', href: 'https://t.me/girtopw' },
   { name: 'Смотреть дальше ↓', href: '#about' },
   { name: 'Написать в Telegram →', href: 'https://t.me/girtopw' },
+  { name: '@girtopw', href: 'https://t.me/girtopw' },
 ] as const;
 
 const requiredViewports = {
@@ -70,19 +71,35 @@ test('keyboard traversal keeps every complete focus ring visible at required vie
         const bounds = element.getBoundingClientRect();
         const ringExpansion = Number.parseFloat(styles.outlineWidth) + Number.parseFloat(styles.outlineOffset);
         return bounds.bottom + ringExpansion;
-      })).toBeLessThanOrEqual(viewport.height);
+      }), { message: `${viewport.width}×${viewport.height} ${expectedLink.name} focus ring bottom` }).toBeLessThanOrEqual(viewport.height);
 
       const focusMetrics = await focused.evaluate((element) => {
+        const colorChannels = (color: string) => color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+        const luminance = (color: string) => {
+          const normalized = colorChannels(color).map((channel) => {
+            const value = channel / 255;
+            return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+          });
+          return .2126 * (normalized[0] ?? 0) + .7152 * (normalized[1] ?? 0) + .0722 * (normalized[2] ?? 0);
+        };
         const styles = getComputedStyle(element);
         const bounds = element.getBoundingClientRect();
         const stickyHeader = document.querySelector('.site-header')!.getBoundingClientRect();
         const outlineWidth = Number.parseFloat(styles.outlineWidth);
         const outlineOffset = Number.parseFloat(styles.outlineOffset);
         const ringExpansion = outlineWidth + outlineOffset;
+        const contact = element.closest<HTMLElement>('.contact');
+        const contactBackground = contact ? getComputedStyle(contact).backgroundColor : undefined;
+        const outlineLuminance = luminance(styles.outlineColor);
+        const backgroundLuminance = contactBackground ? luminance(contactBackground) : undefined;
         return {
           outlineStyle: styles.outlineStyle,
           outlineWidth,
           outlineOffset,
+          outlineColor: styles.outlineColor,
+          contactContrast: backgroundLuminance === undefined
+            ? undefined
+            : (Math.max(outlineLuminance, backgroundLuminance) + .05) / (Math.min(outlineLuminance, backgroundLuminance) + .05),
           withinHeader: element.closest('.site-header') !== null,
           ringTop: bounds.top - ringExpansion,
           ringRight: bounds.right + ringExpansion,
@@ -94,6 +111,9 @@ test('keyboard traversal keeps every complete focus ring visible at required vie
 
       expect(focusMetrics.outlineStyle).not.toBe('none');
       expect(focusMetrics.outlineWidth).toBeGreaterThanOrEqual(3);
+      if (expectedLink.name === 'Написать в Telegram →' || expectedLink.name === '@girtopw') {
+        expect(focusMetrics.contactContrast, `${expectedLink.name} outline ${focusMetrics.outlineColor} contrast`).toBeGreaterThanOrEqual(3);
+      }
       expect(focusMetrics.ringTop, `${viewport.width}×${viewport.height} ${expectedLink.name} ring top`).toBeGreaterThanOrEqual(0);
       expect(focusMetrics.ringRight, `${viewport.width}×${viewport.height} ${expectedLink.name} ring right`).toBeLessThanOrEqual(viewport.width);
       expect(focusMetrics.ringBottom, `${viewport.width}×${viewport.height} ${expectedLink.name} ring bottom`).toBeLessThanOrEqual(viewport.height);
