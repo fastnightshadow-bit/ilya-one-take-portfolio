@@ -47,7 +47,7 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
 });
 
-test('story motion progresses without shifting the rotating hero word', async ({ page }) => {
+test('theme-aware story handoffs progress without shifting the rotating hero word', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
@@ -64,45 +64,105 @@ test('story motion progresses without shifting the rotating hero word', async ({
   const secondWidth = await rotatingWord.evaluate((element) => element.getBoundingClientRect().width);
   expect(Math.abs(secondWidth - firstWidth)).toBeLessThanOrEqual(0.5);
 
+  const handoffs = [
+    { bridge: 0, target: '.about__portrait' },
+    { bridge: 1, target: '.doner-poster' },
+    { bridge: 2, target: '.school-road' },
+    { bridge: 3, target: '.bot-phone' },
+    { bridge: 4, target: '[data-scene="contact"] h2', source: '.case--telegram .bot-phone' },
+  ] as const;
+
   const scribble = page.locator('.about__scribble path').first();
   expect(Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeGreaterThan(1000);
-  await page.locator('.about').evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
-  });
-  await expect.poll(async () => Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeLessThan(10);
+  for (const [index, handoff] of handoffs.entries()) {
+    const bridge = page.locator('[data-transition]').nth(handoff.bridge);
+    const carrier = bridge.locator('[data-transition-carrier]');
+    const target = page.locator(handoff.target);
+    const carrierBox = await carrier.boundingBox();
+    expect(carrierBox?.width, `handoff ${index + 1} carrier width`).toBeGreaterThan(20);
+    expect(carrierBox?.height, `handoff ${index + 1} carrier height`).toBeGreaterThan(3);
 
-  const caseCopy = page.locator('[data-project] .case__copy').first();
-  await page.locator('[data-project]').first().evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight * 0.2);
-  });
-  await expect.poll(async () => Number.parseFloat(await caseCopy.evaluate((element) => getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
-  await expect.poll(async () => await caseCopy.evaluate((element) => getComputedStyle(element).transform)).toMatch(/matrix\([^)]*, 0\)$/);
+    const carrierBefore = await carrier.evaluate((element) => getComputedStyle(element).transform);
+    const targetBefore = await target.evaluate((element) => getComputedStyle(element).transform);
+    const sourceSelector = 'source' in handoff ? handoff.source : undefined;
+    const source = sourceSelector ? page.locator(sourceSelector) : undefined;
+    const sourceBefore = source ? await source.evaluate((element) => getComputedStyle(element).transform) : undefined;
 
-  const bridgePhrase = page.locator('[data-transition] strong').nth(2);
-  const bridgeStart = await bridgePhrase.evaluate((element) => getComputedStyle(element).transform);
-  await page.locator('[data-transition]').nth(2).evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    window.scrollTo(0, window.scrollY + bounds.bottom - window.innerHeight * 0.1);
-  });
-  await expect.poll(async () => await bridgePhrase.evaluate((element) => getComputedStyle(element).transform)).not.toBe(bridgeStart);
+    await bridge.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.55);
+    });
+
+    await expect.poll(() => carrier.evaluate((element) => getComputedStyle(element).transform)).not.toBe(carrierBefore);
+    await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).not.toBe(targetBefore);
+    if (source && sourceBefore !== undefined) {
+      await expect.poll(() => source.evaluate((element) => getComputedStyle(element).transform)).not.toBe(sourceBefore);
+    }
+
+    if (index === 0) {
+      await page.locator('.about').evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
+      });
+      await expect.poll(async () => Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeLessThan(10);
+      await expect.poll(() => page.locator('.about__portrait img').evaluate((element) => getComputedStyle(element).filter)).toContain('grayscale(0)');
+    }
+
+    if (index === 1) {
+      const project = page.locator('[data-project]').first();
+      const caseCopy = project.locator('.case__copy');
+      await project.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight * 0.2);
+      });
+      await expect.poll(() => caseCopy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
+      await expect.poll(() => caseCopy.evaluate((element) => getComputedStyle(element).transform)).toMatch(/matrix\([^)]*, 0\)$/);
+    }
+  }
+
+  const promotedLayers = await page.locator('[data-transition] strong, [data-transition-carrier], [data-project] .case__copy, .about__scribble path').evaluateAll(
+    (elements) => elements.filter((element) => getComputedStyle(element).willChange !== 'auto').length,
+  );
+  expect(promotedLayers).toBe(0);
 
   expect(errors).toEqual([]);
 });
 
-test('reduced motion keeps all content visible and static', async ({ browser }) => {
-  const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
+test('reduced motion keeps final compositions visible and static', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
 
   await expect(page.locator('[data-project]')).toHaveCount(3);
   await expect(page.locator('[data-scene="contact"]')).toBeVisible();
   await expect(page.locator('#app')).not.toHaveAttribute('data-motion-ready', '');
+  for (const copy of await page.locator('[data-project] .case__copy').all()) {
+    expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
+    expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
+  }
+  expect(Number.parseFloat(await page.locator('.about__scribble path').first().evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBe(0);
+  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
   const word = page.locator('[data-rotating-word]');
   const staticWord = await word.textContent();
   await page.waitForTimeout(2100);
   await expect(word).toHaveText(staticWord ?? '');
+  expect(errors).toEqual([]);
+});
 
-  await context.close();
+test('static story remains complete when the application script fails', async ({ page }) => {
+  await page.route('**/*', async (route) => {
+    if (route.request().resourceType() === 'script') await route.abort();
+    else await route.continue();
+  });
+  await page.goto('/');
+
+  await expect(page.locator('[data-scene]')).toHaveCount(6);
+  await expect(page.locator('[data-project]')).toHaveCount(3);
+  for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
+  await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

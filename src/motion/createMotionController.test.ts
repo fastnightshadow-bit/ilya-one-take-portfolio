@@ -5,9 +5,19 @@ const markup = `
   <section data-scene="hero">
     <span data-rotating-word data-words="цепляют.|продают.|помнят.">цепляют.</span>
   </section>
-  <div data-transition="route"><strong>Путь</strong></div>
-  <section class="about"><svg class="about__scribble"><path style="stroke-dashoffset: 1100px"></path></svg></section>
-  <section data-project><div class="case__copy" style="opacity: 0.25; transform: translateY(70px)">Кейс</div></section>
+  <div data-transition="ink"><strong>Контур</strong><i data-transition-carrier></i></div>
+  <section class="about" data-scene="about">
+    <picture class="about__portrait"><img alt=""></picture>
+    <svg class="about__scribble"><path></path></svg>
+  </section>
+  <div data-transition="ink"><strong>Плакат</strong><i data-transition-carrier></i></div>
+  <section class="case--doner" data-scene="pivnoy-doner" data-project><div class="case__copy">Кейс</div><div class="doner-poster"></div></section>
+  <div data-transition="route"><strong>Путь</strong><i data-transition-carrier></i></div>
+  <section class="case--school" data-scene="driving-school" data-project><div class="case__copy">Кейс</div><div class="school-road"></div><div class="school-sign"></div></section>
+  <div data-transition="chat"><strong>Диалог</strong><i data-transition-carrier></i></div>
+  <section class="case--telegram" data-scene="telegram-shop" data-project><div class="case__copy">Кейс</div><div class="bot-phone"><i></i></div></section>
+  <div data-transition="final"><strong>Контакт</strong><i data-transition-carrier></i></div>
+  <section data-scene="contact"><h2>Давай сделаем сайт</h2><a class="button--contact">Написать</a></section>
 `;
 
 const createRoot = () => {
@@ -27,6 +37,13 @@ describe('createMotionController', () => {
 
   it('creates no motion resources or readiness state for reduced-motion users', () => {
     const root = createRoot();
+    const copy = root.querySelector<HTMLElement>('.case__copy');
+    const portrait = root.querySelector<HTMLElement>('.about__portrait img');
+    const path = root.querySelector<SVGPathElement>('.about__scribble path');
+    copy?.style.setProperty('opacity', '0.72', 'important');
+    copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
+    portrait?.style.setProperty('filter', 'sepia(0.2)', 'important');
+    path?.style.setProperty('stroke-dashoffset', '37px', 'important');
     const context = vi.fn();
     const timeline = vi.fn(createTimeline);
     const controller = createMotionController({
@@ -41,6 +58,11 @@ describe('createMotionController', () => {
     expect(timeline).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
     expect(root.hasAttribute('data-motion-ready')).toBe(false);
+    expect(copy?.style.getPropertyValue('opacity')).toBe('0.72');
+    expect(copy?.style.getPropertyPriority('opacity')).toBe('important');
+    expect(copy?.style.getPropertyValue('transform')).toBe('rotate(2deg)');
+    expect(portrait?.style.getPropertyValue('filter')).toBe('sepia(0.2)');
+    expect(path?.style.getPropertyValue('stroke-dashoffset')).toBe('37px');
   });
 
   it('reverts its GSAP context, clears its timer, and removes readiness on destroy', () => {
@@ -70,6 +92,10 @@ describe('createMotionController', () => {
   it('tears down the previous lifecycle before a repeated mount', () => {
     const firstRoot = createRoot();
     const secondRoot = createRoot();
+    const firstPhrase = firstRoot.querySelector<HTMLElement>('[data-transition] strong');
+    const secondPhrase = secondRoot.querySelector<HTMLElement>('[data-transition] strong');
+    firstPhrase?.style.setProperty('transform', 'rotate(1deg)', 'important');
+    secondPhrase?.style.setProperty('opacity', '0.84', 'important');
     const reverts = [vi.fn(), vi.fn()];
     let contextIndex = 0;
     const controller = createMotionController({
@@ -85,24 +111,85 @@ describe('createMotionController', () => {
     });
 
     controller.mount(firstRoot);
+    firstPhrase?.style.setProperty('transform', 'translateX(90px)');
     controller.mount(secondRoot);
 
     expect(reverts[0]).toHaveBeenCalledOnce();
     expect(firstRoot.hasAttribute('data-motion-ready')).toBe(false);
     expect(secondRoot.hasAttribute('data-motion-ready')).toBe(true);
     expect(vi.getTimerCount()).toBe(1);
+    expect(firstPhrase?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
+    expect(firstPhrase?.style.getPropertyPriority('transform')).toBe('important');
+
+    secondPhrase?.style.setProperty('opacity', '0.2');
+    controller.destroy();
+    expect(secondPhrase?.style.getPropertyValue('opacity')).toBe('0.84');
+    expect(secondPhrase?.style.getPropertyPriority('opacity')).toBe('important');
   });
 
-  it('fails open when GSAP setup throws', () => {
+  it('restores exact authored styles and readiness state on destroy', () => {
     const root = createRoot();
+    const copy = root.querySelector<HTMLElement>('.case__copy');
+    const portrait = root.querySelector<HTMLElement>('.about__portrait img');
+    const path = root.querySelector<SVGPathElement>('.about__scribble path');
+    root.setAttribute('data-motion-ready', 'authored');
+    copy?.style.setProperty('opacity', '0.72', 'important');
+    copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
+    portrait?.style.setProperty('filter', 'sepia(0.2)', 'important');
+    path?.style.setProperty('stroke-dasharray', '11px', 'important');
+    path?.style.setProperty('stroke-dashoffset', '37px', 'important');
+    const controller = createMotionController({
+      prefersReducedMotion: () => false,
+      timeline: vi.fn(createTimeline),
+      context: (setup) => {
+        setup();
+        return { revert: vi.fn(), add: vi.fn() };
+      },
+    });
+
+    controller.mount(root);
+    copy?.style.setProperty('opacity', '0.2');
+    copy?.style.setProperty('transform', 'translateY(70px)');
+    portrait?.style.setProperty('filter', 'grayscale(1)');
+    path?.style.setProperty('stroke-dasharray', '1100px');
+    path?.style.setProperty('stroke-dashoffset', '1100px');
+    controller.destroy();
+
+    expect(root.getAttribute('data-motion-ready')).toBe('authored');
+    expect(copy?.style.getPropertyValue('opacity')).toBe('0.72');
+    expect(copy?.style.getPropertyPriority('opacity')).toBe('important');
+    expect(copy?.style.getPropertyValue('transform')).toBe('rotate(2deg)');
+    expect(copy?.style.getPropertyPriority('transform')).toBe('important');
+    expect(portrait?.style.getPropertyValue('filter')).toBe('sepia(0.2)');
+    expect(portrait?.style.getPropertyPriority('filter')).toBe('important');
+    expect(path?.style.getPropertyValue('stroke-dasharray')).toBe('11px');
+    expect(path?.style.getPropertyValue('stroke-dashoffset')).toBe('37px');
+  });
+
+  it('reverts partial setup and restores authored styles when a later timeline throws', () => {
+    const root = createRoot();
+    const phrase = root.querySelector<HTMLElement>('[data-transition] strong');
+    phrase?.style.setProperty('transform', 'rotate(1deg)', 'important');
+    const revert = vi.fn();
+    let timelineCount = 0;
     const controller = createMotionController({
       prefersReducedMotion: () => false,
       timeline: () => {
+        timelineCount += 1;
+        if (timelineCount === 1) {
+          return {
+            to: vi.fn().mockReturnThis(),
+            fromTo: vi.fn((target: unknown) => {
+              if (target instanceof HTMLElement) target.style.transform = 'translateX(90px)';
+              return createTimeline();
+            }),
+          };
+        }
         throw new Error('GSAP unavailable');
       },
       context: (setup) => {
         setup();
-        return { revert: vi.fn(), add: vi.fn() };
+        return { revert, add: vi.fn() };
       },
     });
 
@@ -110,7 +197,8 @@ describe('createMotionController', () => {
 
     expect(root.hasAttribute('data-motion-ready')).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
-    expect(root.querySelector<HTMLElement>('.case__copy')?.style.opacity).toBe('');
-    expect(root.querySelector<SVGPathElement>('.about__scribble path')?.style.strokeDashoffset).toBe('');
+    expect(revert).toHaveBeenCalledOnce();
+    expect(phrase?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
+    expect(phrase?.style.getPropertyPriority('transform')).toBe('important');
   });
 });

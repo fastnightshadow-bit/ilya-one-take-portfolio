@@ -1,8 +1,8 @@
-[data-motion-ready] [data-transition] strong { will-change: transform; }
-[data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; will-change: stroke-dashoffset; }
-[data-motion-ready] [data-project] .case__copy { will-change: transform, opacity; }
+[data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-  .about__scribble path { stroke-dashoffset: 0 !important; }
+  .about__portrait img { filter: grayscale(0) contrast(1.02) !important; }
+  .about__scribble path { stroke-dasharray: none !important; stroke-dashoffset: 0 !important; }
+  [data-project] .case__copy { opacity: 1 !important; transform: none !important; }
 }

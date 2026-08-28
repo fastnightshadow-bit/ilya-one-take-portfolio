@@ -58,4 +58,11 @@ describe('createSite', () => {
     expect(rotatingWord?.getAttribute('aria-hidden')).toBe('true');
     expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
   });
+
+  it('renders a dedicated decorative carrier for every story handoff', () => {
+    const site = createSite(siteContent);
+
+    expect(site.querySelectorAll('[data-transition]')).toHaveLength(5);
+    expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(5);
+  });
 });
