@@ -9,7 +9,7 @@ export const aboutScene = () => `
     <picture class="about__portrait">
       <source type="image/avif" srcset="/assets/portrait/portrait-720.avif 720w, /assets/portrait/portrait-1200.avif 1200w">
       <source type="image/webp" srcset="/assets/portrait/portrait-720.webp 720w, /assets/portrait/portrait-1200.webp 1200w">
-      <img src="/assets/portrait/portrait-1200.png" width="1200" height="1500" alt="Илья, веб-разработчик" fetchpriority="high">
+      <img src="/assets/portrait/portrait-1200.png" width="1200" height="1500" sizes="(max-width: 700px) 98vw, 47vw" alt="Илья, веб-разработчик" loading="lazy" decoding="async">
     </picture>
     <svg class="about__scribble" viewBox="0 0 550 740" aria-hidden="true"><path class="scribble--coral" d="M500 80 C400 25 290 52 220 126 C150 202 125 330 150 450 C172 560 250 640 400 695"/><path class="scribble--blue" d="M92 170 C180 98 285 88 374 135 C464 184 491 290 455 405 C425 515 335 598 215 630"/></svg>
     <div class="about__facts">

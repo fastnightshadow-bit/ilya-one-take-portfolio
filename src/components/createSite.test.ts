@@ -32,4 +32,15 @@ describe('createSite', () => {
       siteContent.projects.map((project) => `${project.headline} ${project.accent}`),
     );
   });
+
+  it('delivers the below-fold portrait responsively without high-priority loading', () => {
+    const site = createSite(siteContent);
+    const portrait = site.querySelector<HTMLPictureElement>('.about__portrait');
+    const image = portrait?.querySelector('img');
+
+    expect(image?.getAttribute('sizes')).toBe('(max-width: 700px) 98vw, 47vw');
+    expect(image?.getAttribute('loading')).toBe('lazy');
+    expect(image?.getAttribute('decoding')).toBe('async');
+    expect(image?.getAttribute('fetchpriority')).toBeNull();
+  });
 });
