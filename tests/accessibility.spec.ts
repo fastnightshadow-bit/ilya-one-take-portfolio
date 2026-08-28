@@ -70,6 +70,39 @@ test('has no automatically detectable accessibility violations', async ({ page }
   expect(results.violations).toEqual([]);
 });
 
+test('final transition copy keeps readable contrast after the coral wipe completes', async ({ page }) => {
+  const finalTransition = page.locator('[data-transition="final"]');
+  await finalTransition.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    window.scrollTo(0, window.scrollY + bounds.bottom - window.innerHeight * .18);
+  });
+  await page.waitForTimeout(250);
+
+  const contrast = await finalTransition.locator('[data-transition-copy]').evaluate((copy) => {
+    const channels = (color: string) => color.match(/[\d.]+/g)?.map(Number) ?? [];
+    const luminance = (values: number[]) => {
+      const normalized = values.slice(0, 3).map((channel) => {
+        const value = channel / 255;
+        return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * (normalized[0] ?? 0) + .7152 * (normalized[1] ?? 0) + .0722 * (normalized[2] ?? 0);
+    };
+    const styles = getComputedStyle(copy);
+    const foreground = channels(styles.color);
+    const background = channels(styles.backgroundColor);
+    const foregroundLuminance = luminance(foreground);
+    const backgroundLuminance = luminance(background);
+    return {
+      backgroundAlpha: background[3] ?? 1,
+      ratio: (Math.max(foregroundLuminance, backgroundLuminance) + .05)
+        / (Math.min(foregroundLuminance, backgroundLuminance) + .05),
+    };
+  });
+
+  expect(contrast.backgroundAlpha).toBe(1);
+  expect(contrast.ratio).toBeGreaterThanOrEqual(3);
+});
+
 test('portrait promise accent keeps readable contrast against the About background', async ({ page }) => {
   const contrast = await page.locator('[data-about-promise] .about__promise-line:last-child > span').evaluate((accent) => {
     const channels = (color: string) => color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
@@ -212,6 +245,11 @@ test('portrait and six real project screenshots expose meaningful alternatives w
 
   const transitions = page.locator('[data-transition]');
   await expect(transitions).toHaveCount(6);
-  for (const transition of await transitions.all()) await expect(transition).toHaveAttribute('aria-hidden', 'true');
+  for (const transition of await transitions.all()) {
+    await expect(transition).toHaveAttribute('aria-hidden', 'true');
+    await expect(transition.locator('[data-transition-source]')).toHaveCount(1);
+    await expect(transition.locator('[data-transition-target]')).toHaveCount(1);
+    await expect(transition.locator('a, button, input, select, textarea, [tabindex]')).toHaveCount(0);
+  }
   await expect(page.locator('.doner-poster, .school-road, .bot-phone, .school-sign')).toHaveCount(0);
 });

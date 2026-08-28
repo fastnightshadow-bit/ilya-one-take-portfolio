@@ -56,6 +56,20 @@ const schoolHierarchyViewports = [
   { width: 1600, height: 1000 },
 ] as const;
 
+const transitionViewports = [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+] as const;
+
+const transitionShapes = [
+  { variant: 'portrait', source: 'type', target: 'portrait' },
+  { variant: 'brand', source: 'line', target: 'frame' },
+  { variant: 'route', source: 'frame', target: 'road' },
+  { variant: 'mobile', source: 'road', target: 'phone' },
+  { variant: 'chat', source: 'phone', target: 'chat' },
+  { variant: 'final', source: 'chat', target: 'wipe' },
+] as const;
+
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
 async function expectImageLoaded(image: Locator, projectId: string, role: string) {
@@ -173,6 +187,85 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   expect(await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
+});
+
+test('transition handoffs are substantial, distinct visual scenes rather than ticker strips', async ({ page }) => {
+  for (const viewport of transitionViewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const transitions = page.locator('[data-transition]');
+    await expect(transitions).toHaveCount(6);
+    expect(await transitions.evaluateAll((elements) => elements.map((element) => ({
+      variant: element.getAttribute('data-transition'),
+      source: element.querySelector('[data-transition-source]')?.getAttribute('data-transition-shape'),
+      target: element.querySelector('[data-transition-target]')?.getAttribute('data-transition-shape'),
+    })))).toEqual(transitionShapes);
+
+    const visualSignatures: string[] = [];
+    for (const [index, transition] of (await transitions.all()).entries()) {
+      await transition.scrollIntoViewIfNeeded();
+      await expect(transition.locator('[data-transition-stage]')).toBeVisible();
+      await expect(transition.locator('[data-transition-carrier]')).toBeVisible();
+      await expect(transition.locator('[data-transition-copy]')).toBeVisible();
+      const metrics = await transition.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const stage = element.querySelector<HTMLElement>('[data-transition-stage]')!;
+        const source = element.querySelector<HTMLElement>('[data-transition-source]')!;
+        const target = element.querySelector<HTMLElement>('[data-transition-target]')!;
+        const stageBounds = stage.getBoundingClientRect();
+        const sourceBounds = source.getBoundingClientRect();
+        const targetBounds = target.getBoundingClientRect();
+        const signature = (node: HTMLElement) => {
+          const styles = getComputedStyle(node);
+          return [styles.backgroundColor, styles.borderRadius, styles.borderTopWidth, styles.borderLeftWidth, styles.color].join('|');
+        };
+        return {
+          height: bounds.height,
+          stageWidth: stageBounds.width,
+          sourceSize: sourceBounds.width * sourceBounds.height,
+          targetSize: targetBounds.width * targetBounds.height,
+          signature: [getComputedStyle(element).backgroundColor, signature(source), signature(target)].join('::'),
+        };
+      });
+
+      expect(metrics.height, `${viewport.width}px transition ${index + 1} height`).toBeGreaterThanOrEqual(viewport.height * .38);
+      expect(metrics.stageWidth, `${viewport.width}px transition ${index + 1} stage width`).toBeGreaterThanOrEqual(viewport.width * .9);
+      expect(metrics.sourceSize, `${viewport.width}px transition ${index + 1} source artwork`).toBeGreaterThan(900);
+      expect(metrics.targetSize, `${viewport.width}px transition ${index + 1} target artwork`).toBeGreaterThan(900);
+      visualSignatures.push(metrics.signature);
+    }
+
+    expect(new Set(visualSignatures).size, `${viewport.width}px distinct transition compositions`).toBe(6);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+});
+
+test('every transition moves both its source and target artwork through scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('#app')).toHaveAttribute('data-motion-ready', '');
+
+  for (const transition of await page.locator('[data-transition]').all()) {
+    const source = transition.locator('[data-transition-source]');
+    const target = transition.locator('[data-transition-target]');
+    await transition.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight * .92);
+    });
+    const before = {
+      source: await source.evaluate((element) => getComputedStyle(element).transform),
+      target: await target.evaluate((element) => getComputedStyle(element).transform),
+    };
+
+    await transition.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      window.scrollTo(0, window.scrollY + bounds.top + bounds.height * .72 - window.innerHeight * .5);
+    });
+
+    await expect.poll(() => source.evaluate((element) => getComputedStyle(element).transform)).not.toBe(before.source);
+    await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).not.toBe(before.target);
+  }
 });
 
 test('real project proofs load, stay visible, and expose approved actions at 390 and 1440', async ({ page }) => {
@@ -370,6 +463,22 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   await page.waitForTimeout(2100);
   await expect(word).toHaveText(staticWord ?? '');
   await expect(page.locator('[data-github-link]')).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
+  for (const transition of await page.locator('[data-transition]').all()) {
+    const source = transition.locator('[data-transition-source]');
+    const target = transition.locator('[data-transition-target]');
+    await expect(source).toBeVisible();
+    await expect(target).toBeVisible();
+    const before = [
+      await source.evaluate((element) => getComputedStyle(element).transform),
+      await target.evaluate((element) => getComputedStyle(element).transform),
+    ];
+    await transition.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(40);
+    expect([
+      await source.evaluate((element) => getComputedStyle(element).transform),
+      await target.evaluate((element) => getComputedStyle(element).transform),
+    ]).toEqual(before);
+  }
   expect(errors).toEqual([]);
 });
 
@@ -410,7 +519,13 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator('[data-project-media]')).toHaveCount(4);
   await expect(page.locator('[data-project-media] img')).toHaveCount(6);
   for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
-  await expect(page.locator(`[data-transition-carrier], .bridge small, .about__scribble, ${oldMockups}`)).toHaveCount(0);
+  await expect(page.locator('[data-transition-stage], [data-transition-carrier], [data-transition-copy], [data-transition-source], [data-transition-target]')).toHaveCount(30);
+  await expect(page.locator(`.bridge small, .about__scribble, ${oldMockups}`)).toHaveCount(0);
+  for (const transition of await page.locator('[data-transition]').all()) {
+    await expect(transition.locator('[data-transition-stage]')).toBeVisible();
+    await expect(transition.locator('[data-transition-source]')).toBeVisible();
+    await expect(transition.locator('[data-transition-target]')).toBeVisible();
+  }
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');

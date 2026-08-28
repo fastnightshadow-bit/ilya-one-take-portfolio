@@ -48,4 +48,16 @@ describe('siteContent', () => {
     const serialized = JSON.stringify(siteContent);
     expect(serialized).not.toMatch(/\d+%|отзыв|наград|лет опыта/i);
   });
+
+  it('defines six unique visual handoffs instead of repeated ticker variants', () => {
+    expect(siteContent.transitions.map(({ variant, phrase }) => ({ variant, phrase }))).toEqual([
+      { variant: 'portrait', phrase: 'ИДЕЯ → ЛИЧНОСТЬ' },
+      { variant: 'brand', phrase: 'ЛИНИЯ → РАМКА → БРЕНД' },
+      { variant: 'route', phrase: 'РАМКА → МАРШРУТ' },
+      { variant: 'mobile', phrase: 'ДОРОГА → ТЕЛЕФОН' },
+      { variant: 'chat', phrase: 'ЭКРАН → ДИАЛОГ' },
+      { variant: 'final', phrase: 'ПРОЕКТЫ → ТВОЙ САЙТ' },
+    ]);
+    expect(new Set(siteContent.transitions.map(({ variant }) => variant)).size).toBe(6);
+  });
 });

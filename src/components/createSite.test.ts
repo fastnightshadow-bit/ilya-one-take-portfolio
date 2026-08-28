@@ -106,12 +106,28 @@ describe('createSite', () => {
     expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
   });
 
-  it('renders clean typographic story handoffs without detached ornaments or captions', () => {
+  it('renders six substantial and structurally distinct visual handoffs', () => {
     const site = createSite(siteContent);
+    const transitions = [...site.querySelectorAll<HTMLElement>('[data-transition]')];
 
-    expect(site.querySelectorAll('[data-transition]')).toHaveLength(siteContent.transitions.length);
-    expect(site.querySelectorAll('[data-transition] strong')).toHaveLength(siteContent.transitions.length);
-    expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(0);
+    expect(transitions).toHaveLength(6);
+    expect(transitions.map((transition) => transition.dataset.transition)).toEqual([
+      'portrait', 'brand', 'route', 'mobile', 'chat', 'final',
+    ]);
+    expect(new Set(transitions.map((transition) => transition.className)).size).toBe(6);
+    expect(site.querySelectorAll('[data-transition-stage]')).toHaveLength(6);
+    expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(6);
+    expect(site.querySelectorAll('[data-transition-copy]')).toHaveLength(6);
+    expect([...site.querySelectorAll<HTMLElement>('[data-transition-source]')].map((node) => node.dataset.transitionShape)).toEqual([
+      'type', 'line', 'frame', 'road', 'phone', 'chat',
+    ]);
+    expect([...site.querySelectorAll<HTMLElement>('[data-transition-target]')].map((node) => node.dataset.transitionShape)).toEqual([
+      'portrait', 'frame', 'road', 'phone', 'chat', 'wipe',
+    ]);
+    expect(transitions.map((transition) => transition.querySelector('[data-transition-copy]')?.textContent?.trim())).toEqual(
+      siteContent.transitions.map(({ phrase }) => phrase),
+    );
+    expect(site.querySelectorAll('[data-transition] a, [data-transition] button, [data-transition] [tabindex]')).toHaveLength(0);
     expect(site.querySelectorAll('[data-transition] small')).toHaveLength(0);
   });
 

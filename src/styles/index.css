@@ -2,4 +2,5 @@
 @import './base.css';
 @import './layout.css';
 @import './scenes.css';
+@import './transitions.css';
 @import './motion.css';

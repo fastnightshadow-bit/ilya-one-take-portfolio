@@ -80,11 +80,6 @@
 .github-strip p { margin: .75rem 0 0; color: var(--text-muted-dark); line-height: 1.5; }
 .github-strip__link { justify-self: end; margin: 0; scroll-margin-block: 8px; white-space: nowrap; }
 
-.bridge--route { border-color: rgb(255 255 255 / .25); background: var(--blue); color: #f7f3e9; }
-.bridge--mobile { border-color: rgb(12 12 16 / .2); background: #ffb438; color: var(--ink); }
-.bridge--chat { border-color: rgb(12 12 16 / .18); background: var(--mint); color: var(--ink); }
-.bridge--final strong { color: var(--coral); }
-
 @media (hover: hover) {
   .case__action:hover span, .github-strip__link:hover span { transform: translate(4px, -4px); }
 }

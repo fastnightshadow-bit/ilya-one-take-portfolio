@@ -1,24 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMotionController, type MotionDependencies } from './createMotionController.ts';
 
+const transition = (variant: string, label: string, sourceShape: string, targetShape: string) => `
+  <div data-transition="${variant}">
+    <div data-transition-stage>
+      <strong data-transition-copy>${label}</strong>
+      <div data-transition-carrier>
+        <i data-transition-source data-transition-shape="${sourceShape}"></i>
+        <i data-transition-target data-transition-shape="${targetShape}"></i>
+        <i data-transition-accent></i>
+      </div>
+    </div>
+  </div>`;
+
 const markup = `
   <section data-scene="hero">
     <span data-rotating-word data-words="цепляют.|продают.|помнят.">цепляют.</span>
   </section>
-  <div data-transition="ink"><strong>Контур</strong></div>
+  ${transition('portrait', 'Контур', 'type', 'portrait')}
   <section class="about" data-scene="about">
     <picture class="about__portrait"><img alt=""></picture>
     <p data-about-promise><span class="about__promise-line"><span>Один человек.</span></span><span class="about__promise-line"><span>Весь сайт.</span></span></p>
   </section>
-  <div data-transition="ink"><strong>Плакат</strong></div>
+  ${transition('brand', 'Плакат', 'line', 'frame')}
   <section class="case--doner" data-scene="pivnoy-doner" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  <div data-transition="route"><strong>Путь</strong></div>
+  ${transition('route', 'Путь', 'frame', 'road')}
   <section class="case--school" data-scene="driving-school" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  <div data-transition="mobile"><strong>Телефон</strong></div>
+  ${transition('mobile', 'Телефон', 'road', 'phone')}
   <section class="case--mobile" data-scene="shaurma-mobile" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  <div data-transition="chat"><strong>Диалог</strong></div>
+  ${transition('chat', 'Диалог', 'phone', 'chat')}
   <section class="case--telegram" data-scene="telegram-shop" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  <div data-transition="final"><strong>Контакт</strong></div>
+  ${transition('final', 'Контакт', 'chat', 'wipe')}
   <section data-scene="contact"><h2>Давай сделаем сайт</h2><a class="button--contact">Написать</a></section>
 `;
 
@@ -121,10 +133,44 @@ describe('createMotionController', () => {
     const projectScenes = ['pivnoy-doner', 'driving-school', 'shaurma-mobile', 'telegram-shop'];
     projectScenes.forEach((scene, index) => {
       const media = root.querySelector(`[data-scene="${scene}"] [data-project-media]`);
-      expect(timelines[index + 1]?.fromTo.mock.calls[1]?.[0], `${scene} handoff target`).toBe(media);
+      const calls = timelines[index + 1]?.fromTo.mock.calls ?? [];
+      expect(calls.some(([animated]) => animated === media), `${scene} handoff target`).toBe(true);
     });
     const telegramMedia = root.querySelector('[data-scene="telegram-shop"] [data-project-media]');
-    expect(timelines[5]?.fromTo.mock.calls[1]?.[0], 'contact handoff source').toBe(telegramMedia);
+    expect(timelines[5]?.fromTo.mock.calls.some(([animated]) => animated === telegramMedia), 'contact handoff source').toBe(true);
+
+    controller.destroy();
+  });
+
+  it('animates both sides of every visual transition instead of only moving its copy', () => {
+    const root = createRoot();
+    const timelines: ReturnType<typeof createTimeline>[] = [];
+    const controller = createMotionController({
+      prefersReducedMotion: () => false,
+      timeline: vi.fn(() => {
+        const instance = createTimeline();
+        timelines.push(instance);
+        return instance;
+      }),
+      context: (setup) => {
+        setup();
+        return { revert: vi.fn(), add: vi.fn() };
+      },
+    });
+
+    controller.mount(root);
+
+    const transitions = [...root.querySelectorAll<HTMLElement>('[data-transition]')];
+    expect(transitions).toHaveLength(6);
+    transitions.forEach((transitionNode, index) => {
+      const source = transitionNode.querySelector('[data-transition-source]');
+      const target = transitionNode.querySelector('[data-transition-target]');
+      const accent = transitionNode.querySelector('[data-transition-accent]');
+      const calls = timelines[index]?.fromTo.mock.calls ?? [];
+      expect(calls.some(([animated]) => animated === source), `${transitionNode.dataset.transition} source`).toBe(true);
+      expect(calls.some(([animated]) => animated === target), `${transitionNode.dataset.transition} target`).toBe(true);
+      expect(calls.some(([animated]) => animated === accent), `${transitionNode.dataset.transition} accent`).toBe(true);
+    });
 
     controller.destroy();
   });
@@ -173,6 +219,9 @@ describe('createMotionController', () => {
     const media = root.querySelector<HTMLElement>('[data-project-media]');
     const portrait = root.querySelector<HTMLElement>('.about__portrait img');
     const promiseLine = root.querySelector<HTMLElement>('[data-about-promise] .about__promise-line > span');
+    const transitionSource = root.querySelector<HTMLElement>('[data-transition-source]');
+    const transitionTarget = root.querySelector<HTMLElement>('[data-transition-target]');
+    const transitionAccent = root.querySelector<HTMLElement>('[data-transition-accent]');
     root.setAttribute('data-motion-ready', 'authored');
     copy?.style.setProperty('opacity', '0.72', 'important');
     copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
@@ -181,6 +230,12 @@ describe('createMotionController', () => {
     portrait?.style.setProperty('filter', 'sepia(0.2)', 'important');
     promiseLine?.style.setProperty('opacity', '0.64', 'important');
     promiseLine?.style.setProperty('transform', 'translateY(3px)', 'important');
+    transitionSource?.style.setProperty('opacity', '0.67', 'important');
+    transitionSource?.style.setProperty('transform', 'rotate(7deg)', 'important');
+    transitionTarget?.style.setProperty('opacity', '0.74', 'important');
+    transitionTarget?.style.setProperty('transform', 'scale(0.92)', 'important');
+    transitionAccent?.style.setProperty('opacity', '0.69', 'important');
+    transitionAccent?.style.setProperty('transform', 'translateY(4px)', 'important');
     const controller = createMotionController({
       prefersReducedMotion: () => false,
       timeline: vi.fn(createTimeline),
@@ -198,6 +253,12 @@ describe('createMotionController', () => {
     portrait?.style.setProperty('filter', 'grayscale(1)');
     promiseLine?.style.setProperty('opacity', '0.1');
     promiseLine?.style.setProperty('transform', 'translateY(50px)');
+    transitionSource?.style.setProperty('opacity', '0.1');
+    transitionSource?.style.setProperty('transform', 'translateX(-40px)');
+    transitionTarget?.style.setProperty('opacity', '0.2');
+    transitionTarget?.style.setProperty('transform', 'translateX(40px)');
+    transitionAccent?.style.setProperty('opacity', '0.3');
+    transitionAccent?.style.setProperty('transform', 'translateY(40px)');
     controller.destroy();
 
     expect(root.getAttribute('data-motion-ready')).toBe('authored');
@@ -215,6 +276,12 @@ describe('createMotionController', () => {
     expect(promiseLine?.style.getPropertyPriority('opacity')).toBe('important');
     expect(promiseLine?.style.getPropertyValue('transform')).toBe('translateY(3px)');
     expect(promiseLine?.style.getPropertyPriority('transform')).toBe('important');
+    expect(transitionSource?.style.getPropertyValue('opacity')).toBe('0.67');
+    expect(transitionSource?.style.getPropertyValue('transform')).toBe('rotate(7deg)');
+    expect(transitionTarget?.style.getPropertyValue('opacity')).toBe('0.74');
+    expect(transitionTarget?.style.getPropertyValue('transform')).toBe('scale(0.92)');
+    expect(transitionAccent?.style.getPropertyValue('opacity')).toBe('0.69');
+    expect(transitionAccent?.style.getPropertyValue('transform')).toBe('translateY(4px)');
   });
 
   it('reverts partial setup and restores authored styles when a later timeline throws', () => {

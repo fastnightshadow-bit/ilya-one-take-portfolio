@@ -39,7 +39,7 @@ export interface ProjectContent {
 
 export interface TransitionContent {
   readonly phrase: string;
-  readonly variant: 'ink' | 'route' | 'mobile' | 'chat' | 'final';
+  readonly variant: 'portrait' | 'brand' | 'route' | 'mobile' | 'chat' | 'final';
 }
 
 export interface SiteContent {
@@ -132,11 +132,11 @@ export const siteContent: SiteContent = {
     },
   ],
   transitions: [
-    { phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
-    { phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
-    { phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
-    { phrase: 'ROAD → MOBILE → MENU → ORDER', variant: 'mobile' },
-    { phrase: 'WEB → CHAT → CATALOG → SHOP', variant: 'chat' },
-    { phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
+    { phrase: 'ИДЕЯ → ЛИЧНОСТЬ', variant: 'portrait' },
+    { phrase: 'ЛИНИЯ → РАМКА → БРЕНД', variant: 'brand' },
+    { phrase: 'РАМКА → МАРШРУТ', variant: 'route' },
+    { phrase: 'ДОРОГА → ТЕЛЕФОН', variant: 'mobile' },
+    { phrase: 'ЭКРАН → ДИАЛОГ', variant: 'chat' },
+    { phrase: 'ПРОЕКТЫ → ТВОЙ САЙТ', variant: 'final' },
   ],
 };
