@@ -55,6 +55,24 @@ test('has no automatically detectable accessibility violations', async ({ page }
   expect(results.violations).toEqual([]);
 });
 
+test('portrait promise accent keeps readable contrast against the About background', async ({ page }) => {
+  const contrast = await page.locator('[data-about-promise] .about__promise-line:last-child > span').evaluate((accent) => {
+    const channels = (color: string) => color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+    const luminance = (color: string) => {
+      const normalized = channels(color).map((channel) => {
+        const value = channel / 255;
+        return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * (normalized[0] ?? 0) + .7152 * (normalized[1] ?? 0) + .0722 * (normalized[2] ?? 0);
+    };
+    const foreground = luminance(getComputedStyle(accent).color);
+    const background = luminance(getComputedStyle(accent.closest('.about')!).backgroundColor);
+    return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05);
+  });
+
+  expect(contrast).toBeGreaterThanOrEqual(3);
+});
+
 test('keyboard traversal keeps every complete focus ring visible at required viewports', async ({ page }, testInfo) => {
   const viewports = requiredViewports[testInfo.project.name as keyof typeof requiredViewports];
   for (const viewport of viewports) {
@@ -155,15 +173,17 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
   }
 });
 
-test('portrait is described and visual carriers stay out of the accessibility tree', async ({ page }) => {
+test('portrait promise is readable and remaining project visuals stay out of the accessibility tree', async ({ page }) => {
   await expect(page.locator('.about__portrait img')).toHaveAttribute('alt', 'Илья, веб-разработчик');
+  const promise = page.locator('[data-about-promise]');
+  await expect(promise).toBeVisible();
+  await expect(promise).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
+  await expect(promise).not.toHaveAttribute('aria-hidden', /.+/);
 
   const decorativeSelectors = [
-    '.about__scribble',
     '[data-transition]',
     '.doner-poster',
     '.school-road',
-    '.school-sign',
     '.bot-phone',
   ];
   for (const selector of decorativeSelectors) {

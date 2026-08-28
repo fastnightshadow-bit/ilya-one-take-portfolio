@@ -29,8 +29,6 @@ interface HandoffStep {
 }
 
 interface HandoffConfig {
-  readonly carrierFrom: ResponsiveTween;
-  readonly carrierTo: ResponsiveTween;
   readonly steps: readonly HandoffStep[];
 }
 
@@ -54,40 +52,28 @@ const defaultDependencies: MotionDependencies = {
 
 const handoffConfigs: Readonly<Record<string, HandoffConfig>> = {
   about: {
-    carrierFrom: { desktop: { xPercent: -35, scaleX: 0.3, rotation: -8, opacity: 0.35 }, mobile: { xPercent: -12, scaleX: 0.65, rotation: -4, opacity: 0.55 } },
-    carrierTo: { desktop: { xPercent: 0, scaleX: 1, rotation: -2, opacity: 1 }, mobile: { xPercent: 0, scaleX: 1, rotation: -1, opacity: 1 } },
     steps: [
       { scope: 'source', selector: '.hero__word', from: { desktop: { y: 0, opacity: 1 } }, to: { desktop: { y: -14, opacity: 0.7 } }, desktopOnly: true },
       { scope: 'target', selector: '.about__portrait', from: { desktop: { xPercent: 12, y: 24, opacity: 0.72 }, mobile: { xPercent: 5, y: 10, opacity: 0.82 } }, to: { desktop: { xPercent: 0, y: 0, opacity: 1 } } },
-      { scope: 'target', selector: '.about__scribble', from: { desktop: { xPercent: 7, opacity: 0.42 }, mobile: { xPercent: 3, opacity: 0.68 } }, to: { desktop: { xPercent: 0, opacity: 1 } } },
     ],
   },
   'pivnoy-doner': {
-    carrierFrom: { desktop: { xPercent: -28, scaleX: 0.35, rotation: -5, opacity: 0.4 }, mobile: { xPercent: -10, scaleX: 0.7, rotation: -2, opacity: 0.6 } },
-    carrierTo: { desktop: { xPercent: 0, scaleX: 1, rotation: 2, opacity: 1 } },
     steps: [
       { scope: 'target', selector: '.doner-poster', from: { desktop: { xPercent: 18, y: 28, rotation: 8, opacity: 0.62 }, mobile: { xPercent: 7, y: 10, rotation: 5, opacity: 0.76 } }, to: { desktop: { xPercent: 0, y: 0, rotation: 3, opacity: 1 } } },
     ],
   },
   'driving-school': {
-    carrierFrom: { desktop: { xPercent: -24, scaleX: 0.4, rotation: 8, opacity: 0.42 }, mobile: { xPercent: -8, scaleX: 0.72, rotation: 3, opacity: 0.62 } },
-    carrierTo: { desktop: { xPercent: 0, scaleX: 1, rotation: 0, opacity: 1 } },
     steps: [
-      { scope: 'target', selector: '.school-road', from: { desktop: { xPercent: 18, rotation: 30, opacity: 0.52 }, mobile: { xPercent: 7, rotation: 24, opacity: 0.66 } }, to: { desktop: { xPercent: 0, rotation: 20, opacity: 1 } } },
-      { scope: 'target', selector: '.school-sign', from: { desktop: { y: 34, rotation: 13, opacity: 0.55 } }, to: { desktop: { y: 0, rotation: 7, opacity: 1 } }, desktopOnly: true },
+      { scope: 'target', selector: '.school-road', from: { desktop: { xPercent: 10, y: 20, opacity: 0.45 }, mobile: { xPercent: 4, y: 10, opacity: 0.24 } }, to: { desktop: { xPercent: 0, y: 0, opacity: 0.92 }, mobile: { opacity: 0.46 } } },
     ],
   },
   'telegram-shop': {
-    carrierFrom: { desktop: { xPercent: -22, scale: 0.72, rotation: -7, opacity: 0.4 }, mobile: { xPercent: -7, scale: 0.88, rotation: -3, opacity: 0.62 } },
-    carrierTo: { desktop: { xPercent: 0, scale: 1, rotation: 0, opacity: 1 } },
     steps: [
       { scope: 'target', selector: '.bot-phone', from: { desktop: { xPercent: 17, y: 30, rotation: -10, opacity: 0.58 }, mobile: { xPercent: 7, y: 12, rotation: -5, opacity: 0.7 } }, to: { desktop: { xPercent: 0, y: 0, rotation: -2, opacity: 1 } } },
       { scope: 'target', selector: '.bot-phone i', from: { desktop: { y: 18, opacity: 0.45 } }, to: { desktop: { y: 0, opacity: 1, stagger: 0.06 } }, desktopOnly: true },
     ],
   },
   contact: {
-    carrierFrom: { desktop: { xPercent: -20, scaleX: 0.35, opacity: 0.4 }, mobile: { xPercent: -7, scaleX: 0.72, opacity: 0.62 } },
-    carrierTo: { desktop: { xPercent: 0, scaleX: 1, opacity: 1 } },
     steps: [
       { scope: 'source', selector: '.bot-phone', from: { desktop: { xPercent: 0, yPercent: 0, scale: 1, rotation: -2, opacity: 1 } }, to: { desktop: { xPercent: -8, yPercent: 12, scale: 0.84, rotation: -1, opacity: 0.62 }, mobile: { xPercent: -3, yPercent: 5, scale: 0.94, rotation: -1, opacity: 0.72 } } },
       { scope: 'target', selector: 'h2', from: { desktop: { y: 58, opacity: 0.48 }, mobile: { y: 24, opacity: 0.7 } }, to: { desktop: { y: 0, opacity: 1 } } },
@@ -110,12 +96,11 @@ const findAdjacentScene = (bridge: HTMLElement, direction: 'previous' | 'next'):
 };
 
 const ownedStyleRules = [
-  { selector: '[data-scene="hero"] .hero__word, [data-transition] strong, [data-transition-carrier]', properties: ['opacity', 'transform'] },
+  { selector: '[data-scene="hero"] .hero__word, [data-transition] strong', properties: ['opacity', 'transform'] },
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
-  { selector: '.about__portrait, .about__scribble', properties: ['opacity', 'transform'] },
+  { selector: '.about__portrait, [data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait img', properties: ['filter'] },
-  { selector: '.about__scribble path', properties: ['stroke-dasharray', 'stroke-dashoffset'] },
-  { selector: '.doner-poster, .school-road, .school-sign, .bot-phone, .bot-phone i', properties: ['opacity', 'transform'] },
+  { selector: '.doner-poster, .school-road, .bot-phone, .bot-phone i', properties: ['opacity', 'transform'] },
   { selector: '[data-scene="contact"] h2, [data-scene="contact"] .button--contact', properties: ['opacity', 'transform'] },
 ] as const;
 
@@ -199,11 +184,10 @@ export function createMotionController(dependencies: MotionDependencies = defaul
           try {
             root.querySelectorAll<HTMLElement>('[data-transition]').forEach((bridge) => {
               const phrase = bridge.querySelector<HTMLElement>('strong');
-              const carrier = bridge.querySelector<HTMLElement>('[data-transition-carrier]');
               const sourceScene = findAdjacentScene(bridge, 'previous');
               const targetScene = findAdjacentScene(bridge, 'next');
               const config = targetScene ? handoffConfigs[targetScene.dataset.scene ?? ''] : undefined;
-              if (!phrase || !carrier || !sourceScene || !targetScene || !config) return;
+              if (!phrase || !sourceScene || !targetScene || !config) return;
 
               const handoff = dependencies.timeline({
                 scrollTrigger: {
@@ -219,13 +203,6 @@ export function createMotionController(dependencies: MotionDependencies = defaul
                 { xPercent: mobile ? -6 : -12, ease: 'none', immediateRender: false },
                 0,
               );
-              handoff.fromTo(
-                carrier,
-                responsiveVars(config.carrierFrom, mobile),
-                { ...responsiveVars(config.carrierTo, mobile), ease: 'none', immediateRender: false },
-                0,
-              );
-
               config.steps.forEach((step) => {
                 if (mobile && step.desktopOnly) return;
                 const scope = step.scope === 'source' ? sourceScene : targetScene;
@@ -254,9 +231,9 @@ export function createMotionController(dependencies: MotionDependencies = defaul
             });
 
             const about = root.querySelector<HTMLElement>('.about');
-            const scribble = about?.querySelectorAll<SVGPathElement>('.about__scribble path');
+            const promiseLines = about?.querySelectorAll<HTMLElement>('[data-about-promise] .about__promise-line > span');
             const portrait = about?.querySelector<HTMLElement>('.about__portrait img');
-            if (about && scribble?.length) {
+            if (about) {
               const aboutTimeline = dependencies.timeline({
                 scrollTrigger: {
                   trigger: about,
@@ -265,12 +242,14 @@ export function createMotionController(dependencies: MotionDependencies = defaul
                   scrub: 0.6,
                 },
               });
-              aboutTimeline.fromTo(
-                scribble,
-                { strokeDasharray: 1100, strokeDashoffset: 1100 },
-                { strokeDashoffset: 0, ease: 'none', immediateRender: false },
-                0,
-              );
+              if (promiseLines?.length) {
+                aboutTimeline.fromTo(
+                  promiseLines,
+                  { yPercent: 110, opacity: 0 },
+                  { yPercent: 0, opacity: 1, stagger: 0.08, ease: 'none', immediateRender: false },
+                  0,
+                );
+              }
               if (portrait) {
                 aboutTimeline.fromTo(
                   portrait,

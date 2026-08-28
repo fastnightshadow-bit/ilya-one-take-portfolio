@@ -21,11 +21,11 @@ export function renderSiteMarkup(content: SiteContent): string {
       ${aboutScene()}
       ${processStrip(content)}
       ${transitionBridge(toDoner)}
-      ${caseChapter(doner, 0)}
+      ${caseChapter(doner)}
       ${transitionBridge(toSchool)}
-      ${caseChapter(school, 1)}
+      ${caseChapter(school)}
       ${transitionBridge(toTelegram)}
-      ${caseChapter(telegram, 2)}
+      ${caseChapter(telegram)}
       ${transitionBridge(toContact)}
       ${contactScene(content)}
     </main>

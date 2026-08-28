@@ -69,10 +69,32 @@ describe('createSite', () => {
     expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
   });
 
-  it('renders a dedicated decorative carrier for every story handoff', () => {
+  it('renders clean typographic story handoffs without detached ornaments or captions', () => {
     const site = createSite(siteContent);
 
     expect(site.querySelectorAll('[data-transition]')).toHaveLength(5);
-    expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(5);
+    expect(site.querySelectorAll('[data-transition] strong')).toHaveLength(5);
+    expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(0);
+    expect(site.querySelectorAll('[data-transition] small')).toHaveLength(0);
+  });
+
+  it('keeps project metadata descriptive without redundant project counters', () => {
+    const site = createSite(siteContent);
+    const projectMetadata = [...site.querySelectorAll<HTMLElement>('[data-project] .scene__meta')];
+
+    expect(projectMetadata).toHaveLength(3);
+    expect(projectMetadata.every((metadata) => metadata.children.length === 1)).toBe(true);
+    expect(projectMetadata.every((metadata) => !/\bproject\b/i.test(metadata.textContent ?? ''))).toBe(true);
+  });
+
+  it('replaces the portrait scribble and school sticker with purposeful visuals', () => {
+    const site = createSite(siteContent);
+    const promise = site.querySelector<HTMLElement>('[data-about-promise]');
+
+    expect(site.querySelector('.about__scribble')).toBeNull();
+    expect(promise?.textContent?.trim().replace(/\s+/g, ' ')).toBe('ОДИН ЧЕЛОВЕК. ВЕСЬ САЙТ.');
+    expect(promise?.getAttribute('aria-hidden')).toBeNull();
+    expect(site.querySelector('.school-road')).not.toBeNull();
+    expect(site.querySelector('.school-sign')).toBeNull();
   });
 });

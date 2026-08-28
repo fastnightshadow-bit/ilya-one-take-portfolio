@@ -12,7 +12,6 @@ export interface ProjectContent {
 }
 
 export interface TransitionContent {
-  readonly label: string;
   readonly phrase: string;
   readonly variant: 'ink' | 'route' | 'chat' | 'final';
 }
@@ -69,10 +68,10 @@ export const siteContent: SiteContent = {
     },
   ],
   transitions: [
-    { label: 'Буквы становятся линиями портрета', phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
-    { label: 'Линия становится графикой кейса', phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
-    { label: 'Красная линия становится дорогой', phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
-    { label: 'Дорожные метки становятся сообщениями', phrase: 'ROAD → FLOW → CHAT → SHOP', variant: 'chat' },
-    { label: 'Проекты становятся приглашением', phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
+    { phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
+    { phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
+    { phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
+    { phrase: 'ROAD → FLOW → CHAT → SHOP', variant: 'chat' },
+    { phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
   ],
 };

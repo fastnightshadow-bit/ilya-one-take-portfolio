@@ -47,6 +47,56 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
 });
 
+test('clean compositions keep the hero CTA and school road deliberately placed', async ({ page }) => {
+  const viewports = [
+    { width: 390, height: 844 },
+    { width: 430, height: 900 },
+    { width: 701, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 900, height: 900 },
+    { width: 844, height: 390 },
+    { width: 1024, height: 768 },
+    { width: 1051, height: 900 },
+    { width: 1100, height: 900 },
+    { width: 1150, height: 900 },
+    { width: 1199, height: 900 },
+    { width: 1200, height: 900 },
+    { width: 1440, height: 900 },
+  ] as const;
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const heroGap = await page.locator('.hero').evaluate((hero) => {
+      const paragraph = hero.querySelector('p')!.getBoundingClientRect();
+      const button = hero.querySelector('.button')!.getBoundingClientRect();
+      return button.top - paragraph.bottom;
+    });
+    expect(heroGap, `${viewport.width}px hero copy-to-CTA gap`).toBeGreaterThanOrEqual(24);
+
+    const roadGeometry = await page.locator('.case--school').evaluate((school) => {
+      const scene = school.getBoundingClientRect();
+      const road = school.querySelector('.school-road')!.getBoundingClientRect();
+      const headline = school.querySelector('.case__headline')!.getBoundingClientRect();
+      const overlapWidth = Math.max(0, Math.min(road.right, headline.right) - Math.max(road.left, headline.left));
+      const overlapHeight = Math.max(0, Math.min(road.bottom, headline.bottom) - Math.max(road.top, headline.top));
+      return {
+        left: road.left - scene.left,
+        top: road.top - scene.top,
+        right: scene.right - road.right,
+        bottom: scene.bottom - road.bottom,
+        headlineOverlap: overlapWidth * overlapHeight,
+      };
+    });
+    expect(roadGeometry.left, `${viewport.width}px road left`).toBeGreaterThanOrEqual(0);
+    expect(roadGeometry.top, `${viewport.width}px road top`).toBeGreaterThanOrEqual(0);
+    expect(roadGeometry.right, `${viewport.width}px road right`).toBeGreaterThanOrEqual(0);
+    expect(roadGeometry.bottom, `${viewport.width}px road bottom`).toBeGreaterThanOrEqual(0);
+    expect(roadGeometry.headlineOverlap, `${viewport.width}px road/headline overlap`).toBe(0);
+  }
+});
+
 test('theme-aware story handoffs progress without shifting the rotating hero word', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', (message) => {
@@ -76,18 +126,16 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     { bridge: 4, target: '[data-scene="contact"] h2', source: '.case--telegram .bot-phone' },
   ] as const;
 
-  const scribble = page.locator('.about__scribble path').first();
+  const promiseLines = page.locator('[data-about-promise] .about__promise-line > span');
+  await expect(promiseLines).toHaveCount(2);
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(1\)/);
-  expect(Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeGreaterThan(1000);
+  await expect.poll(() => promiseLines.first().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeLessThan(0.2);
   for (const [index, handoff] of handoffs.entries()) {
     const bridge = page.locator('[data-transition]').nth(handoff.bridge);
-    const carrier = bridge.locator('[data-transition-carrier]');
+    const phrase = bridge.locator('strong');
     const target = page.locator(handoff.target);
-    const carrierBox = await carrier.boundingBox();
-    expect(carrierBox?.width, `handoff ${index + 1} carrier width`).toBeGreaterThan(20);
-    expect(carrierBox?.height, `handoff ${index + 1} carrier height`).toBeGreaterThan(3);
 
-    const carrierBefore = await carrier.evaluate((element) => getComputedStyle(element).transform);
+    const phraseBefore = await phrase.evaluate((element) => getComputedStyle(element).transform);
     const targetBefore = await target.evaluate((element) => getComputedStyle(element).transform);
     const sourceSelector = 'source' in handoff ? handoff.source : undefined;
     const source = sourceSelector ? page.locator(sourceSelector) : undefined;
@@ -98,7 +146,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
       window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.55);
     });
 
-    await expect.poll(() => carrier.evaluate((element) => getComputedStyle(element).transform)).not.toBe(carrierBefore);
+    await expect.poll(() => phrase.evaluate((element) => getComputedStyle(element).transform)).not.toBe(phraseBefore);
     await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).not.toBe(targetBefore);
     if (source && sourceBefore !== undefined) {
       await expect.poll(() => source.evaluate((element) => getComputedStyle(element).transform)).not.toBe(sourceBefore);
@@ -109,7 +157,12 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
         const bounds = element.getBoundingClientRect();
         window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
       });
-      await expect.poll(async () => Number.parseFloat(await scribble.evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBeLessThan(10);
+      await expect.poll(() => promiseLines.last().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
+      await expect.poll(() => promiseLines.evaluateAll((elements) => Math.max(...elements.map((element) => {
+        const line = element.parentElement!.getBoundingClientRect();
+        const inner = element.getBoundingClientRect();
+        return Math.abs(inner.top - line.top);
+      })))).toBeLessThanOrEqual(1);
       await expect.poll(() => page.locator('.about__portrait img').evaluate((element) => getComputedStyle(element).filter)).toContain('grayscale(0)');
     }
 
@@ -125,7 +178,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     }
   }
 
-  const promotedLayers = await page.locator('[data-transition] strong, [data-transition-carrier], [data-project] .case__copy, .about__scribble path').evaluateAll(
+  const promotedLayers = await page.locator('[data-transition] strong, [data-project] .case__copy, [data-about-promise] .about__promise-line > span').evaluateAll(
     (elements) => elements.filter((element) => getComputedStyle(element).willChange !== 'auto').length,
   );
   expect(promotedLayers).toBe(0);
@@ -154,7 +207,13 @@ test('reduced motion keeps final compositions visible and static', async ({ page
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
   }
-  expect(Number.parseFloat(await page.locator('.about__scribble path').first().evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBe(0);
+  const promise = page.locator('[data-about-promise]');
+  await expect(promise).toBeVisible();
+  await expect(promise).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
+  for (const line of await promise.locator('.about__promise-line > span').all()) {
+    await expect(line).toHaveCSS('opacity', '1');
+    await expect(line).toHaveCSS('transform', 'none');
+  }
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
   const word = page.locator('[data-rotating-word]');
   await expect(word).toBeHidden();
@@ -198,16 +257,13 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator('[data-scene]')).toHaveCount(6);
   await expect(page.locator('[data-project]')).toHaveCount(3);
   for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
-  for (const carrier of await page.locator('[data-transition-carrier]').all()) {
-    const bounds = await carrier.boundingBox();
-    expect(bounds?.width).toBeGreaterThan(20);
-    expect(bounds?.height).toBeGreaterThan(3);
-  }
+  await expect(page.locator('[data-transition-carrier], .bridge small, .about__scribble, .school-sign')).toHaveCount(0);
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
   }
-  expect(Number.parseFloat(await page.locator('.about__scribble path').first().evaluate((element) => getComputedStyle(element).strokeDashoffset))).toBe(0);
+  await expect(page.locator('[data-about-promise]')).toBeVisible();
+  await expect(page.locator('[data-about-promise]')).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

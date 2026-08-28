@@ -7,21 +7,22 @@
 [data-motion-ready] .hero__fallback { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; border: 0; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 [data-motion-ready] .hero__word { display: inline-block; }
 .hero p { max-width: 29rem; margin: 1.75rem 0 0; color: var(--text-muted-dark); font-size: .95rem; line-height: 1.55; }
+.hero .button { margin-top: clamp(2rem, 4vh, 2.75rem); }
 .hero__scroll { position: absolute; right: var(--page-pad); bottom: 1.75rem; color: var(--text-muted-dark); font: 800 .55rem/1 ui-monospace, monospace; letter-spacing: .12em; writing-mode: vertical-rl; }
 
-.about { min-height: 840px; background: var(--paper); color: var(--ink); }
-.about__copy { position: relative; z-index: 8; width: 52%; padding-top: clamp(4rem, 9vh, 6rem); }
+.about { min-height: 900px; background: var(--paper); color: var(--ink); }
+.about__copy { position: relative; z-index: 8; width: 52%; padding-top: clamp(4rem, 9vh, 4.5rem); }
 .eyebrow { display: flex; align-items: center; gap: .65rem; font: 900 .65rem/1 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
 .eyebrow::before { content: ''; width: 35px; height: 2px; background: var(--coral); }
 .about h2 { margin: 1.25rem 0; font-size: clamp(4.1rem, 9vw, 7.5rem); line-height: .82; letter-spacing: -.08em; }
 .about h2 span { display: block; color: var(--doner-red); }
-.about__copy > p:last-child { max-width: 29rem; color: var(--text-muted-light); font-size: .95rem; line-height: 1.55; }
+.about__lede { max-width: 29rem; color: var(--text-muted-light); font-size: .95rem; line-height: 1.55; }
+.about__promise { display: grid; width: max-content; max-width: 100%; gap: .15em; margin: clamp(2rem, 4vh, 2.5rem) 0 0; font: 900 clamp(1.8rem, 3.15vw, 3rem)/.86 Arial, sans-serif; letter-spacing: -.055em; text-transform: uppercase; }
+.about__promise-line { display: block; overflow: hidden; }
+.about__promise-line > span { display: block; width: max-content; max-width: 100%; }
+.about__promise-line:last-child > span { margin-left: clamp(1rem, 2vw, 2.5rem); color: var(--doner-red); }
 .about__portrait { position: absolute; right: 0; bottom: 0; width: 44%; height: min(720px, 82svh); overflow: hidden; clip-path: polygon(12% 0,100% 0,100% 100%,0 100%,0 12%); background: #d2cfca; }
 .about__portrait img { width: 100%; height: 100%; color: transparent; font-size: 0; object-fit: cover; object-position: center top; filter: grayscale(0) contrast(1.02); }
-.about__scribble { position: absolute; right: 0; bottom: 0; z-index: 4; width: 52%; height: 740px; pointer-events: none; }
-.about__scribble path { fill: none; stroke-width: 2.2; stroke-linecap: round; }
-.scribble--coral { stroke: var(--coral); }
-.scribble--blue { stroke: var(--blue); }
 .about__facts { position: absolute; left: var(--page-pad); bottom: 2rem; z-index: 9; width: 45%; border-top: 1px solid #aaa69f; }
 .about__facts p { display: grid; grid-template-columns: 2.7rem 1fr; margin: 0; padding: .8rem 0; border-bottom: 1px solid #cec9c0; font-size: .82rem; }
 .about__facts b { color: var(--blue); font: 900 .65rem/1.5 ui-monospace, monospace; }
@@ -50,9 +51,10 @@
 .case--school .case__headline { text-transform: uppercase; }
 .case--school .case__accent { color: var(--yellow); }
 .case--school .case__label { border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); box-shadow: 6px 6px 0 var(--ink); }
-.school-road { position: absolute; right: -70px; top: 30px; width: 500px; height: 500px; border: 50px solid #f7f3e9; border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(20deg); }
-.school-road::after { content: ''; position: absolute; inset: -32px; border: 4px dashed var(--blue); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; }
-.school-sign { position: absolute; right: 95px; bottom: 72px; display: grid; width: 102px; height: 102px; place-items: center; border: 5px solid var(--ink); border-radius: 50%; background: var(--yellow); color: var(--ink); font: 900 .75rem/1.1 ui-monospace, monospace; text-align: center; transform: rotate(7deg); }
+.school-road { position: absolute; right: clamp(1.5rem, 5vw, 4.5rem); top: clamp(6rem, 13vh, 8rem); width: min(31vw, 22rem); height: auto; opacity: .92; }
+.school-road path { fill: none; stroke-linecap: round; }
+.school-road__track { stroke: #f7f3e9; stroke-width: 54; }
+.school-road__marks { stroke: var(--blue); stroke-width: 4; stroke-dasharray: 10 12; }
 
 .case--telegram { background: var(--mint); color: var(--ink); }
 .case--telegram .case__accent { color: #2476f2; }
@@ -70,20 +72,23 @@
 .contact :focus-visible { outline-color: var(--ink); }
 .contact__handle { position: absolute; right: var(--page-pad); bottom: 1.8rem; display: inline-flex; min-height: 44px; align-items: center; scroll-margin-block: 8px; color: #7a1d14; font: 900 clamp(3.4rem, 10vw, 8rem)/.8 Arial, sans-serif; letter-spacing: -.075em; text-decoration: none; text-transform: uppercase; }
 
+@media (min-width: 701px) and (max-width: 1199px) {
+  .school-road { right: clamp(1.5rem, 4vw, 2.5rem); top: 440px; width: min(22vw, 180px); opacity: .55; }
+}
+
 @media (max-width: 700px) {
   .hero h1 { font-size: clamp(3.65rem, 17vw, 5.2rem); }
   .hero p { max-width: 86%; }
-  .about { min-height: 1140px; }
+  .about { min-height: 1240px; }
   .about__copy { width: 100%; padding-top: 3rem; }
   .about h2 { font-size: clamp(4rem, 18vw, 5.4rem); }
-  .about__portrait { top: 440px; right: -10%; bottom: auto; width: 92%; height: 430px; opacity: .82; }
-  .about__scribble { top: 420px; right: -8%; bottom: auto; width: 105%; height: 470px; }
+  .about__promise { margin-top: 2rem; font-size: clamp(1.7rem, 8vw, 2.2rem); }
+  .about__portrait { top: 540px; right: 0; bottom: auto; width: 92%; height: 430px; opacity: .86; }
   .about__facts { left: 22px; right: 22px; bottom: 18px; width: auto; }
   .about__facts p { background: rgb(241 238 230 / .88); }
   .case__headline + p { max-width: 72%; }
   .doner-poster { right: -70px; top: 390px; width: 61%; height: 300px; background: color-mix(in srgb, var(--doner-red) 48%, var(--doner-paper)); color: var(--ink); }
-  .school-road { right: -210px; top: 115px; opacity: .4; }
-  .school-sign { right: 25px; }
+  .school-road { right: 1rem; top: 390px; width: min(54vw, 220px); opacity: .46; }
   .bot-phone { right: -90px; top: 185px; opacity: .5; }
   .contact h2 { font-size: clamp(4.8rem, 21vw, 6.3rem); }
   .contact > p { max-width: 82%; }
