@@ -17,8 +17,8 @@
     "build": "npm run assets:build && npm run typecheck && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "e2e": "playwright test",
-    "audit": "lhci autorun",
-    "check": "npm run test && npm run build && npm run verify:dist-seo && npm run e2e"
+    "audit": "node scripts/run-lighthouse.mjs",
+    "check": "npm run test && npm run build && npm run verify:dist-seo && npm run e2e && npm run audit"
   },
   "keywords": [],
   "author": "",

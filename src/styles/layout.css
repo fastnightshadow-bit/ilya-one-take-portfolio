@@ -1,5 +1,6 @@
 .site-shell { min-width: 0; overflow: clip; }
 .site-header { position: sticky; top: 0; z-index: 100; display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 var(--page-pad); border-bottom: 1px solid #28282e; background: rgb(12 12 16 / .92); backdrop-filter: blur(16px); font: 800 .625rem/1 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.site-header__nav { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 1rem; }
 .site-header a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
 .site-header__position i { display: inline-block; width: 6px; height: 6px; margin-right: .5rem; border-radius: 50%; background: var(--coral); box-shadow: 0 0 12px var(--coral); }
 .scene { position: relative; min-height: var(--scene-min); overflow: clip; padding: var(--page-pad); isolation: isolate; }

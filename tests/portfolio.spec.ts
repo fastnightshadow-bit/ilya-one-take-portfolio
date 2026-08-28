@@ -200,3 +200,49 @@ test('styled static story remains complete when the application script fails', a
   expect(errors.filter((message) => message === expectedAbortError)).toHaveLength(abortedScripts.length);
   expect(errors.filter((message) => message !== expectedAbortError)).toEqual([]);
 });
+
+test('all primary CTAs use the approved safe Telegram destination without browser errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(`console: ${message.text()}`);
+  });
+  page.on('pageerror', (error) => errors.push(`page: ${error.message}`));
+
+  await page.goto('/');
+  const links = page.locator('[data-primary-cta]');
+  await expect(links).toHaveCount(2);
+  for (const link of await links.all()) {
+    await expect(link).toHaveAttribute('href', 'https://t.me/girtopw');
+    await expect(link).not.toHaveAttribute('target', /.+/);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('supported mobile, landscape, tablet, and desktop geometries do not overflow or hide the final CTA', async ({ page }) => {
+  const viewports = [
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 768 },
+    { width: 1440, height: 900 },
+  ] as const;
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    const geometry = await page.evaluate(() => ({
+      viewportWidth: window.innerWidth,
+      documentWidth: document.documentElement.scrollWidth,
+      bodyWidth: document.body.scrollWidth,
+    }));
+    expect(geometry.documentWidth, `${viewport.width}×${viewport.height} document width`).toBeLessThanOrEqual(geometry.viewportWidth);
+    expect(geometry.bodyWidth, `${viewport.width}×${viewport.height} body width`).toBeLessThanOrEqual(geometry.viewportWidth);
+
+    const finalCta = page.locator('[data-scene="contact"] [data-primary-cta]');
+    await finalCta.scrollIntoViewIfNeeded();
+    await expect(finalCta, `${viewport.width}×${viewport.height} final CTA`).toBeVisible();
+    const ctaBox = await finalCta.boundingBox();
+    expect(ctaBox!.x).toBeGreaterThanOrEqual(0);
+    expect(ctaBox!.x + ctaBox!.width).toBeLessThanOrEqual(viewport.width);
+  }
+});
