@@ -1,3 +1,4 @@
+import './styles/index.css';
 import { createSite } from './components/createSite.ts';
 import { siteContent } from './content/siteContent.ts';
 

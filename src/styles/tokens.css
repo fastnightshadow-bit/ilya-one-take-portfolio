@@ -1,0 +1,16 @@
+:root {
+  --ink: #0c0c10;
+  --paper: #f1eee6;
+  --coral: #ff553d;
+  --blue: #385bf5;
+  --yellow: #f5cf45;
+  --mint: #d5f0eb;
+  --doner-paper: #efe4d2;
+  --doner-red: #d83c2b;
+  --text-muted-dark: #aaa7af;
+  --text-muted-light: #656159;
+  --border-dark: #303038;
+  --page-pad: clamp(1.375rem, 3vw, 2.125rem);
+  --scene-min: clamp(43.75rem, 88svh, 57.5rem);
+  --ease-story: cubic-bezier(.65, 0, .35, 1);
+}

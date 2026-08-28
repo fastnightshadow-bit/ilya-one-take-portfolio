@@ -1,0 +1,7 @@
+[data-motion-ready] .about__scribble path { stroke-dasharray: 1100; stroke-dashoffset: 1100; }
+[data-motion-ready] [data-project] .case__copy { will-change: transform, opacity; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  .about__scribble path { stroke-dashoffset: 0 !important; }
+}

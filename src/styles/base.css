@@ -1,0 +1,8 @@
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--ink); }
+body { margin: 0; overflow-x: clip; background: var(--ink); color: var(--paper); font-family: Inter, Arial, sans-serif; }
+button, a { font: inherit; }
+a { color: inherit; }
+img, svg { display: block; max-width: 100%; }
+:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
+.button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: .85rem 1.1rem; border-radius: 999px; background: var(--paper); color: var(--ink); font: 900 .75rem/1 ui-monospace, monospace; text-transform: uppercase; text-decoration: none; }

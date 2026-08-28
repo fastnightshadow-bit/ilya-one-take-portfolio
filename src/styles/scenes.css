@@ -1,0 +1,86 @@
+.hero { min-height: 790px; background: var(--ink); color: var(--paper); }
+.hero__ghost { position: absolute; right: -.04em; top: .16em; z-index: -1; color: #1b1b22; font: 900 clamp(12rem, 36vw, 30rem)/.8 Arial, sans-serif; letter-spacing: -.1em; }
+.hero__copy { position: relative; z-index: 2; padding-top: clamp(5rem, 11vh, 8rem); }
+.hero h1 { max-width: 62rem; margin: 0; font-size: clamp(3.8rem, 11vw, 9rem); line-height: .78; letter-spacing: -.08em; text-transform: uppercase; }
+.hero__word { display: inline-block; min-width: 5.2ch; color: var(--coral); }
+.hero p { max-width: 29rem; margin: 1.75rem 0 0; color: var(--text-muted-dark); font-size: .95rem; line-height: 1.55; }
+.hero__scroll { position: absolute; right: var(--page-pad); bottom: 1.75rem; color: #77747d; font: 800 .55rem/1 ui-monospace, monospace; letter-spacing: .12em; writing-mode: vertical-rl; }
+
+.about { min-height: 840px; background: var(--paper); color: var(--ink); }
+.about__copy { position: relative; z-index: 8; width: 52%; padding-top: clamp(4rem, 9vh, 6rem); }
+.eyebrow { display: flex; align-items: center; gap: .65rem; font: 900 .65rem/1 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.eyebrow::before { content: ''; width: 35px; height: 2px; background: var(--coral); }
+.about h2 { margin: 1.25rem 0; font-size: clamp(4.1rem, 9vw, 7.5rem); line-height: .82; letter-spacing: -.08em; }
+.about h2 span { display: block; color: var(--coral); }
+.about__copy > p:last-child { max-width: 29rem; color: var(--text-muted-light); font-size: .95rem; line-height: 1.55; }
+.about__portrait { position: absolute; right: 2%; bottom: 0; width: 47%; height: min(720px, 82svh); overflow: hidden; clip-path: polygon(12% 0,100% 0,100% 100%,0 100%,0 12%); background: #d2cfca; }
+.about__portrait img { width: 100%; height: 100%; color: transparent; font-size: 0; object-fit: cover; object-position: center top; filter: grayscale(1) contrast(1.08); }
+.about__scribble { position: absolute; right: 0; bottom: 0; z-index: 4; width: 52%; height: 740px; pointer-events: none; }
+.about__scribble path { fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.scribble--coral { stroke: var(--coral); }
+.scribble--blue { stroke: var(--blue); }
+.about__facts { position: absolute; left: var(--page-pad); bottom: 2rem; z-index: 9; width: 45%; border-top: 1px solid #aaa69f; }
+.about__facts p { display: grid; grid-template-columns: 2.7rem 1fr; margin: 0; padding: .8rem 0; border-bottom: 1px solid #cec9c0; font-size: .82rem; }
+.about__facts b { color: var(--blue); font: 900 .65rem/1.5 ui-monospace, monospace; }
+.about__facts small { display: block; margin-top: .2rem; color: #77736b; font-size: .65rem; }
+
+.process em { display: block; margin-bottom: 2rem; color: var(--coral); font: 900 .7rem/1 ui-monospace, monospace; font-style: normal; }
+.process h2 { margin: 0; font-size: .95rem; }
+.process p { margin: .45rem 0 0; color: #77747d; font: 700 .6rem/1.4 ui-monospace, monospace; }
+
+.case { min-height: 720px; }
+.case__copy { position: relative; z-index: 5; padding-top: clamp(5rem, 12vh, 7.5rem); }
+.case__title { display: flex; max-width: 46rem; align-items: center; gap: .7rem; margin: 0 0 1.15rem; font: 900 clamp(.72rem, 1vw, .9rem)/1 ui-monospace, monospace; letter-spacing: .09em; text-transform: uppercase; }
+.case__title::before { content: ''; flex: 0 0 2.2rem; height: 2px; background: currentColor; }
+.case__headline { max-width: 46rem; margin: 0 0 1.1rem; font-size: clamp(4rem, 9vw, 7.6rem); font-weight: 900; line-height: .79; letter-spacing: -.075em; }
+.case__accent { display: block; }
+.case__headline + p { max-width: 25rem; font-size: .9rem; line-height: 1.55; }
+.case__label { display: inline-flex; margin-top: .8rem; padding: .7rem .85rem; border: 1px solid currentColor; font: 900 .6rem/1 ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; }
+.case--doner { background: var(--doner-paper); color: var(--ink); }
+.case--doner .case__headline { font-family: Georgia, serif; font-style: italic; font-weight: 500; }
+.case--doner .case__accent { color: var(--doner-red); font-family: Arial, sans-serif; font-size: .68em; font-style: normal; font-weight: 900; text-transform: uppercase; }
+.doner-poster { position: absolute; right: 7%; top: 75px; width: 31%; height: 460px; border: 2px solid var(--ink); background: var(--doner-red); box-shadow: 14px 14px 0 var(--ink); color: #fff; transform: rotate(3deg); }
+.doner-poster b { position: absolute; left: 1.35rem; top: 1.5rem; font: 900 clamp(2rem, 4vw, 3.4rem)/.82 Arial, sans-serif; letter-spacing: -.06em; }
+.doner-poster small { position: absolute; left: 1.35rem; bottom: 1.35rem; padding: .5rem; background: var(--doner-paper); color: var(--ink); font: 900 .5rem/1 ui-monospace, monospace; }
+
+.case--school { background: var(--blue); color: #f7f3e9; }
+.case--school .case__headline { text-transform: uppercase; }
+.case--school .case__accent { color: var(--yellow); }
+.case--school .case__label { border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); box-shadow: 6px 6px 0 var(--ink); }
+.school-road { position: absolute; right: -70px; top: 30px; width: 500px; height: 500px; border: 50px solid #f7f3e9; border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(20deg); }
+.school-road::after { content: ''; position: absolute; inset: -32px; border: 4px dashed var(--blue); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; }
+.school-sign { position: absolute; right: 95px; bottom: 72px; display: grid; width: 102px; height: 102px; place-items: center; border: 5px solid var(--ink); border-radius: 50%; background: var(--yellow); color: var(--ink); font: 900 .75rem/1.1 ui-monospace, monospace; text-align: center; transform: rotate(7deg); }
+
+.case--telegram { background: var(--mint); color: var(--ink); }
+.case--telegram .case__accent { color: #2476f2; }
+.bot-phone { position: absolute; right: 8%; top: 55px; width: 275px; height: 470px; padding: 4.5rem 1rem 1rem; border: 3px solid var(--ink); border-radius: 40px; background: #2476f2; box-shadow: 13px 13px 0 var(--ink); transform: rotate(-2deg); }
+.bot-phone::before { content: ''; position: absolute; left: 50%; top: 1.5rem; width: 64px; height: 9px; border-radius: 999px; background: var(--ink); transform: translateX(-50%); }
+.bot-phone i { display: block; margin: .75rem 0; padding: .85rem .75rem; border: 2px solid var(--ink); border-radius: 15px; background: #fff; color: var(--ink); font: 900 .65rem/1.3 ui-monospace, monospace; font-style: normal; }
+.bot-phone i:nth-child(2) { margin-left: 1.8rem; background: var(--yellow); }
+.bot-phone i:nth-child(3) { margin-right: 1.25rem; background: #ff846e; }
+
+.contact { min-height: 700px; background: var(--coral); color: var(--ink); }
+.contact h2 { position: relative; z-index: 2; max-width: 70rem; margin: clamp(5rem, 12vh, 7rem) 0 1.25rem; font: 900 clamp(4.8rem, 13vw, 10.5rem)/.73 Impact, 'Arial Narrow Bold', Arial, sans-serif; letter-spacing: -.035em; text-transform: uppercase; }
+.contact h2 span { display: inline-block; padding: 0 .08em; background: var(--ink); color: var(--coral); transform: rotate(-1deg); }
+.contact > p { max-width: 27rem; font-size: .95rem; line-height: 1.5; }
+.button--contact { border: 2px solid var(--ink); border-radius: 0; background: #fff; box-shadow: 7px 7px 0 var(--ink); }
+.contact__handle { position: absolute; right: var(--page-pad); bottom: 1.8rem; color: #d73524; font: 900 clamp(3.4rem, 10vw, 8rem)/.8 Arial, sans-serif; letter-spacing: -.075em; text-transform: uppercase; }
+
+@media (max-width: 700px) {
+  .hero h1 { font-size: clamp(3.65rem, 17vw, 5.2rem); }
+  .hero p { max-width: 86%; }
+  .about { min-height: 970px; }
+  .about__copy { width: 100%; padding-top: 3rem; }
+  .about h2 { font-size: clamp(4rem, 18vw, 5.4rem); }
+  .about__portrait { right: -23%; bottom: 218px; width: 98%; height: 535px; opacity: .74; }
+  .about__scribble { right: -22%; bottom: 210px; width: 112%; height: 555px; }
+  .about__facts { left: 22px; right: 22px; bottom: 18px; width: auto; }
+  .about__facts p { background: rgb(241 238 230 / .88); }
+  .case__headline + p { max-width: 72%; }
+  .doner-poster { right: -70px; top: 390px; width: 61%; height: 300px; opacity: .48; }
+  .school-road { right: -210px; top: 115px; opacity: .4; }
+  .school-sign { right: 25px; }
+  .bot-phone { right: -90px; top: 185px; opacity: .5; }
+  .contact h2 { font-size: clamp(4.8rem, 21vw, 6.3rem); }
+  .contact > p { max-width: 82%; }
+}
