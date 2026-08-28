@@ -3,6 +3,24 @@ import { siteContent } from '../content/siteContent.ts';
 import { applyMetadata, renderMetadataMarkup } from './applyMetadata.ts';
 
 const description = 'Илья лично проектирует и разрабатывает современные сайты для бизнеса — от идеи до запуска.';
+const ownedMetadataSelectors = [
+  'title',
+  'meta[name="description"]',
+  'meta[property="og:title"]',
+  'meta[property="og:description"]',
+  'meta[property="og:type"]',
+  'meta[property="og:locale"]',
+  'meta[property="og:image"]',
+  'meta[property="og:image:width"]',
+  'meta[property="og:image:height"]',
+  'meta[property="og:image:alt"]',
+  'meta[name="twitter:card"]',
+  'meta[name="twitter:title"]',
+  'meta[name="twitter:description"]',
+  'meta[name="twitter:image"]',
+  'link[rel="icon"]',
+  'script[data-seo-person-jsonld]',
+] as const;
 
 describe('portfolio metadata', () => {
   beforeEach(() => {
@@ -45,11 +63,9 @@ describe('portfolio metadata', () => {
     applyMetadata(document, siteContent);
     applyMetadata(document, siteContent);
 
-    expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1);
-    expect(document.querySelectorAll('meta[property="og:title"]')).toHaveLength(1);
-    expect(document.querySelectorAll('meta[name="twitter:card"]')).toHaveLength(1);
-    expect(document.querySelectorAll('link[rel="icon"]')).toHaveLength(1);
-    expect(document.querySelectorAll('script[data-seo-person-jsonld]')).toHaveLength(1);
+    for (const selector of ownedMetadataSelectors) expect(document.head.querySelectorAll(selector)).toHaveLength(1);
+    expect(document.head.querySelectorAll('link[rel="canonical"]')).toHaveLength(0);
+    expect(document.head.querySelectorAll('meta[property="og:url"]')).toHaveLength(0);
   });
 
   it('renders crawler-visible relative social metadata with one Person JSON-LD block', () => {
