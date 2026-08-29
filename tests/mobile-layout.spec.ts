@@ -162,27 +162,7 @@ test('mobile About stays in compact normal flow', async ({ page }) => {
   expect(metrics.factsBottom).toBeLessThanOrEqual(metrics.aboutBottom + .5);
 });
 
-test('Doner is a compact mobile-only phone composition', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  const scene = page.locator('[data-scene="pivnoy-doner"]');
-  const geometry = await projectGeometry(page, 'pivnoy-doner');
-  const phone = scene.locator('[data-project-shot="mobile"]');
-  await expect(phone).toBeVisible();
-  await expect(scene.locator('[data-project-shot="desktop"]')).toBeHidden();
-  await expect(scene.locator('[data-project-shot]:visible')).toHaveCount(1);
-  const angle = await phone.evaluate((shot) => {
-    const matrix = new DOMMatrixReadOnly(getComputedStyle(shot).transform);
-    return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
-  });
-  expect(geometry.copy.right).toBeLessThanOrEqual(geometry.media.left);
-  expect(Math.abs((geometry.copy.top + geometry.copy.height / 2) - (geometry.media.top + geometry.media.height / 2))).toBeLessThan(90);
-  expect(geometry.media.height / geometry.chapter.height).toBeGreaterThan(.6);
-  expect(angle).toBeGreaterThan(0);
-});
-
-test('Doner phone stays inside its chapter at every compact width', async ({ page }) => {
+test('Doner is one large right-aligned phone at every compact width', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 
   for (const viewport of [
@@ -195,14 +175,49 @@ test('Doner phone stays inside its chapter at every compact width', async ({ pag
 
     const scene = page.locator('[data-scene="pivnoy-doner"]');
     const phone = scene.locator('[data-project-shot="mobile"]');
-    const [sceneBox, phoneBox] = await Promise.all([scene.boundingBox(), phone.boundingBox()]);
+    await expect(phone).toBeVisible();
+    await expect(scene.locator('[data-project-shot="desktop"]')).toBeHidden();
+    await expect(scene.locator('[data-project-shot]:visible')).toHaveCount(1);
 
-    expect(sceneBox, `${viewport.width}px Doner chapter`).not.toBeNull();
-    expect(phoneBox, `${viewport.width}px Doner phone`).not.toBeNull();
-    expect(phoneBox!.x, `${viewport.width}px Doner phone left`).toBeGreaterThanOrEqual(sceneBox!.x - .5);
-    expect(phoneBox!.y, `${viewport.width}px Doner phone top`).toBeGreaterThanOrEqual(sceneBox!.y - .5);
-    expect(phoneBox!.x + phoneBox!.width, `${viewport.width}px Doner phone right`).toBeLessThanOrEqual(sceneBox!.x + sceneBox!.width + .5);
-    expect(phoneBox!.y + phoneBox!.height, `${viewport.width}px Doner phone bottom`).toBeLessThanOrEqual(sceneBox!.y + sceneBox!.height + .5);
+    const geometry = await scene.evaluate((element) => {
+      const chapter = element.getBoundingClientRect();
+      const copy = element.querySelector<HTMLElement>('.case__copy')!.getBoundingClientRect();
+      const media = element.querySelector<HTMLElement>('[data-project-media]')!.getBoundingClientRect();
+      const phone = element.querySelector<HTMLElement>('[data-project-shot="mobile"]')!;
+      const phoneBounds = phone.getBoundingClientRect();
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(phone).transform);
+      const overlapWidth = Math.max(0, Math.min(copy.right, phoneBounds.right) - Math.max(copy.left, phoneBounds.left));
+      const overlapHeight = Math.max(0, Math.min(copy.bottom, phoneBounds.bottom) - Math.max(copy.top, phoneBounds.top));
+      return {
+        chapter: { left: chapter.left, top: chapter.top, right: chapter.right, bottom: chapter.bottom },
+        copy: { right: copy.right },
+        media: { right: media.right, width: media.width, height: media.height },
+        phone: {
+          left: phoneBounds.left,
+          top: phoneBounds.top,
+          right: phoneBounds.right,
+          bottom: phoneBounds.bottom,
+          width: phoneBounds.width,
+          height: phoneBounds.height,
+        },
+        angle: Math.atan2(matrix.b, matrix.a) * 180 / Math.PI,
+        overlapArea: overlapWidth * overlapHeight,
+      };
+    });
+
+    expect(geometry.angle, `${viewport.width}px Doner phone angle`).toBeGreaterThan(0);
+    expect(geometry.overlapArea, `${viewport.width}px Doner copy/phone overlap`).toBe(0);
+    expect(geometry.copy.right, `${viewport.width}px Doner horizontal separation`).toBeLessThanOrEqual(geometry.phone.left + .5);
+    expect(geometry.phone.left, `${viewport.width}px Doner phone left`).toBeGreaterThanOrEqual(geometry.chapter.left - .5);
+    expect(geometry.phone.top, `${viewport.width}px Doner phone top`).toBeGreaterThanOrEqual(geometry.chapter.top - .5);
+    expect(geometry.phone.right, `${viewport.width}px Doner phone right`).toBeLessThanOrEqual(geometry.chapter.right + .5);
+    expect(geometry.phone.bottom, `${viewport.width}px Doner phone bottom`).toBeLessThanOrEqual(geometry.chapter.bottom + .5);
+    expect(
+      geometry.phone.width * geometry.phone.height / (geometry.media.width * geometry.media.height),
+      `${viewport.width}px Doner phone media occupancy`,
+    ).toBeGreaterThan(.45);
+    expect(geometry.phone.height / geometry.media.height, `${viewport.width}px Doner phone media height`).toBeGreaterThan(.9);
+    expect(Math.abs(geometry.phone.right - geometry.media.right), `${viewport.width}px Doner right alignment`).toBeLessThanOrEqual(4);
   }
 });
 
@@ -263,19 +278,43 @@ test('School phone stays inside its chapter at every compact width', async ({ pa
   }
 });
 
-test('Shaurma headline wraps as two meaningful lines without changing its phone structure', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  const scene = page.locator('[data-scene="shaurma-mobile"]');
-  await expect(scene.locator('[data-project-shot]')).toHaveCount(1);
-  const lineCounts = await scene.locator('.case__headline').evaluate((headline) => {
-    const first = document.createRange();
-    first.selectNodeContents(headline.firstChild!);
-    const accent = document.createRange();
-    accent.selectNodeContents(headline.querySelector('.case__accent')!);
-    return { first: first.getClientRects().length, accent: accent.getClientRects().length };
-  });
-  expect(lineCounts).toEqual({ first: 1, accent: 1 });
+test('Shaurma keeps two semantic headline runs clear of its authored phone', async ({ page }) => {
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 700, height: 900 },
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const scene = page.locator('[data-scene="shaurma-mobile"]');
+    const phone = scene.locator('[data-project-shot="mobile"]');
+    await expect(scene.locator('[data-project-shot]')).toHaveCount(1);
+    await expect(phone).toBeVisible();
+
+    const presentation = await scene.evaluate((element) => {
+      const copy = element.querySelector<HTMLElement>('.case__copy')!.getBoundingClientRect();
+      const phone = element.querySelector<HTMLElement>('[data-project-shot="mobile"]')!;
+      const phoneBounds = phone.getBoundingClientRect();
+      const headline = element.querySelector<HTMLElement>('.case__headline')!;
+      const first = document.createRange();
+      first.selectNodeContents(headline.firstChild!);
+      const accent = document.createRange();
+      accent.selectNodeContents(headline.querySelector('.case__accent')!);
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(phone).transform);
+      const overlapWidth = Math.max(0, Math.min(copy.right, phoneBounds.right) - Math.max(copy.left, phoneBounds.left));
+      const overlapHeight = Math.max(0, Math.min(copy.bottom, phoneBounds.bottom) - Math.max(copy.top, phoneBounds.top));
+      return {
+        lines: { first: first.getClientRects().length, accent: accent.getClientRects().length },
+        angle: Math.atan2(matrix.b, matrix.a) * 180 / Math.PI,
+        overlapArea: overlapWidth * overlapHeight,
+      };
+    });
+
+    expect(presentation.lines, `${viewport.width}px Shaurma semantic runs`).toEqual({ first: 1, accent: 1 });
+    expect(presentation.angle, `${viewport.width}px Shaurma authored angle`).toBeCloseTo(-1.5, 1);
+    expect(presentation.overlapArea, `${viewport.width}px Shaurma copy/phone overlap`).toBe(0);
+  }
 });
 
 test('School to Shaurma running text uses the requested black strip', async ({ page }) => {
