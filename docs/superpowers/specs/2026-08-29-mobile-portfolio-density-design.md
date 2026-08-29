@@ -46,9 +46,9 @@ Implementation must not add or change mobile rules targeting `.case--telegram`, 
 ### Pivnoy Doner
 
 - Copy is vertically centered in the left column.
-- Desktop and phone proofs share the right column as a compact layered composition.
-- The desktop proof has a subtle negative rotation; the phone has a subtle positive rotation and appears in front.
-- Both device bottoms remain visible and the phone is lifted to eliminate the previous large beige void.
+- Only the mobile proof is visible on phone widths; the desktop proof remains in the DOM and remains visible at `701px` and above.
+- The phone is large in the right column with a subtle positive rotation, matching the successful mobile composition used for Driving School.
+- The complete phone remains inside the chapter and its bottom stays visible without recreating the previous large beige void.
 - The headline is reduced enough that `Из локального места` never overlaps either proof.
 - The existing project action remains a visible, styled, at-least-`44px` target.
 
@@ -85,7 +85,7 @@ Implementation must not add or change mobile rules targeting `.case--telegram`, 
 
 - New Playwright expectations are written and observed failing before production CSS changes.
 - Verify at `390×844`, `360×800`, `700×900`, `701×900`, and `1440×900`.
-- At `390×844`, verify intentional hero height and centering, compact About flow, Doner non-overlap/density, School mobile-only proof and action, Shaurma meaningful wrapping, and no horizontal overflow.
+- At `390×844`, verify intentional hero height and centering, compact About flow, Doner mobile-only non-overlapping composition, School mobile-only proof and action, Shaurma meaningful wrapping, and no horizontal overflow.
 - Characterize and preserve the Telegram chapter's mobile computed presentation before the redesign.
 - At `701px` and `1440px`, verify both Driving School proofs remain visible and existing desktop hierarchy still passes.
 - Run unit tests, type checking, production build, complete Playwright suite, SEO verifier, and Lighthouse through the existing `npm run check` workflow.

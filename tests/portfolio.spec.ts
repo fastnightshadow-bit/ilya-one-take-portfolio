@@ -142,8 +142,10 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
       await expect(image).toHaveAttribute('decoding', 'async');
       await expect(shot.locator('source')).toHaveCount(2);
 
-      const isHiddenSchoolDesktop = project.id === 'driving-school' && expectedShot.role === 'desktop' && viewportWidth <= 700;
-      if (isHiddenSchoolDesktop) {
+      const isHiddenCompactDesktop = (
+        project.id === 'pivnoy-doner' || project.id === 'driving-school'
+      ) && expectedShot.role === 'desktop' && viewportWidth <= 700;
+      if (isHiddenCompactDesktop) {
         const projectAssetPath = `./assets/projects/${project.id}-${expectedShot.role}`;
         const sources = shot.locator('source');
         await expect(image).toHaveAttribute('src', `${projectAssetPath}-1280.jpg`);

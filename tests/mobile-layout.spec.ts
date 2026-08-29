@@ -162,21 +162,61 @@ test('mobile About stays in compact normal flow', async ({ page }) => {
   expect(metrics.factsBottom).toBeLessThanOrEqual(metrics.aboutBottom + .5);
 });
 
-test('Doner is a compact non-overlapping angled composition on phones', async ({ page }) => {
+test('Doner is a compact mobile-only phone composition', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const scene = page.locator('[data-scene="pivnoy-doner"]');
   const geometry = await projectGeometry(page, 'pivnoy-doner');
-  const angles = await scene.locator('[data-project-shot]').evaluateAll((shots) => shots.map((shot) => {
+  const phone = scene.locator('[data-project-shot="mobile"]');
+  await expect(phone).toBeVisible();
+  await expect(scene.locator('[data-project-shot="desktop"]')).toBeHidden();
+  await expect(scene.locator('[data-project-shot]:visible')).toHaveCount(1);
+  const angle = await phone.evaluate((shot) => {
     const matrix = new DOMMatrixReadOnly(getComputedStyle(shot).transform);
     return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
-  }));
+  });
   expect(geometry.copy.right).toBeLessThanOrEqual(geometry.media.left);
   expect(Math.abs((geometry.copy.top + geometry.copy.height / 2) - (geometry.media.top + geometry.media.height / 2))).toBeLessThan(90);
   expect(geometry.media.height / geometry.chapter.height).toBeGreaterThan(.6);
-  expect(angles[0]).toBeLessThan(0);
-  expect(angles[1]).toBeGreaterThan(0);
+  expect(angle).toBeGreaterThan(0);
+});
+
+test('Doner phone stays inside its chapter at every compact width', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 700, height: 900 },
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const scene = page.locator('[data-scene="pivnoy-doner"]');
+    const phone = scene.locator('[data-project-shot="mobile"]');
+    const [sceneBox, phoneBox] = await Promise.all([scene.boundingBox(), phone.boundingBox()]);
+
+    expect(sceneBox, `${viewport.width}px Doner chapter`).not.toBeNull();
+    expect(phoneBox, `${viewport.width}px Doner phone`).not.toBeNull();
+    expect(phoneBox!.x, `${viewport.width}px Doner phone left`).toBeGreaterThanOrEqual(sceneBox!.x - .5);
+    expect(phoneBox!.y, `${viewport.width}px Doner phone top`).toBeGreaterThanOrEqual(sceneBox!.y - .5);
+    expect(phoneBox!.x + phoneBox!.width, `${viewport.width}px Doner phone right`).toBeLessThanOrEqual(sceneBox!.x + sceneBox!.width + .5);
+    expect(phoneBox!.y + phoneBox!.height, `${viewport.width}px Doner phone bottom`).toBeLessThanOrEqual(sceneBox!.y + sceneBox!.height + .5);
+  }
+});
+
+test('Doner desktop proof returns above the compact breakpoint', async ({ page }) => {
+  for (const viewport of [
+    { width: 701, height: 900 },
+    { width: 1440, height: 900 },
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    const scene = page.locator('[data-scene="pivnoy-doner"]');
+    await expect(scene.locator('[data-project-shot="desktop"]')).toBeVisible();
+    await expect(scene.locator('[data-project-shot="mobile"]')).toBeVisible();
+  }
 });
 
 test('School shows one tilted phone beside centered copy and a styled action', async ({ page }) => {

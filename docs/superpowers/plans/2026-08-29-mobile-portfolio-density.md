@@ -198,15 +198,17 @@ test('Doner is a compact non-overlapping angled composition on phones', async ({
   await page.goto('/');
   const scene = page.locator('[data-scene="pivnoy-doner"]');
   const geometry = await projectGeometry(page, 'pivnoy-doner');
-  const angles = await scene.locator('[data-project-shot]').evaluateAll((shots) => shots.map((shot) => {
+  const phone = scene.locator('[data-project-shot="mobile"]');
+  await expect(phone).toBeVisible();
+  await expect(scene.locator('[data-project-shot="desktop"]')).toBeHidden();
+  const angle = await phone.evaluate((shot) => {
     const matrix = new DOMMatrixReadOnly(getComputedStyle(shot).transform);
     return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
-  }));
+  });
   expect(geometry.copy.right).toBeLessThanOrEqual(geometry.media.left);
   expect(Math.abs((geometry.copy.top + geometry.copy.height / 2) - (geometry.media.top + geometry.media.height / 2))).toBeLessThan(90);
   expect(geometry.media.height / geometry.chapter.height).toBeGreaterThan(.6);
-  expect(angles[0]).toBeLessThan(0);
-  expect(angles[1]).toBeGreaterThan(0);
+  expect(angle).toBeGreaterThan(0);
 });
 
 test('School shows one tilted phone beside centered copy and a styled action', async ({ page }) => {
@@ -249,7 +251,7 @@ test('School to Shaurma running text uses the requested black strip', async ({ p
 
 - [ ] **Step 3: Update existing School proof expectations for mobile**
 
-In `expectRealProjectProofs`, branch only the School desktop shot at `viewportWidth <= 700`: keep its DOM, source, alt, loading, and decoding checks, assert it is hidden, and skip image-loaded, visible-box, and intersection checks for that one hidden proof. In `AutoSchool keeps its mobile proof visually primary`, assert the secondary proof is hidden for widths `<=700` and retain the existing visual-area hierarchy assertions from `701px` upward.
+In `expectRealProjectProofs`, branch the Doner and School desktop shots at `viewportWidth <= 700`: keep their DOM, source, alt, loading, and decoding checks, assert they are hidden, and skip image-loaded, visible-box, and intersection checks only for those hidden proofs. In `AutoSchool keeps its mobile proof visually primary`, assert the secondary proof is hidden for widths `<=700` and retain the existing visual-area hierarchy assertions from `701px` upward.
 
 - [ ] **Step 4: Run the focused suite and verify RED**
 
@@ -371,18 +373,14 @@ git commit -m "feat: tighten mobile opening chapters"
     padding: 0;
   }
   [data-scene="pivnoy-doner"] [data-project-shot="desktop"] {
-    position: absolute;
-    right: 0;
-    top: 3.25rem;
-    width: 106%;
-    transform: rotate(-3deg);
+    display: none;
   }
   [data-scene="pivnoy-doner"] [data-project-shot="mobile"] {
     position: absolute;
-    right: 0;
+    right: .35rem;
     top: 0;
     z-index: 2;
-    width: 56%;
+    width: min(calc(100% - .7rem), 10rem);
     transform: rotate(3deg);
   }
 }
