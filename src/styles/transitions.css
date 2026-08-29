@@ -24,7 +24,7 @@
 .bridge--route {
   border-color: rgb(255 255 255 / .25);
   background: var(--blue);
-  color: var(--paper);
+  color: #f7f3e9;
 }
 
 .bridge--mobile {

@@ -58,6 +58,8 @@ const schoolHierarchyViewports = [
 
 const transitionViewports = [
   { width: 390, height: 844 },
+  { width: 700, height: 900 },
+  { width: 701, height: 900 },
   { width: 1440, height: 900 },
 ] as const;
 
@@ -77,6 +79,15 @@ const tickerTracks = [
   'ROAD → MOBILE → MENU → ORDER → ROAD → MOBILE → MENU → ORDER',
   'WEB → CHAT → CATALOG → SHOP → WEB → CHAT → CATALOG → SHOP',
   'DESIGN × CODE × BUSINESS → DESIGN × CODE × BUSINESS',
+] as const;
+
+const tickerColors = [
+  { background: 'rgb(17, 17, 22)', foreground: 'rgb(241, 238, 230)' },
+  { background: 'rgb(17, 17, 22)', foreground: 'rgb(241, 238, 230)' },
+  { background: 'rgb(56, 91, 245)', foreground: 'rgb(247, 243, 233)' },
+  { background: 'rgb(255, 180, 56)', foreground: 'rgb(12, 12, 16)' },
+  { background: 'rgb(213, 240, 235)', foreground: 'rgb(12, 12, 16)' },
+  { background: 'rgb(17, 17, 22)', foreground: 'rgb(255, 85, 61)' },
 ] as const;
 
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
@@ -223,6 +234,8 @@ test('all handoffs are exact compact a14 running-text strips', async ({ page }) 
         const track = element.querySelector<HTMLElement>('[data-transition-line]')!;
         const styles = getComputedStyle(track);
         return {
+          background: getComputedStyle(element).backgroundColor,
+          foreground: styles.color,
           height: bounds.height,
           overflow: getComputedStyle(element).overflow,
           whiteSpace: styles.whiteSpace,
@@ -230,7 +243,11 @@ test('all handoffs are exact compact a14 running-text strips', async ({ page }) 
         };
       });
 
-      expect(Math.round(metrics.height), `${viewport.width}px transition ${index + 1} height`).toBe(viewport.width === 390 ? 102 : 118);
+      expect(Math.round(metrics.height), `${viewport.width}px transition ${index + 1} height`).toBe(viewport.width <= 700 ? 102 : 118);
+      expect(
+        { background: metrics.background, foreground: metrics.foreground },
+        `${viewport.width}px transition ${index + 1} exact a14 colors`,
+      ).toEqual(tickerColors[index]);
       expect(metrics.overflow, `${viewport.width}px transition ${index + 1} clipping`).toBe('hidden');
       expect(metrics.whiteSpace, `${viewport.width}px transition ${index + 1} nowrap`).toBe('nowrap');
       expect(metrics.trackWidth, `${viewport.width}px transition ${index + 1} running track`).toBeGreaterThan(viewport.width);
