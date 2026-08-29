@@ -21,13 +21,12 @@ test('test and release scripts cover unit, script, production E2E, SEO, and Ligh
 test('production E2E serves dist on a dedicated port without reusing a dev server', async () => {
   const configUrl = new URL('../playwright.prod.config.ts', import.meta.url);
   assert.equal(existsSync(fileURLToPath(configUrl)), true, 'playwright.prod.config.ts must exist');
-  const config = (await import(configUrl.href)).default;
-  const webServer = Array.isArray(config.webServer) ? config.webServer[0] : config.webServer;
+  const config = await readFile(configUrl, 'utf8');
 
-  assert.equal(config.use.baseURL, 'http://127.0.0.1:4174');
-  assert.equal(webServer.command, 'npm run preview -- --port 4174');
-  assert.equal(webServer.port, 4174);
-  assert.equal(webServer.reuseExistingServer, false);
+  assert.match(config, /command:\s*['"]npm run preview -- --port 4174['"]/);
+  assert.match(config, /port:\s*4174/);
+  assert.match(config, /reuseExistingServer:\s*false/);
+  assert.match(config, /baseURL:\s*['"]http:\/\/127\.0\.0\.1:4174['"]/);
 });
 
 test('GitHub Pages workflow deploys a verified dist artifact from main', async () => {
