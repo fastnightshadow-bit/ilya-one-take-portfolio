@@ -52,4 +52,87 @@
 
   [data-scene="about"] .about__facts p { background: transparent; }
   [data-scene="about"] .about__facts p:last-child { grid-column: 1 / -1; }
+
+  [data-scene="pivnoy-doner"] .case__layout {
+    grid-template-columns: minmax(0, .9fr) minmax(9.5rem, 1.1fr);
+    gap: 1rem;
+    align-items: center;
+    padding-top: 2rem;
+  }
+
+  [data-scene="pivnoy-doner"] .case__headline { font-size: clamp(1.85rem, 8vw, 2.2rem); }
+  [data-scene="pivnoy-doner"] .case__headline + p { font-size: .75rem; }
+  [data-scene="pivnoy-doner"] .case__label { display: none; }
+
+  [data-scene="pivnoy-doner"] [data-project-media] {
+    position: relative;
+    display: block;
+    min-height: 20.25rem;
+    padding: 0;
+  }
+
+  [data-scene="pivnoy-doner"] [data-project-shot="desktop"] {
+    position: absolute;
+    right: 0;
+    top: 3.25rem;
+    width: 106%;
+    transform: rotate(-3deg);
+  }
+
+  [data-scene="pivnoy-doner"] [data-project-shot="mobile"] {
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 2;
+    width: 56%;
+    transform: rotate(3deg);
+  }
+
+  [data-scene="driving-school"] .case__layout {
+    grid-template-columns: minmax(0, .92fr) minmax(8.75rem, 1.08fr);
+    gap: .75rem;
+    align-items: center;
+    padding-top: 2rem;
+  }
+
+  [data-scene="driving-school"] .case__headline { font-size: clamp(1.75rem, 7.5vw, 2.05rem); }
+  [data-scene="driving-school"] .case__headline + p { font-size: .75rem; }
+  [data-scene="driving-school"] .case__label { display: none; }
+
+  [data-scene="driving-school"] [data-project-media] {
+    position: relative;
+    display: block;
+    min-height: 21rem;
+    padding: 0;
+  }
+
+  [data-scene="driving-school"] [data-project-shot="mobile"] {
+    position: absolute;
+    right: .35rem;
+    top: 0;
+    width: min(calc(100% - .7rem), 10rem);
+    transform: rotate(-2deg);
+  }
+
+  [data-scene="driving-school"] [data-project-shot="desktop"] { display: none; }
+
+  [data-scene="driving-school"] .case__action {
+    margin-top: 1rem;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  [data-scene="shaurma-mobile"] .case__copy { align-self: center; }
+
+  [data-scene="shaurma-mobile"] .case__headline {
+    font-size: clamp(1.55rem, 6.7vw, 1.85rem);
+    line-height: .92;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  [data-transition="road-to-phone"] {
+    border-color: var(--border-dark);
+    background: #111116;
+    color: var(--paper);
+  }
 }

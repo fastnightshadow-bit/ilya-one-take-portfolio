@@ -199,6 +199,30 @@ test('School shows one tilted phone beside centered copy and a styled action', a
   await expect(scene.locator('.case__action')).not.toHaveCSS('box-shadow', 'none');
 });
 
+test('School phone stays inside its chapter at every compact width', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 700, height: 900 },
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const scene = page.locator('[data-scene="driving-school"]');
+    const phone = scene.locator('[data-project-shot="mobile"]');
+    const [sceneBox, phoneBox] = await Promise.all([scene.boundingBox(), phone.boundingBox()]);
+
+    expect(sceneBox, `${viewport.width}px School chapter`).not.toBeNull();
+    expect(phoneBox, `${viewport.width}px School phone`).not.toBeNull();
+    expect(phoneBox!.x, `${viewport.width}px School phone left`).toBeGreaterThanOrEqual(sceneBox!.x - .5);
+    expect(phoneBox!.y, `${viewport.width}px School phone top`).toBeGreaterThanOrEqual(sceneBox!.y - .5);
+    expect(phoneBox!.x + phoneBox!.width, `${viewport.width}px School phone right`).toBeLessThanOrEqual(sceneBox!.x + sceneBox!.width + .5);
+    expect(phoneBox!.y + phoneBox!.height, `${viewport.width}px School phone bottom`).toBeLessThanOrEqual(sceneBox!.y + sceneBox!.height + .5);
+  }
+});
+
 test('Shaurma headline wraps as two meaningful lines without changing its phone structure', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
