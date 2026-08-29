@@ -1,5 +1,7 @@
 # Selected Story Transitions Implementation Plan
 
+**Status:** Superseded by the user's 2026-08-28 decision to restore the compact running-text bridges from `a14fd3c`. This plan remains as implementation history only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the six abstract bridge illustrations with the exact selected content-driven transition sequence, including the approved T1 clean poster takeover.

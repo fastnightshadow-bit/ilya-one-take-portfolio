@@ -1,6 +1,5 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import type { TransitionContent } from '../content/siteContent.ts';
 
 if (typeof window.matchMedia === 'function') gsap.registerPlugin(ScrollTrigger);
 
@@ -31,19 +30,6 @@ interface HandoffStep {
 
 interface HandoffConfig {
   readonly steps: readonly HandoffStep[];
-}
-
-interface TransitionArtStep {
-  readonly from: ResponsiveTween;
-  readonly to: ResponsiveTween;
-  readonly at?: number;
-  readonly exit?: { readonly to: ResponsiveTween; readonly at: number };
-}
-
-interface TransitionArtConfig {
-  readonly source: TransitionArtStep;
-  readonly target: TransitionArtStep;
-  readonly morph: TransitionArtStep;
 }
 
 export interface MotionDependencies {
@@ -100,109 +86,6 @@ const handoffConfigs: Readonly<Record<string, HandoffConfig>> = {
   },
 };
 
-const transitionArtConfigs: Readonly<Record<TransitionContent['kind'], TransitionArtConfig>> = {
-  'ticker-to-about': {
-    source: {
-      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: -38, y: -18, scale: 0.88, opacity: 0.12 }, mobile: { xPercent: -24, y: -10, scale: 0.93, opacity: 0.18 } },
-    },
-    target: {
-      from: { desktop: { xPercent: 70, scaleX: 0.08, opacity: 0 }, mobile: { xPercent: 48, scaleX: 0.16, opacity: 0 } },
-      to: { desktop: { xPercent: 0, scaleX: 1, opacity: 1 } },
-      at: 0.18,
-    },
-    morph: {
-      from: { desktop: { xPercent: 25, y: 18, scale: 0.72, opacity: 0 }, mobile: { xPercent: 16, y: 10, scale: 0.8, opacity: 0 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      at: 0.34,
-    },
-  },
-  'personal-to-poster': {
-    source: {
-      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: 82, y: -10, scale: 0.56, opacity: 0.08 }, mobile: { xPercent: 48, y: -6, scale: 0.7, opacity: 0.14 } },
-    },
-    target: {
-      from: { desktop: { xPercent: -65, y: 12, scale: 0.36, rotation: -4, opacity: 0 }, mobile: { xPercent: -38, y: 7, scale: 0.52, rotation: -2, opacity: 0 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, rotation: 0, opacity: 1 } },
-      at: 0.18,
-    },
-    morph: {
-      from: { desktop: { xPercent: -48, scaleX: 0.16, scaleY: 0.5, opacity: 0.08 }, mobile: { xPercent: -28, scaleX: 0.28, scaleY: 0.66, opacity: 0.12 } },
-      to: { desktop: { xPercent: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
-      at: 0.12,
-    },
-  },
-  'clean-takeover': {
-    source: {
-      from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
-      to: { desktop: { xPercent: 240, yPercent: 5, scaleX: 7.2, scaleY: 1.55, rotation: 2, opacity: 1 }, mobile: { xPercent: 72, yPercent: 3, scaleX: 4.5, scaleY: 1.72, rotation: 1, opacity: 1 } },
-      exit: { to: { desktop: { duration: 0.16, opacity: 0 } }, at: 0.5 },
-    },
-    target: {
-      from: { desktop: { yPercent: -38, scale: 0.82, opacity: 0 }, mobile: { yPercent: -24, scale: 0.9, opacity: 0 } },
-      to: { desktop: { yPercent: 0, scale: 1, opacity: 1 } },
-      at: 0.68,
-    },
-    morph: {
-      from: { desktop: { xPercent: -72, scaleX: 0.32, scaleY: 0.82, opacity: 0 }, mobile: { xPercent: -44, scaleX: 0.42, scaleY: 0.9, opacity: 0 } },
-      to: { desktop: { xPercent: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
-      at: 0.48,
-    },
-  },
-  'road-to-phone': {
-    source: {
-      from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
-      to: { desktop: { xPercent: 170, yPercent: 16, scaleX: 0.45, scaleY: 0.72, rotation: 45, opacity: 0 }, mobile: { xPercent: 105, yPercent: 10, scaleX: 0.58, scaleY: 0.8, rotation: 32, opacity: 0 } },
-    },
-    target: {
-      from: { desktop: { xPercent: -72, y: 26, scale: 0.7, opacity: 0 }, mobile: { xPercent: -46, y: 16, scale: 0.82, opacity: 0 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      at: 0.42,
-    },
-    morph: {
-      from: { desktop: { xPercent: -135, yPercent: -8, scaleX: 0.28, scaleY: 1.7, rotation: -14, opacity: 0.12 }, mobile: { xPercent: -82, yPercent: -5, scaleX: 0.4, scaleY: 1.4, rotation: -9, opacity: 0.18 } },
-      to: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
-      at: 0.12,
-    },
-  },
-  'phone-to-telegram': {
-    source: {
-      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: 92, y: 0, scale: 0.96, opacity: 0.08 }, mobile: { xPercent: 58, scale: 0.98, opacity: 0.12 } },
-    },
-    target: {
-      from: { desktop: { xPercent: -92, y: 0, scale: 0.96, opacity: 0 }, mobile: { xPercent: -58, scale: 0.98, opacity: 0 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      at: 0.32,
-    },
-    morph: {
-      from: { desktop: { scaleX: 0.35, scaleY: 0.82, opacity: 0 }, mobile: { scaleX: 0.5, scaleY: 0.9, opacity: 0 } },
-      to: { desktop: { scaleX: 1, scaleY: 1, opacity: 1 } },
-      at: 0.12,
-    },
-  },
-  'message-to-contact': {
-    source: {
-      from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
-      to: { desktop: { xPercent: 60, yPercent: 0, scaleX: 2.5, scaleY: 3.2, opacity: 0.08 }, mobile: { xPercent: 38, scaleX: 2, scaleY: 2.5, opacity: 0.12 } },
-    },
-    target: {
-      from: { desktop: { y: 50, scale: 0.68, opacity: 0 }, mobile: { y: 28, scale: 0.8, opacity: 0 } },
-      to: { desktop: { y: 0, scale: 1, opacity: 1 } },
-      at: 0.55,
-    },
-    morph: {
-      from: { desktop: { xPercent: -70, scaleX: 0.28, opacity: 0 }, mobile: { xPercent: -44, scaleX: 0.4, opacity: 0 } },
-      to: { desktop: { xPercent: 0, scaleX: 1, opacity: 1 } },
-      at: 0.22,
-    },
-  },
-};
-
-const isTransitionKind = (value: string | undefined): value is TransitionContent['kind'] =>
-  value !== undefined && value in transitionArtConfigs;
-
 const responsiveVars = (value: ResponsiveTween, mobile: boolean): TweenVars => mobile && value.mobile
   ? { ...value.desktop, ...value.mobile }
   : value.desktop;
@@ -217,7 +100,7 @@ const findAdjacentScene = (bridge: HTMLElement, direction: 'previous' | 'next'):
 };
 
 const ownedStyleRules = [
-  { selector: '[data-scene="hero"] .hero__word, [data-transition-source], [data-transition-target], [data-transition-morph]', properties: ['opacity', 'transform'] },
+  { selector: '[data-scene="hero"] .hero__word, [data-transition-line]', properties: ['opacity', 'transform'] },
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait, [data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait img', properties: ['filter'] },
@@ -304,15 +187,11 @@ export function createMotionController(dependencies: MotionDependencies = defaul
         nextContext = dependencies.context(() => {
           try {
             root.querySelectorAll<HTMLElement>('[data-transition]').forEach((bridge) => {
-              const artSource = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-source]');
-              const artTarget = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-target]');
-              const artMorph = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-morph]');
+              const phrase = bridge.querySelector<HTMLElement>('[data-transition-line]');
               const sourceScene = findAdjacentScene(bridge, 'previous');
               const targetScene = findAdjacentScene(bridge, 'next');
               const config = targetScene ? handoffConfigs[targetScene.dataset.scene ?? ''] : undefined;
-              const kind = bridge.dataset.transition;
-              const artConfig = isTransitionKind(kind) ? transitionArtConfigs[kind] : undefined;
-              if (!artSource || !artTarget || !artMorph || !sourceScene || !targetScene || !config || !artConfig) return;
+              if (!phrase || !sourceScene || !targetScene || !config) return;
 
               const handoff = dependencies.timeline({
                 scrollTrigger: {
@@ -322,26 +201,12 @@ export function createMotionController(dependencies: MotionDependencies = defaul
                   scrub: 0.7,
                 },
               });
-              ([
-                ['source', artSource],
-                ['target', artTarget],
-                ['morph', artMorph],
-              ] as const).forEach(([layer, element]) => {
-                const tween = artConfig[layer];
-                handoff.fromTo(
-                  element,
-                  responsiveVars(tween.from, mobile),
-                  { ...responsiveVars(tween.to, mobile), ease: 'none', immediateRender: false },
-                  tween.at ?? 0,
-                );
-                if (tween.exit) {
-                  handoff.to(
-                    element,
-                    { ...responsiveVars(tween.exit.to, mobile), ease: 'none' },
-                    tween.exit.at,
-                  );
-                }
-              });
+              handoff.fromTo(
+                phrase,
+                { xPercent: mobile ? 4 : 8 },
+                { xPercent: mobile ? -6 : -12, ease: 'none', immediateRender: false },
+                0,
+              );
               config.steps.forEach((step) => {
                 if (mobile && step.desktopOnly) return;
                 const scope = step.scope === 'source' ? sourceScene : targetScene;

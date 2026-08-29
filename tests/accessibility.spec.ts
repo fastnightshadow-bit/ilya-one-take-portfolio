@@ -70,16 +70,8 @@ test('has no automatically detectable accessibility violations', async ({ page }
   expect(results.violations).toEqual([]);
 });
 
-test('message-to-contact artwork keeps readable contact-word contrast against the coral message-field', async ({ page }) => {
-  const finalTransition = page.locator('[data-transition="message-to-contact"]');
-  expect(await finalTransition.count()).toBe(1);
-  await finalTransition.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    window.scrollTo(0, window.scrollY + bounds.bottom - window.innerHeight * .18);
-  });
-  await page.waitForTimeout(250);
-
-  const contrast = await finalTransition.evaluate((transition) => {
+test('every running-text color variant keeps at least 4.5:1 contrast', async ({ page }) => {
+  const contrasts = await page.locator('[data-transition]').evaluateAll((transitions) => transitions.map((transition) => {
     const channels = (color: string) => color.match(/[\d.]+/g)?.map(Number) ?? [];
     const luminance = (values: number[]) => {
       const normalized = values.slice(0, 3).map((channel) => {
@@ -88,21 +80,25 @@ test('message-to-contact artwork keeps readable contact-word contrast against th
       });
       return .2126 * (normalized[0] ?? 0) + .7152 * (normalized[1] ?? 0) + .0722 * (normalized[2] ?? 0);
     };
-    const word = transition.querySelector<HTMLElement>('[data-transition-target="contact-word"]')!;
-    const field = transition.querySelector<HTMLElement>('[data-transition-morph="message-field"]')!;
+    const word = transition.querySelector<HTMLElement>('[data-transition-line]')!;
+    const field = transition;
     const foreground = channels(getComputedStyle(word).color);
     const background = channels(getComputedStyle(field).backgroundColor);
     const foregroundLuminance = luminance(foreground);
     const backgroundLuminance = luminance(background);
     return {
+      kind: transition.getAttribute('data-transition'),
       backgroundAlpha: background[3] ?? 1,
       ratio: (Math.max(foregroundLuminance, backgroundLuminance) + .05)
         / (Math.min(foregroundLuminance, backgroundLuminance) + .05),
     };
-  });
+  }));
 
-  expect(contrast.backgroundAlpha).toBe(1);
-  expect(contrast.ratio).toBeGreaterThanOrEqual(3);
+  expect(contrasts).toHaveLength(6);
+  for (const contrast of contrasts) {
+    expect(contrast.backgroundAlpha, `${contrast.kind} opaque background`).toBe(1);
+    expect(contrast.ratio, `${contrast.kind} contrast`).toBeGreaterThanOrEqual(4.5);
+  }
 });
 
 test('portrait promise accent keeps readable contrast against the About background', async ({ page }) => {
@@ -261,10 +257,8 @@ test('portrait and six real project screenshots expose meaningful alternatives w
   ]);
   for (const transition of await transitions.all()) {
     await expect(transition).toHaveAttribute('aria-hidden', 'true');
-    await expect(transition.locator('[data-transition-copy], .bridge__copy')).toHaveCount(0);
-    await expect(transition.locator('[data-transition-source]')).toHaveCount(1);
-    await expect(transition.locator('[data-transition-target]')).toHaveCount(1);
-    await expect(transition.locator('[data-transition-morph]')).toHaveCount(1);
+    await expect(transition.locator('[data-transition-line]')).toHaveCount(1);
+    await expect(transition.locator('[data-transition-stage], [data-transition-carrier], [data-transition-source], [data-transition-target], [data-transition-morph]')).toHaveCount(0);
     await expect(transition.locator('a, button, input, select, textarea, [tabindex]')).toHaveCount(0);
   }
   await expect(page.locator('.doner-poster, .school-road, .bot-phone, .school-sign')).toHaveCount(0);

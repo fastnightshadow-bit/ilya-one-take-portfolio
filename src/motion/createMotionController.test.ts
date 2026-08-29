@@ -3,13 +3,7 @@ import { createMotionController, type MotionDependencies } from './createMotionC
 
 const transition = (kind: string, from: string, to: string) => `
   <div data-transition="${kind}" data-transition-from="${from}" data-transition-to="${to}">
-    <div data-transition-stage>
-      <div data-transition-carrier>
-        <i data-transition-source></i>
-        <i data-transition-target></i>
-        <i data-transition-morph></i>
-      </div>
-    </div>
+    <strong data-transition-line>БЕГУЩАЯ СТРОКА → БЕГУЩАЯ СТРОКА</strong>
   </div>`;
 
 const markup = `
@@ -141,7 +135,7 @@ describe('createMotionController', () => {
     controller.destroy();
   });
 
-  it('animates the selected bridge source, target, and morph layers without requiring transition captions', () => {
+  it('scrubs every desktop ticker phrase from +8 to -12 percent', () => {
     const root = createRoot();
     const timelines: ReturnType<typeof createTimeline>[] = [];
     const controller = createMotionController({
@@ -161,7 +155,6 @@ describe('createMotionController', () => {
 
     const transitions = [...root.querySelectorAll<HTMLElement>('[data-transition]')];
     expect(transitions).toHaveLength(6);
-    expect(root.querySelectorAll('[data-transition-copy]')).toHaveLength(0);
     expect(transitions.map((transitionNode) => [
       transitionNode.dataset.transition,
       transitionNode.dataset.transitionFrom,
@@ -175,19 +168,23 @@ describe('createMotionController', () => {
       ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
     transitions.forEach((transitionNode, index) => {
-      const source = transitionNode.querySelector('[data-transition-source]');
-      const target = transitionNode.querySelector('[data-transition-target]');
-      const morph = transitionNode.querySelector('[data-transition-morph]');
+      const phrase = transitionNode.querySelector('[data-transition-line]');
       const calls = timelines[index]?.fromTo.mock.calls ?? [];
-      expect(calls.some(([animated]) => animated === source), `${transitionNode.dataset.transition} source`).toBe(true);
-      expect(calls.some(([animated]) => animated === target), `${transitionNode.dataset.transition} target`).toBe(true);
-      expect(calls.some(([animated]) => animated === morph), `${transitionNode.dataset.transition} morph`).toBe(true);
+      const phraseCall = calls.find(([animated]) => animated === phrase);
+      expect(phraseCall?.[1], `${transitionNode.dataset.transition} start`).toEqual({ xPercent: 8 });
+      expect(phraseCall?.[2], `${transitionNode.dataset.transition} end`).toMatchObject({
+        xPercent: -12,
+        ease: 'none',
+        immediateRender: false,
+      });
     });
 
     controller.destroy();
   });
 
-  it('expands the clean-takeover poster across the stage before revealing the school target', () => {
+  it('scrubs every mobile ticker phrase from +4 to -6 percent', () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
     const root = createRoot();
     const timelines: ReturnType<typeof createTimeline>[] = [];
     const controller = createMotionController({
@@ -205,30 +202,26 @@ describe('createMotionController', () => {
 
     controller.mount(root);
 
-    const bridge = root.querySelector<HTMLElement>('[data-transition="clean-takeover"]');
-    const source = bridge?.querySelector('[data-transition-source]');
-    const target = bridge?.querySelector('[data-transition-target]');
-    const calls = timelines[2]?.fromTo.mock.calls ?? [];
-    const sourceCall = calls.find(([animated]) => animated === source);
-    const targetCall = calls.find(([animated]) => animated === target);
-    const sourceExitCall = timelines[2]?.to.mock.calls.find(([animated]) => animated === source);
-    expect(sourceCall?.[2]).toMatchObject({ scaleX: expect.any(Number), scaleY: expect.any(Number), opacity: 1 });
-    expect((sourceCall?.[2] as { scaleX?: number } | undefined)?.scaleX).toBeGreaterThanOrEqual(7);
-    expect((sourceCall?.[2] as { scaleY?: number } | undefined)?.scaleY).toBeGreaterThan(1);
-    expect((sourceCall?.[2] as { xPercent?: number } | undefined)?.xPercent).toBeGreaterThanOrEqual(200);
-    expect(sourceExitCall?.[1]).toMatchObject({ duration: expect.any(Number), opacity: 0 });
-    const sourceExitEnd = (sourceExitCall?.[2] as number)
-      + ((sourceExitCall?.[1] as { duration: number }).duration);
-    expect(targetCall?.[3]).toBeGreaterThanOrEqual(sourceExitEnd);
+    [...root.querySelectorAll<HTMLElement>('[data-transition]')].forEach((transitionNode, index) => {
+      const phrase = transitionNode.querySelector('[data-transition-line]');
+      const phraseCall = timelines[index]?.fromTo.mock.calls.find(([animated]) => animated === phrase);
+      expect(phraseCall?.[1], `${transitionNode.dataset.transition} mobile start`).toEqual({ xPercent: 4 });
+      expect(phraseCall?.[2], `${transitionNode.dataset.transition} mobile end`).toMatchObject({
+        xPercent: -6,
+        ease: 'none',
+        immediateRender: false,
+      });
+    });
 
     controller.destroy();
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
   });
 
   it('tears down the previous lifecycle before a repeated mount', () => {
     const firstRoot = createRoot();
     const secondRoot = createRoot();
-    const firstLayer = firstRoot.querySelector<HTMLElement>('[data-transition-source]');
-    const secondLayer = secondRoot.querySelector<HTMLElement>('[data-transition-source]');
+    const firstLayer = firstRoot.querySelector<HTMLElement>('[data-transition-line]');
+    const secondLayer = secondRoot.querySelector<HTMLElement>('[data-transition-line]');
     firstLayer?.style.setProperty('transform', 'rotate(1deg)', 'important');
     secondLayer?.style.setProperty('opacity', '0.84', 'important');
     const reverts = [vi.fn(), vi.fn()];
@@ -268,9 +261,7 @@ describe('createMotionController', () => {
     const media = root.querySelector<HTMLElement>('[data-project-media]');
     const portrait = root.querySelector<HTMLElement>('.about__portrait img');
     const promiseLine = root.querySelector<HTMLElement>('[data-about-promise] .about__promise-line > span');
-    const transitionSource = root.querySelector<HTMLElement>('[data-transition-source]');
-    const transitionTarget = root.querySelector<HTMLElement>('[data-transition-target]');
-    const transitionMorph = root.querySelector<HTMLElement>('[data-transition-morph]');
+    const transitionPhrase = root.querySelector<HTMLElement>('[data-transition-line]');
     root.setAttribute('data-motion-ready', 'authored');
     copy?.style.setProperty('opacity', '0.72', 'important');
     copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
@@ -279,12 +270,8 @@ describe('createMotionController', () => {
     portrait?.style.setProperty('filter', 'sepia(0.2)', 'important');
     promiseLine?.style.setProperty('opacity', '0.64', 'important');
     promiseLine?.style.setProperty('transform', 'translateY(3px)', 'important');
-    transitionSource?.style.setProperty('opacity', '0.67', 'important');
-    transitionSource?.style.setProperty('transform', 'rotate(7deg)', 'important');
-    transitionTarget?.style.setProperty('opacity', '0.74', 'important');
-    transitionTarget?.style.setProperty('transform', 'scale(0.92)', 'important');
-    transitionMorph?.style.setProperty('opacity', '0.69', 'important');
-    transitionMorph?.style.setProperty('transform', 'translateY(4px)', 'important');
+    transitionPhrase?.style.setProperty('opacity', '0.67', 'important');
+    transitionPhrase?.style.setProperty('transform', 'rotate(7deg)', 'important');
     const controller = createMotionController({
       prefersReducedMotion: () => false,
       timeline: vi.fn(createTimeline),
@@ -302,12 +289,8 @@ describe('createMotionController', () => {
     portrait?.style.setProperty('filter', 'grayscale(1)');
     promiseLine?.style.setProperty('opacity', '0.1');
     promiseLine?.style.setProperty('transform', 'translateY(50px)');
-    transitionSource?.style.setProperty('opacity', '0.1');
-    transitionSource?.style.setProperty('transform', 'translateX(-40px)');
-    transitionTarget?.style.setProperty('opacity', '0.2');
-    transitionTarget?.style.setProperty('transform', 'translateX(40px)');
-    transitionMorph?.style.setProperty('opacity', '0.3');
-    transitionMorph?.style.setProperty('transform', 'translateY(40px)');
+    transitionPhrase?.style.setProperty('opacity', '0.1');
+    transitionPhrase?.style.setProperty('transform', 'translateX(-40px)');
     controller.destroy();
 
     expect(root.getAttribute('data-motion-ready')).toBe('authored');
@@ -325,18 +308,14 @@ describe('createMotionController', () => {
     expect(promiseLine?.style.getPropertyPriority('opacity')).toBe('important');
     expect(promiseLine?.style.getPropertyValue('transform')).toBe('translateY(3px)');
     expect(promiseLine?.style.getPropertyPriority('transform')).toBe('important');
-    expect(transitionSource?.style.getPropertyValue('opacity')).toBe('0.67');
-    expect(transitionSource?.style.getPropertyValue('transform')).toBe('rotate(7deg)');
-    expect(transitionTarget?.style.getPropertyValue('opacity')).toBe('0.74');
-    expect(transitionTarget?.style.getPropertyValue('transform')).toBe('scale(0.92)');
-    expect(transitionMorph?.style.getPropertyValue('opacity')).toBe('0.69');
-    expect(transitionMorph?.style.getPropertyValue('transform')).toBe('translateY(4px)');
+    expect(transitionPhrase?.style.getPropertyValue('opacity')).toBe('0.67');
+    expect(transitionPhrase?.style.getPropertyValue('transform')).toBe('rotate(7deg)');
   });
 
   it('reverts partial setup and restores authored styles when a later timeline throws', () => {
     const root = createRoot();
-    const transitionSource = root.querySelector<HTMLElement>('[data-transition-source]');
-    transitionSource?.style.setProperty('transform', 'rotate(1deg)', 'important');
+    const transitionPhrase = root.querySelector<HTMLElement>('[data-transition-line]');
+    transitionPhrase?.style.setProperty('transform', 'rotate(1deg)', 'important');
     const revert = vi.fn();
     let timelineCount = 0;
     const controller = createMotionController({
@@ -365,7 +344,7 @@ describe('createMotionController', () => {
     expect(root.hasAttribute('data-motion-ready')).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
     expect(revert).toHaveBeenCalledOnce();
-    expect(transitionSource?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
-    expect(transitionSource?.style.getPropertyPriority('transform')).toBe('important');
+    expect(transitionPhrase?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
+    expect(transitionPhrase?.style.getPropertyPriority('transform')).toBe('important');
   });
 });

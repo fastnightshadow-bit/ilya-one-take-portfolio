@@ -54,10 +54,14 @@ export type TransitionKind =
   | 'phone-to-telegram'
   | 'message-to-contact';
 
+export type TransitionVariant = 'ink' | 'route' | 'mobile' | 'chat' | 'final';
+
 export interface TransitionContent {
   readonly kind: TransitionKind;
   readonly from: SceneId;
   readonly to: SceneId;
+  readonly phrase: string;
+  readonly variant: TransitionVariant;
 }
 
 export interface SiteContent {
@@ -71,12 +75,12 @@ export interface SiteContent {
 }
 
 const transitions = [
-  { kind: 'ticker-to-about', from: 'hero', to: 'about' },
-  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner' },
-  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school' },
-  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile' },
-  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop' },
-  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact' },
+  { kind: 'ticker-to-about', from: 'hero', to: 'about', phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
+  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner', phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
+  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school', phrase: 'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
+  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile', phrase: 'ROAD → MOBILE → MENU → ORDER', variant: 'mobile' },
+  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop', phrase: 'WEB → CHAT → CATALOG → SHOP', variant: 'chat' },
+  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact', phrase: 'DESIGN × CODE × BUSINESS', variant: 'final' },
 ] as const satisfies readonly TransitionContent[];
 
 export const siteContent: SiteContent = {

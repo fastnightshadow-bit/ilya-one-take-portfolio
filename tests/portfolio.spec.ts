@@ -70,9 +70,14 @@ const selectedTransitionContract = [
   ['message-to-contact', 'telegram-shop', 'contact'],
 ] as const;
 
-const rejectedCleanTakeoverCompositions: readonly string[] = [
-  'd', 'd1', 'split-shutter', 'diagonal-split', 'horizontal-strips', '3d-flip', 'camera-fly-through',
-];
+const tickerTracks = [
+  'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ → ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ',
+  'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ → БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ',
+  'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ → ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ',
+  'ROAD → MOBILE → MENU → ORDER → ROAD → MOBILE → MENU → ORDER',
+  'WEB → CHAT → CATALOG → SHOP → WEB → CHAT → CATALOG → SHOP',
+  'DESIGN × CODE × BUSINESS → DESIGN × CODE × BUSINESS',
+] as const;
 
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
@@ -193,170 +198,69 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
 });
 
-test('selected transition handoffs expose the literal kind/from/to contract and substantial distinct visual scenes', async ({ page }) => {
+test('all handoffs are exact compact a14 running-text strips', async ({ page }) => {
   for (const viewport of transitionViewports) {
     await page.setViewportSize(viewport);
     await page.goto('/');
 
     const transitions = page.locator('[data-transition]');
     await expect(transitions).toHaveCount(6);
-    await expect(page.locator('[data-transition-copy], .bridge__copy')).toHaveCount(0);
     expect(await transitions.evaluateAll((elements) => elements.map((element) => [
       element.getAttribute('data-transition'),
       element.getAttribute('data-transition-from'),
       element.getAttribute('data-transition-to'),
     ]))).toEqual(selectedTransitionContract);
 
-    const visualSignatures: string[] = [];
+    expect(await transitions.locator('[data-transition-line]').allTextContents()).toEqual(tickerTracks);
+    await expect(page.locator('[data-transition-stage], [data-transition-carrier], [data-transition-source], [data-transition-target], [data-transition-morph]')).toHaveCount(0);
+
     for (const [index, transition] of (await transitions.all()).entries()) {
       await transition.scrollIntoViewIfNeeded();
-      await expect(transition.locator('[data-transition-stage]')).toBeVisible();
-      await expect(transition.locator('[data-transition-carrier]')).toBeVisible();
+      const track = transition.locator('[data-transition-line]');
+      await expect(track).toBeVisible();
       const metrics = await transition.evaluate((element) => {
         const bounds = element.getBoundingClientRect();
-        const stage = element.querySelector<HTMLElement>('[data-transition-stage]')!;
-        const source = element.querySelector<HTMLElement>('[data-transition-source]')!;
-        const target = element.querySelector<HTMLElement>('[data-transition-target]')!;
-        const morph = element.querySelector<HTMLElement>('[data-transition-morph]')!;
-        const stageBounds = stage.getBoundingClientRect();
-        const sourceBounds = source.getBoundingClientRect();
-        const targetBounds = target.getBoundingClientRect();
-        const morphBounds = morph.getBoundingClientRect();
-        const signature = (node: HTMLElement) => {
-          const styles = getComputedStyle(node);
-          return [styles.backgroundColor, styles.borderRadius, styles.borderTopWidth, styles.borderLeftWidth, styles.color].join('|');
-        };
+        const track = element.querySelector<HTMLElement>('[data-transition-line]')!;
+        const styles = getComputedStyle(track);
         return {
           height: bounds.height,
-          stageWidth: stageBounds.width,
-          sourceSize: sourceBounds.width * sourceBounds.height,
-          targetSize: targetBounds.width * targetBounds.height,
-          morphSize: morphBounds.width * morphBounds.height,
-          signature: [getComputedStyle(element).backgroundColor, signature(source), signature(target), signature(morph)].join('::'),
+          overflow: getComputedStyle(element).overflow,
+          whiteSpace: styles.whiteSpace,
+          trackWidth: track.getBoundingClientRect().width,
         };
       });
 
-      expect(metrics.height, `${viewport.width}px transition ${index + 1} height`).toBeGreaterThanOrEqual(viewport.height * .38);
-      expect(metrics.stageWidth, `${viewport.width}px transition ${index + 1} stage width`).toBeGreaterThanOrEqual(viewport.width * .9);
-      expect(metrics.sourceSize, `${viewport.width}px transition ${index + 1} source artwork`).toBeGreaterThan(900);
-      expect(metrics.targetSize, `${viewport.width}px transition ${index + 1} target artwork`).toBeGreaterThan(900);
-      expect(metrics.morphSize, `${viewport.width}px transition ${index + 1} morph artwork`).toBeGreaterThan(900);
-      visualSignatures.push(metrics.signature);
+      expect(Math.round(metrics.height), `${viewport.width}px transition ${index + 1} height`).toBe(viewport.width === 390 ? 102 : 118);
+      expect(metrics.overflow, `${viewport.width}px transition ${index + 1} clipping`).toBe('hidden');
+      expect(metrics.whiteSpace, `${viewport.width}px transition ${index + 1} nowrap`).toBe('nowrap');
+      expect(metrics.trackWidth, `${viewport.width}px transition ${index + 1} running track`).toBeGreaterThan(viewport.width);
     }
 
-    expect(new Set(visualSignatures).size, `${viewport.width}px distinct transition compositions`).toBe(6);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
 });
 
-test('third bridge is the approved T1 clean poster takeover rather than a rejected composition', async ({ page }) => {
-  await page.goto('/');
-  const cleanTakeover = page.locator('[data-transition]').nth(2);
-  const t1Contract = await cleanTakeover.evaluate((element) => ({
-    composition: element.getAttribute('data-transition-composition'),
-    source: element.querySelector('[data-transition-source]')?.getAttribute('data-transition-source'),
-    target: element.querySelector('[data-transition-target]')?.getAttribute('data-transition-target'),
-    morph: element.querySelector('[data-transition-morph]')?.getAttribute('data-transition-morph'),
-  }));
-  const rejectedMarkers = await cleanTakeover.evaluate((element, rejectedCompositions) => [element, ...element.querySelectorAll<HTMLElement>(
-    '[data-transition-composition], [data-transition-effect], [data-transition-mode]',
-  )].flatMap((node) => [
-    node.getAttribute('data-transition-composition'),
-    node.getAttribute('data-transition-effect'),
-    node.getAttribute('data-transition-mode'),
-  ].filter((value): value is string => value !== null && rejectedCompositions.includes(value))), rejectedCleanTakeoverCompositions);
-
-  expect(t1Contract).toEqual({
-    composition: 't1-clean-takeover',
-    source: 'doner-poster',
-    target: 'school-road',
-    morph: 'poster-takeover',
-  });
-  expect(rejectedMarkers).toEqual([]);
-});
-
-test('T1 source poster covers the full stage at takeover peak on wide production viewports', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'Wide DPR 1 geometry is covered by the desktop project');
-
-  for (const viewport of [
-    { width: 1920, height: 1080 },
-    { width: 2560, height: 1440 },
-  ] as const) {
+test('every compact ticker track scrubs left as its strip crosses the viewport', async ({ page }) => {
+  for (const viewport of transitionViewports) {
     await page.setViewportSize(viewport);
     await page.goto('/');
-    const takeover = page.locator('[data-transition="clean-takeover"]');
-    await takeover.evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      const documentTop = window.scrollY + bounds.top;
-      const start = documentTop - window.innerHeight * .9;
-      const end = documentTop + bounds.height - window.innerHeight * .2;
-      document.documentElement.style.scrollBehavior = 'auto';
-      window.scrollTo(0, start + (end - start) * .424);
-    });
-    await takeover.locator('[data-transition-source="doner-poster"]').evaluate(async (source) => {
-      const startedAt = performance.now();
-      let stableSince = startedAt;
-      let previousTransform = '';
-      while (performance.now() - startedAt < 2_500) {
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-        const transform = getComputedStyle(source).transform;
-        if (transform !== previousTransform) {
-          previousTransform = transform;
-          stableSince = performance.now();
-        } else if (performance.now() - stableSince >= 160) {
-          return;
-        }
-      }
-    });
+    await expect(page.locator('#app')).toHaveAttribute('data-motion-ready', '');
 
-    const geometry = await takeover.evaluate((element) => {
-      const stage = element.querySelector<HTMLElement>('[data-transition-stage]')!.getBoundingClientRect();
-      const source = element.querySelector<HTMLElement>('[data-transition-source="doner-poster"]')!;
-      const bounds = source.getBoundingClientRect();
-      return {
-        opacity: Number.parseFloat(getComputedStyle(source).opacity),
-        stage: { left: stage.left, top: stage.top, right: stage.right, bottom: stage.bottom },
-        source: { left: bounds.left, top: bounds.top, right: bounds.right, bottom: bounds.bottom },
-      };
-    });
-    const tolerance = 3;
+    for (const transition of await page.locator('[data-transition]').all()) {
+      const track = transition.locator('[data-transition-line]');
+      await transition.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight * .9);
+      });
+      const before = await track.evaluate((element) => element.getBoundingClientRect().left);
 
-    expect(geometry.opacity, `${viewport.width}×${viewport.height} source opacity at takeover peak`).toBeGreaterThanOrEqual(.95);
-    expect(geometry.source.left, `${viewport.width}×${viewport.height} source covers stage left`).toBeLessThanOrEqual(geometry.stage.left + tolerance);
-    expect(geometry.source.top, `${viewport.width}×${viewport.height} source covers stage top`).toBeLessThanOrEqual(geometry.stage.top + tolerance);
-    expect(geometry.source.right, `${viewport.width}×${viewport.height} source covers stage right`).toBeGreaterThanOrEqual(geometry.stage.right - tolerance);
-    expect(geometry.source.bottom, `${viewport.width}×${viewport.height} source covers stage bottom`).toBeGreaterThanOrEqual(geometry.stage.bottom - tolerance);
-  }
-});
+      await transition.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        window.scrollTo(0, window.scrollY + bounds.bottom - window.innerHeight * .2);
+      });
 
-test('every selected transition moves its source, target, and morph artwork through scroll', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  await expect(page.locator('#app')).toHaveAttribute('data-motion-ready', '');
-
-  for (const transition of await page.locator('[data-transition]').all()) {
-    const source = transition.locator('[data-transition-source]');
-    const target = transition.locator('[data-transition-target]');
-    const morph = transition.locator('[data-transition-morph]');
-    expect(await morph.count(), `${await transition.getAttribute('data-transition')} morph layer`).toBe(1);
-    await transition.evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight * .92);
-    });
-    const before = {
-      source: await source.evaluate((element) => getComputedStyle(element).transform),
-      target: await target.evaluate((element) => getComputedStyle(element).transform),
-      morph: await morph.evaluate((element) => getComputedStyle(element).transform),
-    };
-
-    await transition.evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      window.scrollTo(0, window.scrollY + bounds.top + bounds.height * .72 - window.innerHeight * .5);
-    });
-
-    await expect.poll(() => source.evaluate((element) => getComputedStyle(element).transform)).not.toBe(before.source);
-    await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).not.toBe(before.target);
-    await expect.poll(() => morph.evaluate((element) => getComputedStyle(element).transform)).not.toBe(before.morph);
+      await expect.poll(() => track.evaluate((element) => element.getBoundingClientRect().left)).toBeLessThan(before - 8);
+    }
   }
 });
 
@@ -552,7 +456,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     }
   }
 
-  const promotedLayers = await page.locator('[data-transition-source], [data-transition-target], [data-transition-morph], [data-project] .case__copy, [data-project-media], [data-about-promise] .about__promise-line > span').evaluateAll(
+  const promotedLayers = await page.locator('[data-transition-line], [data-project] .case__copy, [data-project-media], [data-about-promise] .about__promise-line > span').evaluateAll(
     (elements) => elements.filter((element) => getComputedStyle(element).willChange !== 'auto').length,
   );
   expect(promotedLayers).toBe(0);
@@ -606,24 +510,12 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   await expect(word).toHaveText(staticWord ?? '');
   await expect(page.locator('[data-github-link]')).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
   for (const transition of await page.locator('[data-transition]').all()) {
-    const source = transition.locator('[data-transition-source]');
-    const target = transition.locator('[data-transition-target]');
-    const morph = transition.locator('[data-transition-morph]');
-    await expect(source).toBeVisible();
-    await expect(target).toBeVisible();
-    expect(await morph.count(), `${await transition.getAttribute('data-transition')} reduced-motion morph layer`).toBe(1);
-    const before = [
-      await source.evaluate((element) => getComputedStyle(element).transform),
-      await target.evaluate((element) => getComputedStyle(element).transform),
-      await morph.evaluate((element) => getComputedStyle(element).transform),
-    ];
+    const track = transition.locator('[data-transition-line]');
+    await expect(track).toBeVisible();
+    const before = await track.evaluate((element) => getComputedStyle(element).transform);
     await transition.evaluate((element) => element.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(40);
-    expect([
-      await source.evaluate((element) => getComputedStyle(element).transform),
-      await target.evaluate((element) => getComputedStyle(element).transform),
-      await morph.evaluate((element) => getComputedStyle(element).transform),
-    ]).toEqual(before);
+    expect(await track.evaluate((element) => getComputedStyle(element).transform)).toBe(before);
   }
   expect(errors).toEqual([]);
 });
@@ -665,15 +557,11 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator('[data-project-media]')).toHaveCount(4);
   await expect(page.locator('[data-project-media] img')).toHaveCount(6);
   for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
-  expect(await page.locator('[data-transition-stage], [data-transition-carrier], [data-transition-source], [data-transition-target], [data-transition-morph]').count()).toBe(30);
-  await expect(page.locator('[data-transition-copy], .bridge__copy')).toHaveCount(0);
+  await expect(page.locator('[data-transition-line]')).toHaveCount(6);
+  expect(await page.locator('[data-transition-stage], [data-transition-carrier], [data-transition-source], [data-transition-target], [data-transition-morph]').count()).toBe(0);
   await expect(page.locator(`.bridge small, .about__scribble, ${oldMockups}`)).toHaveCount(0);
   for (const transition of await page.locator('[data-transition]').all()) {
-    await expect(transition.locator('[data-transition-stage]')).toBeVisible();
-    await expect(transition.locator('[data-transition-carrier]')).toBeVisible();
-    await expect(transition.locator('[data-transition-source]')).toBeVisible();
-    await expect(transition.locator('[data-transition-target]')).toBeVisible();
-    await expect(transition.locator('[data-transition-morph]')).toBeVisible();
+    await expect(transition.locator('[data-transition-line]')).toBeVisible();
   }
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);

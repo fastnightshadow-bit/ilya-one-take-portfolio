@@ -49,7 +49,7 @@ describe('siteContent', () => {
     expect(serialized).not.toMatch(/\d+%|отзыв|наград|лет опыта/i);
   });
 
-  it('defines the selected six-bridge kind/from/to story contract without legacy variants', () => {
+  it('defines the six compact ticker handoffs with the exact approved phrases', () => {
     const transitions = siteContent.transitions as ReadonlyArray<{
       kind?: string;
       from?: string;
@@ -66,7 +66,13 @@ describe('siteContent', () => {
       ['phone-to-telegram', 'shaurma-mobile', 'telegram-shop'],
       ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
-    expect(transitions.every(({ variant }) => variant === undefined)).toBe(true);
-    expect(transitions.every(({ phrase }) => phrase === undefined)).toBe(true);
+    expect(transitions.map(({ phrase, variant }) => [phrase, variant])).toEqual([
+      ['ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', 'ink'],
+      ['БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', 'ink'],
+      ['ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ', 'route'],
+      ['ROAD → MOBILE → MENU → ORDER', 'mobile'],
+      ['WEB → CHAT → CATALOG → SHOP', 'chat'],
+      ['DESIGN × CODE × BUSINESS', 'final'],
+    ]);
   });
 });

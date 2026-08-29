@@ -120,7 +120,7 @@ describe('createSite', () => {
     expect(rotatingWord?.textContent).toBe(siteContent.rotatingWords[0]);
   });
 
-  it('renders the selected six-bridge kind/from/to contract with one source, target, and morph layer each', () => {
+  it('renders six compact running-text strips without full-screen transition artwork', () => {
     const site = createSite(siteContent);
     const transitions = [...site.querySelectorAll<HTMLElement>('[data-transition]')];
 
@@ -137,14 +137,24 @@ describe('createSite', () => {
       ['phone-to-telegram', 'shaurma-mobile', 'telegram-shop'],
       ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
-    expect(site.querySelectorAll('[data-transition-stage]')).toHaveLength(6);
-    expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(6);
-    expect(site.querySelectorAll('[data-transition-copy], .bridge__copy')).toHaveLength(0);
-    for (const transition of transitions) {
-      expect(transition.querySelectorAll('[data-transition-source]')).toHaveLength(1);
-      expect(transition.querySelectorAll('[data-transition-target]')).toHaveLength(1);
-      expect(transition.querySelectorAll('[data-transition-morph]')).toHaveLength(1);
-    }
+    expect(transitions.map((transition) => transition.querySelector('[data-transition-line]')?.textContent?.trim())).toEqual([
+      'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ → ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ',
+      'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ → БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ',
+      'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ → ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ',
+      'ROAD → MOBILE → MENU → ORDER → ROAD → MOBILE → MENU → ORDER',
+      'WEB → CHAT → CATALOG → SHOP → WEB → CHAT → CATALOG → SHOP',
+      'DESIGN × CODE × BUSINESS → DESIGN × CODE × BUSINESS',
+    ]);
+    expect(transitions.map((transition) => transition.className)).toEqual([
+      'bridge bridge--ink',
+      'bridge bridge--ink',
+      'bridge bridge--route',
+      'bridge bridge--mobile',
+      'bridge bridge--chat',
+      'bridge bridge--final',
+    ]);
+    expect(site.querySelectorAll('[data-transition-line]')).toHaveLength(6);
+    expect(site.querySelectorAll('[data-transition-stage], [data-transition-carrier], [data-transition-source], [data-transition-target], [data-transition-morph]')).toHaveLength(0);
     expect(site.querySelectorAll('[data-transition-accent]')).toHaveLength(0);
     expect(site.querySelectorAll('[data-transition] a, [data-transition] button, [data-transition] [tabindex]')).toHaveLength(0);
     expect(site.querySelectorAll('[data-transition] small')).toHaveLength(0);
