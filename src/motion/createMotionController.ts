@@ -33,10 +33,17 @@ interface HandoffConfig {
   readonly steps: readonly HandoffStep[];
 }
 
+interface TransitionArtStep {
+  readonly from: ResponsiveTween;
+  readonly to: ResponsiveTween;
+  readonly at?: number;
+  readonly exit?: { readonly to: ResponsiveTween; readonly at: number };
+}
+
 interface TransitionArtConfig {
-  readonly source: { readonly from: ResponsiveTween; readonly to: ResponsiveTween };
-  readonly target: { readonly from: ResponsiveTween; readonly to: ResponsiveTween };
-  readonly accent: { readonly from: ResponsiveTween; readonly to: ResponsiveTween };
+  readonly source: TransitionArtStep;
+  readonly target: TransitionArtStep;
+  readonly morph: TransitionArtStep;
 }
 
 export interface MotionDependencies {
@@ -93,94 +100,107 @@ const handoffConfigs: Readonly<Record<string, HandoffConfig>> = {
   },
 };
 
-const transitionArtConfigs: Readonly<Record<TransitionContent['variant'], TransitionArtConfig>> = {
-  portrait: {
+const transitionArtConfigs: Readonly<Record<TransitionContent['kind'], TransitionArtConfig>> = {
+  'ticker-to-about': {
     source: {
       from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: -22, y: -14, scale: 0.74, opacity: 0.08 }, mobile: { xPercent: -13, y: -8, scale: 0.82, opacity: 0.14 } },
+      to: { desktop: { xPercent: -38, y: -18, scale: 0.88, opacity: 0.12 }, mobile: { xPercent: -24, y: -10, scale: 0.93, opacity: 0.18 } },
     },
     target: {
-      from: { desktop: { xPercent: 30, y: 30, scale: 0.62, opacity: 0.12 }, mobile: { xPercent: 18, y: 18, scale: 0.72, opacity: 0.18 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-    },
-    accent: {
-      from: { desktop: { scaleX: 0.06, opacity: 0.28 } },
-      to: { desktop: { scaleX: 1, opacity: 1 } },
-    },
-  },
-  brand: {
-    source: {
-      from: { desktop: { scaleX: 0.12, opacity: 1 } },
-      to: { desktop: { xPercent: 24, scaleX: 0.76, opacity: 0.12 }, mobile: { xPercent: 14, scaleX: 0.84, opacity: 0.18 } },
-    },
-    target: {
-      from: { desktop: { xPercent: 24, y: 32, scaleX: 0.18, scaleY: 0.18, opacity: 0.12 }, mobile: { xPercent: 14, y: 20, scaleX: 0.28, scaleY: 0.28, opacity: 0.18 } },
-      to: { desktop: { xPercent: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
-    },
-    accent: {
-      from: { desktop: { y: 30, scale: 0.52, opacity: 0.08 }, mobile: { y: 18, scale: 0.64, opacity: 0.14 } },
-      to: { desktop: { y: 0, scale: 1, opacity: 1 } },
-    },
-  },
-  route: {
-    source: {
-      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: -28, y: 18, scale: 0.72, opacity: 0.1 }, mobile: { xPercent: -17, y: 10, scale: 0.8, opacity: 0.16 } },
-    },
-    target: {
-      from: { desktop: { xPercent: 42, yPercent: -18, scaleY: 0.54, opacity: 0.14 }, mobile: { xPercent: 25, yPercent: -10, scaleY: 0.68, opacity: 0.2 } },
-      to: { desktop: { xPercent: 0, yPercent: 0, scaleY: 1, opacity: 1 } },
-    },
-    accent: {
-      from: { desktop: { y: -26, scale: 0.34, opacity: 0.08 }, mobile: { y: -16, scale: 0.5, opacity: 0.14 } },
-      to: { desktop: { y: 0, scale: 1, opacity: 1 } },
-    },
-  },
-  mobile: {
-    source: {
-      from: { desktop: { yPercent: -10, scaleY: 1, opacity: 1 } },
-      to: { desktop: { yPercent: 24, scaleY: 0.46, opacity: 0.1 }, mobile: { yPercent: 15, scaleY: 0.58, opacity: 0.16 } },
-    },
-    target: {
-      from: { desktop: { xPercent: 26, y: 36, scale: 0.58, opacity: 0.12 }, mobile: { xPercent: 16, y: 22, scale: 0.7, opacity: 0.18 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-    },
-    accent: {
-      from: { desktop: { x: -44, y: -30, opacity: 0.08 }, mobile: { x: -26, y: -18, opacity: 0.14 } },
-      to: { desktop: { x: 0, y: 0, opacity: 1 } },
-    },
-  },
-  chat: {
-    source: {
-      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: -22, y: 20, scale: 0.72, opacity: 0.1 }, mobile: { xPercent: -14, y: 12, scale: 0.8, opacity: 0.16 } },
-    },
-    target: {
-      from: { desktop: { xPercent: 30, y: 24, scale: 0.66, opacity: 0.1 }, mobile: { xPercent: 18, y: 15, scale: 0.75, opacity: 0.16 } },
-      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-    },
-    accent: {
-      from: { desktop: { y: -24, scale: 0.48, opacity: 0.06 }, mobile: { y: -14, scale: 0.6, opacity: 0.12 } },
-      to: { desktop: { y: 0, scale: 1, opacity: 1 } },
-    },
-  },
-  final: {
-    source: {
-      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
-      to: { desktop: { xPercent: -26, y: 18, scale: 0.72, opacity: 0.08 }, mobile: { xPercent: -16, y: 10, scale: 0.8, opacity: 0.14 } },
-    },
-    target: {
-      from: { desktop: { xPercent: 34, scaleX: 0.08, opacity: 0.12 }, mobile: { xPercent: 20, scaleX: 0.16, opacity: 0.18 } },
+      from: { desktop: { xPercent: 70, scaleX: 0.08, opacity: 0 }, mobile: { xPercent: 48, scaleX: 0.16, opacity: 0 } },
       to: { desktop: { xPercent: 0, scaleX: 1, opacity: 1 } },
+      at: 0.18,
     },
-    accent: {
-      from: { desktop: { x: 22, y: -32, opacity: 0.08 }, mobile: { x: 14, y: -20, opacity: 0.14 } },
-      to: { desktop: { x: 0, y: 0, opacity: 1 } },
+    morph: {
+      from: { desktop: { xPercent: 25, y: 18, scale: 0.72, opacity: 0 }, mobile: { xPercent: 16, y: 10, scale: 0.8, opacity: 0 } },
+      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
+      at: 0.34,
+    },
+  },
+  'personal-to-poster': {
+    source: {
+      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
+      to: { desktop: { xPercent: 82, y: -10, scale: 0.56, opacity: 0.08 }, mobile: { xPercent: 48, y: -6, scale: 0.7, opacity: 0.14 } },
+    },
+    target: {
+      from: { desktop: { xPercent: -65, y: 12, scale: 0.36, rotation: -4, opacity: 0 }, mobile: { xPercent: -38, y: 7, scale: 0.52, rotation: -2, opacity: 0 } },
+      to: { desktop: { xPercent: 0, y: 0, scale: 1, rotation: 0, opacity: 1 } },
+      at: 0.18,
+    },
+    morph: {
+      from: { desktop: { xPercent: -48, scaleX: 0.16, scaleY: 0.5, opacity: 0.08 }, mobile: { xPercent: -28, scaleX: 0.28, scaleY: 0.66, opacity: 0.12 } },
+      to: { desktop: { xPercent: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
+      at: 0.12,
+    },
+  },
+  'clean-takeover': {
+    source: {
+      from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
+      to: { desktop: { xPercent: 98, yPercent: 5, scaleX: 4.1, scaleY: 1.55, rotation: 2, opacity: 1 }, mobile: { xPercent: 72, yPercent: 3, scaleX: 4.5, scaleY: 1.72, rotation: 1, opacity: 1 } },
+      exit: { to: { desktop: { duration: 0.16, opacity: 0 } }, at: 0.5 },
+    },
+    target: {
+      from: { desktop: { yPercent: -38, scale: 0.82, opacity: 0 }, mobile: { yPercent: -24, scale: 0.9, opacity: 0 } },
+      to: { desktop: { yPercent: 0, scale: 1, opacity: 1 } },
+      at: 0.68,
+    },
+    morph: {
+      from: { desktop: { xPercent: -72, scaleX: 0.32, scaleY: 0.82, opacity: 0 }, mobile: { xPercent: -44, scaleX: 0.42, scaleY: 0.9, opacity: 0 } },
+      to: { desktop: { xPercent: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
+      at: 0.48,
+    },
+  },
+  'road-to-phone': {
+    source: {
+      from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
+      to: { desktop: { xPercent: 170, yPercent: 16, scaleX: 0.45, scaleY: 0.72, rotation: 45, opacity: 0 }, mobile: { xPercent: 105, yPercent: 10, scaleX: 0.58, scaleY: 0.8, rotation: 32, opacity: 0 } },
+    },
+    target: {
+      from: { desktop: { xPercent: -72, y: 26, scale: 0.7, opacity: 0 }, mobile: { xPercent: -46, y: 16, scale: 0.82, opacity: 0 } },
+      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
+      at: 0.42,
+    },
+    morph: {
+      from: { desktop: { xPercent: -135, yPercent: -8, scaleX: 0.28, scaleY: 1.7, rotation: -14, opacity: 0.12 }, mobile: { xPercent: -82, yPercent: -5, scaleX: 0.4, scaleY: 1.4, rotation: -9, opacity: 0.18 } },
+      to: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
+      at: 0.12,
+    },
+  },
+  'phone-to-telegram': {
+    source: {
+      from: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
+      to: { desktop: { xPercent: 92, y: 0, scale: 0.96, opacity: 0.08 }, mobile: { xPercent: 58, scale: 0.98, opacity: 0.12 } },
+    },
+    target: {
+      from: { desktop: { xPercent: -92, y: 0, scale: 0.96, opacity: 0 }, mobile: { xPercent: -58, scale: 0.98, opacity: 0 } },
+      to: { desktop: { xPercent: 0, y: 0, scale: 1, opacity: 1 } },
+      at: 0.32,
+    },
+    morph: {
+      from: { desktop: { scaleX: 0.35, scaleY: 0.82, opacity: 0 }, mobile: { scaleX: 0.5, scaleY: 0.9, opacity: 0 } },
+      to: { desktop: { scaleX: 1, scaleY: 1, opacity: 1 } },
+      at: 0.12,
+    },
+  },
+  'message-to-contact': {
+    source: {
+      from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, opacity: 1 } },
+      to: { desktop: { xPercent: 60, yPercent: 0, scaleX: 2.5, scaleY: 3.2, opacity: 0.08 }, mobile: { xPercent: 38, scaleX: 2, scaleY: 2.5, opacity: 0.12 } },
+    },
+    target: {
+      from: { desktop: { y: 50, scale: 0.68, opacity: 0 }, mobile: { y: 28, scale: 0.8, opacity: 0 } },
+      to: { desktop: { y: 0, scale: 1, opacity: 1 } },
+      at: 0.55,
+    },
+    morph: {
+      from: { desktop: { xPercent: -70, scaleX: 0.28, opacity: 0 }, mobile: { xPercent: -44, scaleX: 0.4, opacity: 0 } },
+      to: { desktop: { xPercent: 0, scaleX: 1, opacity: 1 } },
+      at: 0.22,
     },
   },
 };
 
-const isTransitionVariant = (value: string | undefined): value is TransitionContent['variant'] =>
+const isTransitionKind = (value: string | undefined): value is TransitionContent['kind'] =>
   value !== undefined && value in transitionArtConfigs;
 
 const responsiveVars = (value: ResponsiveTween, mobile: boolean): TweenVars => mobile && value.mobile
@@ -197,7 +217,7 @@ const findAdjacentScene = (bridge: HTMLElement, direction: 'previous' | 'next'):
 };
 
 const ownedStyleRules = [
-  { selector: '[data-scene="hero"] .hero__word, [data-transition-copy], [data-transition-source], [data-transition-target], [data-transition-accent]', properties: ['opacity', 'transform'] },
+  { selector: '[data-scene="hero"] .hero__word, [data-transition-copy], [data-transition-source], [data-transition-target], [data-transition-morph]', properties: ['opacity', 'transform'] },
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait, [data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait img', properties: ['filter'] },
@@ -287,13 +307,13 @@ export function createMotionController(dependencies: MotionDependencies = defaul
               const phrase = bridge.querySelector<HTMLElement>('[data-transition-copy]');
               const artSource = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-source]');
               const artTarget = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-target]');
-              const artAccent = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-accent]');
+              const artMorph = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-morph]');
               const sourceScene = findAdjacentScene(bridge, 'previous');
               const targetScene = findAdjacentScene(bridge, 'next');
               const config = targetScene ? handoffConfigs[targetScene.dataset.scene ?? ''] : undefined;
-              const variant = bridge.dataset.transition;
-              const artConfig = isTransitionVariant(variant) ? transitionArtConfigs[variant] : undefined;
-              if (!phrase || !artSource || !artTarget || !artAccent || !sourceScene || !targetScene || !config || !artConfig) return;
+              const kind = bridge.dataset.transition;
+              const artConfig = isTransitionKind(kind) ? transitionArtConfigs[kind] : undefined;
+              if (!phrase || !artSource || !artTarget || !artMorph || !sourceScene || !targetScene || !config || !artConfig) return;
 
               const handoff = dependencies.timeline({
                 scrollTrigger: {
@@ -312,15 +332,22 @@ export function createMotionController(dependencies: MotionDependencies = defaul
               ([
                 ['source', artSource],
                 ['target', artTarget],
-                ['accent', artAccent],
+                ['morph', artMorph],
               ] as const).forEach(([layer, element]) => {
                 const tween = artConfig[layer];
                 handoff.fromTo(
                   element,
                   responsiveVars(tween.from, mobile),
                   { ...responsiveVars(tween.to, mobile), ease: 'none', immediateRender: false },
-                  0,
+                  tween.at ?? 0,
                 );
+                if (tween.exit) {
+                  handoff.to(
+                    element,
+                    { ...responsiveVars(tween.exit.to, mobile), ease: 'none' },
+                    tween.exit.at,
+                  );
+                }
               });
               config.steps.forEach((step) => {
                 if (mobile && step.desktopOnly) return;

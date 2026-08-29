@@ -187,6 +187,42 @@ describe('createMotionController', () => {
     controller.destroy();
   });
 
+  it('expands the clean-takeover poster across the stage before revealing the school target', () => {
+    const root = createRoot();
+    const timelines: ReturnType<typeof createTimeline>[] = [];
+    const controller = createMotionController({
+      prefersReducedMotion: () => false,
+      timeline: vi.fn(() => {
+        const instance = createTimeline();
+        timelines.push(instance);
+        return instance;
+      }),
+      context: (setup) => {
+        setup();
+        return { revert: vi.fn(), add: vi.fn() };
+      },
+    });
+
+    controller.mount(root);
+
+    const bridge = root.querySelector<HTMLElement>('[data-transition="clean-takeover"]');
+    const source = bridge?.querySelector('[data-transition-source]');
+    const target = bridge?.querySelector('[data-transition-target]');
+    const calls = timelines[2]?.fromTo.mock.calls ?? [];
+    const sourceCall = calls.find(([animated]) => animated === source);
+    const targetCall = calls.find(([animated]) => animated === target);
+    const sourceExitCall = timelines[2]?.to.mock.calls.find(([animated]) => animated === source);
+    expect(sourceCall?.[2]).toMatchObject({ scaleX: expect.any(Number), scaleY: expect.any(Number), opacity: 1 });
+    expect((sourceCall?.[2] as { scaleX?: number } | undefined)?.scaleX).toBeGreaterThan(3);
+    expect((sourceCall?.[2] as { scaleY?: number } | undefined)?.scaleY).toBeGreaterThan(1);
+    expect(sourceExitCall?.[1]).toMatchObject({ duration: expect.any(Number), opacity: 0 });
+    const sourceExitEnd = (sourceExitCall?.[2] as number)
+      + ((sourceExitCall?.[1] as { duration: number }).duration);
+    expect(targetCall?.[3]).toBeGreaterThanOrEqual(sourceExitEnd);
+
+    controller.destroy();
+  });
+
   it('tears down the previous lifecycle before a repeated mount', () => {
     const firstRoot = createRoot();
     const secondRoot = createRoot();
