@@ -16,6 +16,7 @@
 .bridge__stage {
   min-width: 100%;
   overflow: hidden;
+  background: inherit;
 }
 
 .bridge__carrier {
@@ -55,11 +56,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-[data-motion-ready] .bridge__art,
-[data-motion-ready] .bridge__copy {
-  will-change: transform, opacity;
 }
 
 /* Hero → About: the working ticker yields to a light, personal plane. */
@@ -532,12 +528,5 @@
     bottom: 23%;
     width: 78%;
     font-size: clamp(4.2rem, 22vw, 5.7rem);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bridge__art,
-  .bridge__copy {
-    will-change: auto;
   }
 }
