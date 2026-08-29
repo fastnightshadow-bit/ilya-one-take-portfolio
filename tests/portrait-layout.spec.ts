@@ -93,10 +93,9 @@ test('keeps the short-landscape portrait paint layer stable after reverse scroll
     };
   });
 
-  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), sceneBounds.bottom - 12);
-  await portrait.evaluate((element) => window.scrollBy(0, element.getBoundingClientRect().bottom - 8));
-  const edgeBottom = await expect.poll(() => portrait.evaluate((element) => element.getBoundingClientRect().bottom), {
-    message: 'short-landscape portrait should leave only a small edge in the viewport',
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), sceneBounds.bottom - 8);
+  const edgeBottom = await expect.poll(() => about.evaluate((element) => element.getBoundingClientRect().bottom), {
+    message: 'short-landscape About clip should leave only a small portrait edge in the viewport',
   });
   await edgeBottom.toBeGreaterThanOrEqual(4);
   await edgeBottom.toBeLessThanOrEqual(12);

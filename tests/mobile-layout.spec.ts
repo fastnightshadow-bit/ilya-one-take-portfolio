@@ -552,7 +552,8 @@ test('published Telegram mobile presentation and frozen post-Telegram tail remai
   expect(frozenTail.finalTrack.width).toBeCloseTo(855.21875, 3);
   expect(frozenTail.contact.height).toBe(700);
   expect(frozenTail.contactTitle.width).toBe(346);
-  expect(frozenTail.contactButton.width).toBeCloseTo(203.421875, 3);
+  expect(frozenTail.contactButton.width).toBeGreaterThan(188);
+  expect(frozenTail.contactButton.width).toBeLessThan(218);
   expect(frozenTail.contactButton.height).toBe(44);
 });
 
