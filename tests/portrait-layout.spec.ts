@@ -1,5 +1,63 @@
 import { expect, test } from '@playwright/test';
 
+test('keeps the portrait visible after the real About CTA jump in short landscape', async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto('/');
+
+  await page.getByRole('link', { name: 'Смотреть дальше ↓' }).click();
+  await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('#about');
+
+  await expect.poll(() => page.locator('.about__portrait').evaluate((portrait) => {
+    const bounds = portrait.getBoundingClientRect();
+    return Math.max(0, Math.min(bounds.bottom, window.innerHeight) - Math.max(bounds.top, 0));
+  }), { message: '844×390 portrait viewport intersection' }).toBeGreaterThanOrEqual(96);
+});
+
+test('keeps at least 90% of the portrait source height visible on wide screens', async ({ page }) => {
+  for (const viewport of [
+    { width: 1920, height: 1080 },
+    { width: 2560, height: 1440 },
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const image = page.locator('.about__portrait img');
+    await image.evaluate((node) => (node as HTMLImageElement).decode());
+    const visibleSourceFraction = await image.evaluate((node: HTMLImageElement) => {
+      const bounds = node.getBoundingClientRect();
+      const coverScale = Math.max(bounds.width / node.naturalWidth, bounds.height / node.naturalHeight);
+      const renderedSourceHeight = node.naturalHeight * coverScale;
+      return Math.min(1, bounds.height / renderedSourceHeight);
+    });
+
+    expect(visibleSourceFraction, `${viewport.width}×${viewport.height} visible source height`).toBeGreaterThanOrEqual(.9);
+  }
+});
+
+test('keeps short-landscape portrait and About copy in bounds at the 701px tier', async ({ page }) => {
+  await page.setViewportSize({ width: 701, height: 390 });
+  await page.goto('/');
+
+  const geometry = await page.locator('.about').evaluate((scene) => {
+    const title = scene.querySelector('#about-title')!.getBoundingClientRect();
+    const promise = scene.querySelector('[data-about-promise]')!.getBoundingClientRect();
+    const portrait = scene.querySelector('.about__portrait')!.getBoundingClientRect();
+    return {
+      titleRight: title.right,
+      promiseRight: promise.right,
+      portraitLeft: portrait.left,
+      portraitRight: portrait.right,
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+    };
+  });
+
+  expect(geometry.titleRight, '701×390 heading should clear portrait').toBeLessThanOrEqual(geometry.portraitLeft - 12);
+  expect(geometry.promiseRight, '701×390 promise should clear portrait').toBeLessThanOrEqual(geometry.portraitLeft - 16);
+  expect(geometry.portraitRight).toBeLessThanOrEqual(geometry.viewportWidth + .5);
+  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+});
+
 test('keeps About copy clear of the portrait at supported breakpoints', async ({ page }) => {
   for (const width of [360, 390, 430]) {
     await page.setViewportSize({ width, height: 900 });

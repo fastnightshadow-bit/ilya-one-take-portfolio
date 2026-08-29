@@ -50,6 +50,20 @@ describe('createSite', () => {
     expect(githubLinks).toHaveLength(1);
   });
 
+  it('renders one non-semantic Shaurma detail without adding a semantic project image', () => {
+    const site = createSite(siteContent);
+    const details = [...site.querySelectorAll<HTMLElement>('[data-project-detail]')];
+    const shaurma = site.querySelector<HTMLElement>('[data-scene="shaurma-mobile"]');
+
+    expect(details).toHaveLength(1);
+    expect(shaurma?.querySelectorAll('[data-project-detail]')).toHaveLength(1);
+    expect(details[0]?.getAttribute('aria-hidden')).toBe('true');
+    expect(details[0]?.querySelector('img, picture')).toBeNull();
+    expect([...site.querySelectorAll('[data-project]:not([data-scene="shaurma-mobile"])')]
+      .every((project) => project.querySelector('[data-project-detail]') === null)).toBe(true);
+    expect(site.querySelectorAll('[data-project-media] img')).toHaveLength(6);
+  });
+
   it('renders all three primary contacts as safe Telegram links', () => {
     const site = createSite(siteContent);
     const links = [...site.querySelectorAll<HTMLAnchorElement>('[data-primary-cta]')];

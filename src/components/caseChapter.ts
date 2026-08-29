@@ -24,8 +24,11 @@ const projectScreenshot = (project: ProjectContent, role: 'desktop' | 'mobile', 
 
 const projectMedia = (project: ProjectContent) => {
   const presentation = project.presentation;
+  const detail = project.theme === 'mobile'
+    ? '<div class="case__detail" data-project-detail aria-hidden="true"></div>'
+    : '';
   const media = presentation.kind === 'phone'
-    ? projectScreenshot(project, 'mobile', true)
+    ? `${detail}${projectScreenshot(project, 'mobile', true)}`
     : presentation.primary === 'mobile'
       ? `${projectScreenshot(project, 'mobile', true)}${projectScreenshot(project, 'desktop', false)}`
       : `${projectScreenshot(project, 'desktop', true)}${projectScreenshot(project, 'mobile', false)}`;

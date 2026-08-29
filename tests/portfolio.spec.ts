@@ -342,6 +342,59 @@ test('real project proofs load, stay visible, and expose approved actions at 390
   }
 });
 
+test('Shaurma uses one bounded decorative detail to fill its tablet and desktop media area', async ({ page }) => {
+  for (const viewport of [
+    { width: 701, height: 900 },
+    { width: 1440, height: 900 },
+  ] as const) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const scene = page.locator('[data-scene="shaurma-mobile"]');
+    const media = scene.locator('[data-project-media]');
+    const phone = media.locator('[data-project-shot="mobile"]');
+    const detail = media.locator('[data-project-detail]');
+    await media.scrollIntoViewIfNeeded();
+    await expect(detail).toHaveCount(1);
+    await expect(detail).toBeVisible();
+
+    const geometry = await media.evaluate((element) => {
+      const mediaBounds = element.getBoundingClientRect();
+      const phoneBounds = element.querySelector<HTMLElement>('[data-project-shot="mobile"]')!.getBoundingClientRect();
+      const detailBounds = element.querySelector<HTMLElement>('[data-project-detail]')!.getBoundingClientRect();
+      const union = {
+        left: Math.min(phoneBounds.left, detailBounds.left),
+        top: Math.min(phoneBounds.top, detailBounds.top),
+        right: Math.max(phoneBounds.right, detailBounds.right),
+        bottom: Math.max(phoneBounds.bottom, detailBounds.bottom),
+      };
+      return {
+        media: { left: mediaBounds.left, top: mediaBounds.top, right: mediaBounds.right, bottom: mediaBounds.bottom },
+        phone: { left: phoneBounds.left, top: phoneBounds.top, right: phoneBounds.right, bottom: phoneBounds.bottom },
+        detail: { left: detailBounds.left, top: detailBounds.top, right: detailBounds.right, bottom: detailBounds.bottom },
+        footprint: ((union.right - union.left) * (union.bottom - union.top)) / (mediaBounds.width * mediaBounds.height),
+      };
+    });
+
+    for (const [name, bounds] of [['phone', geometry.phone], ['detail', geometry.detail]] as const) {
+      expect(bounds.left, `${viewport.width}px Shaurma ${name} left`).toBeGreaterThanOrEqual(geometry.media.left - .5);
+      expect(bounds.top, `${viewport.width}px Shaurma ${name} top`).toBeGreaterThanOrEqual(geometry.media.top - .5);
+      expect(bounds.right, `${viewport.width}px Shaurma ${name} right`).toBeLessThanOrEqual(geometry.media.right + .5);
+      expect(bounds.bottom, `${viewport.width}px Shaurma ${name} bottom`).toBeLessThanOrEqual(geometry.media.bottom + .5);
+    }
+    expect(geometry.footprint, `${viewport.width}px Shaurma combined media footprint`).toBeGreaterThanOrEqual(.55);
+    await expect(phone).toBeVisible();
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const mobileDetail = page.locator('[data-scene="shaurma-mobile"] [data-project-detail]');
+  await expect(mobileDetail).toHaveCount(1);
+  await expect(mobileDetail).toBeHidden();
+  await expect(page.locator('[data-project-detail]')).toHaveCount(1);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+});
+
 test('AutoSchool keeps its mobile proof visually primary at every supported layout tier', async ({ page }) => {
   for (const viewport of schoolHierarchyViewports) {
     await page.setViewportSize(viewport);
