@@ -97,10 +97,10 @@ describe('createSite', () => {
     const image = portrait?.querySelector('img');
 
     expect(sources.map((source) => ({ type: source.getAttribute('type'), sizes: source.getAttribute('sizes') }))).toEqual([
-      { type: 'image/avif', sizes: '(max-width: 700px) 98vw, 47vw' },
-      { type: 'image/webp', sizes: '(max-width: 700px) 98vw, 47vw' },
+      { type: 'image/avif', sizes: '(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)' },
+      { type: 'image/webp', sizes: '(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)' },
     ]);
-    expect(image?.getAttribute('sizes')).toBe('(max-width: 700px) 98vw, 47vw');
+    expect(image?.getAttribute('sizes')).toBe('(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)');
     expect(image?.getAttribute('loading')).toBe('lazy');
     expect(image?.getAttribute('decoding')).toBe('async');
     expect(image?.getAttribute('fetchpriority')).toBeNull();
@@ -139,16 +139,13 @@ describe('createSite', () => {
     ]);
     expect(site.querySelectorAll('[data-transition-stage]')).toHaveLength(6);
     expect(site.querySelectorAll('[data-transition-carrier]')).toHaveLength(6);
-    expect(site.querySelectorAll('[data-transition-copy]')).toHaveLength(6);
+    expect(site.querySelectorAll('[data-transition-copy], .bridge__copy')).toHaveLength(0);
     for (const transition of transitions) {
       expect(transition.querySelectorAll('[data-transition-source]')).toHaveLength(1);
       expect(transition.querySelectorAll('[data-transition-target]')).toHaveLength(1);
       expect(transition.querySelectorAll('[data-transition-morph]')).toHaveLength(1);
     }
     expect(site.querySelectorAll('[data-transition-accent]')).toHaveLength(0);
-    expect(transitions.map((transition) => transition.querySelector('[data-transition-copy]')?.textContent?.trim())).toEqual(
-      siteContent.transitions.map(({ phrase }) => phrase),
-    );
     expect(site.querySelectorAll('[data-transition] a, [data-transition] button, [data-transition] [tabindex]')).toHaveLength(0);
     expect(site.querySelectorAll('[data-transition] small')).toHaveLength(0);
   });

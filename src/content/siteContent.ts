@@ -58,7 +58,6 @@ export interface TransitionContent {
   readonly kind: TransitionKind;
   readonly from: SceneId;
   readonly to: SceneId;
-  readonly phrase: string;
 }
 
 export interface SiteContent {
@@ -72,12 +71,12 @@ export interface SiteContent {
 }
 
 const transitions = [
-  { kind: 'ticker-to-about', from: 'hero', to: 'about', phrase: 'ИДЕЯ / ДИЗАЙН / КОД / ЗАПУСК' },
-  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner', phrase: 'ЛИЧНО. → ПИВНОЙ ДОНЕР' },
-  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school', phrase: 'ПИВНОЙ ДОНЕР → АВТОШКОЛА' },
-  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile', phrase: 'ДОРОГА → ТЕЛЕФОН' },
-  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop', phrase: 'ШАУРМА → TELEGRAM' },
-  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact', phrase: 'СООБЩЕНИЕ → ДАВАЙ' },
+  { kind: 'ticker-to-about', from: 'hero', to: 'about' },
+  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner' },
+  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school' },
+  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile' },
+  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop' },
+  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact' },
 ] as const satisfies readonly TransitionContent[];
 
 export const siteContent: SiteContent = {

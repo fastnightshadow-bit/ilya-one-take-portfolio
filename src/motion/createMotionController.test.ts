@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMotionController, type MotionDependencies } from './createMotionController.ts';
 
-const transition = (kind: string, from: string, to: string, label: string) => `
+const transition = (kind: string, from: string, to: string) => `
   <div data-transition="${kind}" data-transition-from="${from}" data-transition-to="${to}">
     <div data-transition-stage>
-      <strong data-transition-copy>${label}</strong>
       <div data-transition-carrier>
         <i data-transition-source></i>
         <i data-transition-target></i>
@@ -17,20 +16,20 @@ const markup = `
   <section data-scene="hero">
     <span data-rotating-word data-words="цепляют.|продают.|помнят.">цепляют.</span>
   </section>
-  ${transition('ticker-to-about', 'hero', 'about', 'Контур')}
+  ${transition('ticker-to-about', 'hero', 'about')}
   <section class="about" data-scene="about">
     <picture class="about__portrait"><img alt=""></picture>
     <p data-about-promise><span class="about__promise-line"><span>Один человек.</span></span><span class="about__promise-line"><span>Весь сайт.</span></span></p>
   </section>
-  ${transition('personal-to-poster', 'about', 'pivnoy-doner', 'Плакат')}
+  ${transition('personal-to-poster', 'about', 'pivnoy-doner')}
   <section class="case--doner" data-scene="pivnoy-doner" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  ${transition('clean-takeover', 'pivnoy-doner', 'driving-school', 'Путь')}
+  ${transition('clean-takeover', 'pivnoy-doner', 'driving-school')}
   <section class="case--school" data-scene="driving-school" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  ${transition('road-to-phone', 'driving-school', 'shaurma-mobile', 'Телефон')}
+  ${transition('road-to-phone', 'driving-school', 'shaurma-mobile')}
   <section class="case--mobile" data-scene="shaurma-mobile" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  ${transition('phone-to-telegram', 'shaurma-mobile', 'telegram-shop', 'Диалог')}
+  ${transition('phone-to-telegram', 'shaurma-mobile', 'telegram-shop')}
   <section class="case--telegram" data-scene="telegram-shop" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
-  ${transition('message-to-contact', 'telegram-shop', 'contact', 'Контакт')}
+  ${transition('message-to-contact', 'telegram-shop', 'contact')}
   <section data-scene="contact"><h2>Давай сделаем сайт</h2><a class="button--contact">Написать</a></section>
 `;
 
@@ -142,7 +141,7 @@ describe('createMotionController', () => {
     controller.destroy();
   });
 
-  it('animates the selected bridge source, target, and morph layers instead of only moving its copy', () => {
+  it('animates the selected bridge source, target, and morph layers without requiring transition captions', () => {
     const root = createRoot();
     const timelines: ReturnType<typeof createTimeline>[] = [];
     const controller = createMotionController({
@@ -162,6 +161,7 @@ describe('createMotionController', () => {
 
     const transitions = [...root.querySelectorAll<HTMLElement>('[data-transition]')];
     expect(transitions).toHaveLength(6);
+    expect(root.querySelectorAll('[data-transition-copy]')).toHaveLength(0);
     expect(transitions.map((transitionNode) => [
       transitionNode.dataset.transition,
       transitionNode.dataset.transitionFrom,
@@ -213,8 +213,9 @@ describe('createMotionController', () => {
     const targetCall = calls.find(([animated]) => animated === target);
     const sourceExitCall = timelines[2]?.to.mock.calls.find(([animated]) => animated === source);
     expect(sourceCall?.[2]).toMatchObject({ scaleX: expect.any(Number), scaleY: expect.any(Number), opacity: 1 });
-    expect((sourceCall?.[2] as { scaleX?: number } | undefined)?.scaleX).toBeGreaterThan(3);
+    expect((sourceCall?.[2] as { scaleX?: number } | undefined)?.scaleX).toBeGreaterThanOrEqual(7);
     expect((sourceCall?.[2] as { scaleY?: number } | undefined)?.scaleY).toBeGreaterThan(1);
+    expect((sourceCall?.[2] as { xPercent?: number } | undefined)?.xPercent).toBeGreaterThanOrEqual(200);
     expect(sourceExitCall?.[1]).toMatchObject({ duration: expect.any(Number), opacity: 0 });
     const sourceExitEnd = (sourceExitCall?.[2] as number)
       + ((sourceExitCall?.[1] as { duration: number }).duration);
@@ -226,10 +227,10 @@ describe('createMotionController', () => {
   it('tears down the previous lifecycle before a repeated mount', () => {
     const firstRoot = createRoot();
     const secondRoot = createRoot();
-    const firstPhrase = firstRoot.querySelector<HTMLElement>('[data-transition] strong');
-    const secondPhrase = secondRoot.querySelector<HTMLElement>('[data-transition] strong');
-    firstPhrase?.style.setProperty('transform', 'rotate(1deg)', 'important');
-    secondPhrase?.style.setProperty('opacity', '0.84', 'important');
+    const firstLayer = firstRoot.querySelector<HTMLElement>('[data-transition-source]');
+    const secondLayer = secondRoot.querySelector<HTMLElement>('[data-transition-source]');
+    firstLayer?.style.setProperty('transform', 'rotate(1deg)', 'important');
+    secondLayer?.style.setProperty('opacity', '0.84', 'important');
     const reverts = [vi.fn(), vi.fn()];
     let contextIndex = 0;
     const controller = createMotionController({
@@ -245,20 +246,20 @@ describe('createMotionController', () => {
     });
 
     controller.mount(firstRoot);
-    firstPhrase?.style.setProperty('transform', 'translateX(90px)');
+    firstLayer?.style.setProperty('transform', 'translateX(90px)');
     controller.mount(secondRoot);
 
     expect(reverts[0]).toHaveBeenCalledOnce();
     expect(firstRoot.hasAttribute('data-motion-ready')).toBe(false);
     expect(secondRoot.hasAttribute('data-motion-ready')).toBe(true);
     expect(vi.getTimerCount()).toBe(1);
-    expect(firstPhrase?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
-    expect(firstPhrase?.style.getPropertyPriority('transform')).toBe('important');
+    expect(firstLayer?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
+    expect(firstLayer?.style.getPropertyPriority('transform')).toBe('important');
 
-    secondPhrase?.style.setProperty('opacity', '0.2');
+    secondLayer?.style.setProperty('opacity', '0.2');
     controller.destroy();
-    expect(secondPhrase?.style.getPropertyValue('opacity')).toBe('0.84');
-    expect(secondPhrase?.style.getPropertyPriority('opacity')).toBe('important');
+    expect(secondLayer?.style.getPropertyValue('opacity')).toBe('0.84');
+    expect(secondLayer?.style.getPropertyPriority('opacity')).toBe('important');
   });
 
   it('restores exact authored styles and readiness state on destroy', () => {
@@ -334,8 +335,8 @@ describe('createMotionController', () => {
 
   it('reverts partial setup and restores authored styles when a later timeline throws', () => {
     const root = createRoot();
-    const phrase = root.querySelector<HTMLElement>('[data-transition] strong');
-    phrase?.style.setProperty('transform', 'rotate(1deg)', 'important');
+    const transitionSource = root.querySelector<HTMLElement>('[data-transition-source]');
+    transitionSource?.style.setProperty('transform', 'rotate(1deg)', 'important');
     const revert = vi.fn();
     let timelineCount = 0;
     const controller = createMotionController({
@@ -364,7 +365,7 @@ describe('createMotionController', () => {
     expect(root.hasAttribute('data-motion-ready')).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
     expect(revert).toHaveBeenCalledOnce();
-    expect(phrase?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
-    expect(phrase?.style.getPropertyPriority('transform')).toBe('important');
+    expect(transitionSource?.style.getPropertyValue('transform')).toBe('rotate(1deg)');
+    expect(transitionSource?.style.getPropertyPriority('transform')).toBe('important');
   });
 });

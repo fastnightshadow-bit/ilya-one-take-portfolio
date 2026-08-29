@@ -55,6 +55,7 @@ describe('siteContent', () => {
       from?: string;
       to?: string;
       variant?: string;
+      phrase?: string;
     }>;
 
     expect(transitions.map(({ kind, from, to }) => [kind, from, to])).toEqual([
@@ -66,5 +67,6 @@ describe('siteContent', () => {
       ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
     expect(transitions.every(({ variant }) => variant === undefined)).toBe(true);
+    expect(transitions.every(({ phrase }) => phrase === undefined)).toBe(true);
   });
 });

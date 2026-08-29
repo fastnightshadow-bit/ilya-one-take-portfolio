@@ -128,12 +128,17 @@ test('keeps About copy clear of the portrait at supported breakpoints', async ({
   }
 });
 
-test('selects the 720 portrait source for desktop Chromium at DPR 1', async ({ page }, testInfo) => {
+test('selects the 720 portrait source for desktop Chromium at DPR 1 through 2560px', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'DPR 1 source selection is covered by the desktop project');
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(1);
 
-  for (const width of [1280, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const viewport of [
+    { width: 1280, height: 900 },
+    { width: 1440, height: 900 },
+    { width: 1920, height: 1080 },
+    { width: 2560, height: 1440 },
+  ] as const) {
+    await page.setViewportSize(viewport);
     await page.goto('/');
     const image = page.locator('.about__portrait img');
     await image.scrollIntoViewIfNeeded();
@@ -143,4 +148,16 @@ test('selects the 720 portrait source for desktop Chromium at DPR 1', async ({ p
     await page.locator('.about__portrait source[type="image/avif"]').evaluate((source) => source.remove());
     await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).currentSrc.endsWith('/assets/portrait/portrait-720.webp'))).toBe(true);
   }
+});
+
+test('keeps the 1200 portrait source for mobile Chromium at DPR 3', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'DPR 3 source selection is covered by the mobile project');
+  expect(await page.evaluate(() => window.devicePixelRatio)).toBe(3);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const image = page.locator('.about__portrait img');
+  await image.scrollIntoViewIfNeeded();
+  await image.evaluate((node) => (node as HTMLImageElement).decode());
+  await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).currentSrc.endsWith('/assets/portrait/portrait-1200.avif'))).toBe(true);
 });

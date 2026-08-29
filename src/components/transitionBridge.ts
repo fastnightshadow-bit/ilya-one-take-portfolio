@@ -45,7 +45,6 @@ const artwork: Record<TransitionContent['kind'], string> = {
 export const transitionBridge = (transition: TransitionContent) => `
   <div class="bridge bridge--${transition.kind}" data-transition="${transition.kind}" data-transition-from="${transition.from}" data-transition-to="${transition.to}"${transition.kind === 'clean-takeover' ? ' data-transition-composition="t1-clean-takeover"' : ''} aria-hidden="true">
     <div class="bridge__stage" data-transition-stage>
-      <strong class="bridge__copy" data-transition-copy>${transition.phrase}</strong>
       <div class="bridge__carrier" data-transition-carrier>
         ${artwork[transition.kind]}
       </div>

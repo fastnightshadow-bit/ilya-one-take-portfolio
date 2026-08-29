@@ -23,23 +23,6 @@
   z-index: 1;
 }
 
-.bridge__copy {
-  position: absolute;
-  left: var(--page-pad);
-  bottom: clamp(1.1rem, 2.2vw, 1.8rem);
-  z-index: 20;
-  display: block;
-  max-width: min(76vw, 58rem);
-  margin: 0;
-  padding: .62rem .76rem;
-  border: 1px solid currentColor;
-  background: inherit;
-  color: inherit;
-  font: 900 clamp(.7rem, 1.05vw, .9rem)/1 ui-monospace, monospace;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
 .bridge__art {
   position: absolute;
   z-index: 3;
@@ -379,14 +362,6 @@
 @media (max-width: 700px) {
   .bridge {
     min-height: clamp(23rem, 58svh, 31rem);
-  }
-
-  .bridge__copy {
-    left: 1rem;
-    bottom: 1rem;
-    max-width: calc(100vw - 2rem);
-    padding: .5rem .58rem;
-    font-size: .62rem;
   }
 
   .bridge__ticker {

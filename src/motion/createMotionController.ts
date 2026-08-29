@@ -136,7 +136,7 @@ const transitionArtConfigs: Readonly<Record<TransitionContent['kind'], Transitio
   'clean-takeover': {
     source: {
       from: { desktop: { xPercent: 0, yPercent: 0, scaleX: 1, scaleY: 1, rotation: 0, opacity: 1 } },
-      to: { desktop: { xPercent: 98, yPercent: 5, scaleX: 4.1, scaleY: 1.55, rotation: 2, opacity: 1 }, mobile: { xPercent: 72, yPercent: 3, scaleX: 4.5, scaleY: 1.72, rotation: 1, opacity: 1 } },
+      to: { desktop: { xPercent: 240, yPercent: 5, scaleX: 7.2, scaleY: 1.55, rotation: 2, opacity: 1 }, mobile: { xPercent: 72, yPercent: 3, scaleX: 4.5, scaleY: 1.72, rotation: 1, opacity: 1 } },
       exit: { to: { desktop: { duration: 0.16, opacity: 0 } }, at: 0.5 },
     },
     target: {
@@ -217,7 +217,7 @@ const findAdjacentScene = (bridge: HTMLElement, direction: 'previous' | 'next'):
 };
 
 const ownedStyleRules = [
-  { selector: '[data-scene="hero"] .hero__word, [data-transition-copy], [data-transition-source], [data-transition-target], [data-transition-morph]', properties: ['opacity', 'transform'] },
+  { selector: '[data-scene="hero"] .hero__word, [data-transition-source], [data-transition-target], [data-transition-morph]', properties: ['opacity', 'transform'] },
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait, [data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '.about__portrait img', properties: ['filter'] },
@@ -304,7 +304,6 @@ export function createMotionController(dependencies: MotionDependencies = defaul
         nextContext = dependencies.context(() => {
           try {
             root.querySelectorAll<HTMLElement>('[data-transition]').forEach((bridge) => {
-              const phrase = bridge.querySelector<HTMLElement>('[data-transition-copy]');
               const artSource = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-source]');
               const artTarget = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-target]');
               const artMorph = bridge.querySelector<HTMLElement | SVGElement>('[data-transition-morph]');
@@ -313,7 +312,7 @@ export function createMotionController(dependencies: MotionDependencies = defaul
               const config = targetScene ? handoffConfigs[targetScene.dataset.scene ?? ''] : undefined;
               const kind = bridge.dataset.transition;
               const artConfig = isTransitionKind(kind) ? transitionArtConfigs[kind] : undefined;
-              if (!phrase || !artSource || !artTarget || !artMorph || !sourceScene || !targetScene || !config || !artConfig) return;
+              if (!artSource || !artTarget || !artMorph || !sourceScene || !targetScene || !config || !artConfig) return;
 
               const handoff = dependencies.timeline({
                 scrollTrigger: {
@@ -323,12 +322,6 @@ export function createMotionController(dependencies: MotionDependencies = defaul
                   scrub: 0.7,
                 },
               });
-              handoff.fromTo(
-                phrase,
-                { xPercent: mobile ? 4 : 8, y: mobile ? 24 : 46, opacity: 0.16 },
-                { xPercent: mobile ? -4 : -8, y: 0, opacity: 1, ease: 'none', immediateRender: false },
-                0,
-              );
               ([
                 ['source', artSource],
                 ['target', artTarget],
