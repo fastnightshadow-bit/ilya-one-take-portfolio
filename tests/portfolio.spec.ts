@@ -70,9 +70,9 @@ const selectedTransitionContract = [
   ['message-to-contact', 'telegram-shop', 'contact'],
 ] as const;
 
-const rejectedCleanTakeoverCompositions = [
+const rejectedCleanTakeoverCompositions: readonly string[] = [
   'd', 'd1', 'split-shutter', 'diagonal-split', 'horizontal-strips', '3d-flip', 'camera-fly-through',
-] as const;
+];
 
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
