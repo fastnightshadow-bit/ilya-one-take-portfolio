@@ -101,7 +101,6 @@ const findAdjacentScene = (bridge: HTMLElement, direction: 'previous' | 'next'):
 const ownedStyleRules = [
   { selector: '[data-scene="hero"] .hero__word, [data-transition-line]', properties: ['opacity', 'transform'] },
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
-  { selector: '[data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '[data-project-media]', properties: ['opacity', 'transform'] },
   { selector: '[data-scene="contact"] h2, [data-scene="contact"] .button--contact', properties: ['opacity', 'transform'] },
 ] as const;
@@ -232,26 +231,6 @@ export function createMotionController(dependencies: MotionDependencies = defaul
               }).fromTo(copy, { y: mobile ? 32 : 70, opacity: 0.25 }, { y: 0, opacity: 1, ease: 'none', immediateRender: false });
             });
 
-            const about = root.querySelector<HTMLElement>('.about');
-            const promiseLines = about?.querySelectorAll<HTMLElement>('[data-about-promise] .about__promise-line > span');
-            if (about) {
-              const aboutTimeline = dependencies.timeline({
-                scrollTrigger: {
-                  trigger: about,
-                  start: 'top 75%',
-                  end: 'center 42%',
-                  scrub: 0.6,
-                },
-              });
-              if (promiseLines?.length) {
-                aboutTimeline.fromTo(
-                  promiseLines,
-                  { yPercent: 110, opacity: 0 },
-                  { yPercent: 0, opacity: 1, stagger: 0.08, ease: 'none', immediateRender: false },
-                  0,
-                );
-              }
-            }
           } catch (error) {
             setupError = error;
           }

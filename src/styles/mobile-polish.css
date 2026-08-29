@@ -1,8 +1,8 @@
 @media (max-width: 700px) {
   [data-scene="hero"] {
     display: grid;
-    min-height: calc(100svh - 61px);
-    grid-template-rows: auto 1fr;
+    min-height: calc(100svh - var(--header-height));
+    grid-template-rows: 1fr;
   }
 
   [data-scene="hero"] .hero__copy {
@@ -10,48 +10,29 @@
     padding: 0 0 2rem;
   }
 
-  [data-scene="hero"] .hero__ghost,
-  [data-scene="hero"] .hero__scroll { display: none; }
-
   [data-scene="about"] {
     position: relative;
     display: grid;
     min-height: 0;
     grid-template-columns: minmax(0, 1.12fr) minmax(8.25rem, .88fr);
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto;
     gap: 1.25rem 1rem;
     padding-bottom: 1.5rem;
   }
 
-  [data-scene="about"] > .scene__meta { grid-column: 1 / -1; }
-  [data-scene="about"] .about__copy { grid-column: 1; grid-row: 2; width: auto; padding-top: 1.5rem; }
+  [data-scene="about"] .about__copy { grid-column: 1; grid-row: 1; width: auto; padding-top: 1.5rem; }
   [data-scene="about"] h2 { font-size: clamp(2.35rem, 11vw, 3rem); }
   [data-scene="about"] .about__lede { font-size: .78rem; }
-  [data-scene="about"] .about__promise { font-size: clamp(1.35rem, 6vw, 1.75rem); }
-
   [data-scene="about"] .about__portrait {
     position: relative;
     inset: auto;
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
     width: 100%;
     height: 100%;
     min-height: 15rem;
     opacity: 1;
   }
-
-  [data-scene="about"] .about__facts {
-    position: static;
-    display: grid;
-    grid-column: 1 / -1;
-    grid-row: 3;
-    grid-template-columns: 1fr 1fr;
-    width: auto;
-    margin: 0;
-  }
-
-  [data-scene="about"] .about__facts p { background: transparent; }
-  [data-scene="about"] .about__facts p:last-child { grid-column: 1 / -1; }
 
   [data-scene="pivnoy-doner"] .case__layout {
     grid-template-columns: minmax(0, .9fr) minmax(9.5rem, 1.1fr);
@@ -62,8 +43,6 @@
 
   [data-scene="pivnoy-doner"] .case__headline { font-size: clamp(1.85rem, 8vw, 2.2rem); }
   [data-scene="pivnoy-doner"] .case__headline + p { font-size: .75rem; }
-  [data-scene="pivnoy-doner"] .case__label { display: none; }
-
   [data-scene="pivnoy-doner"] [data-project-media] {
     position: relative;
     display: block;
@@ -93,8 +72,6 @@
 
   [data-scene="driving-school"] .case__headline { font-size: clamp(1.75rem, 7.5vw, 2.05rem); }
   [data-scene="driving-school"] .case__headline + p { font-size: .75rem; }
-  [data-scene="driving-school"] .case__label { display: none; }
-
   [data-scene="driving-school"] [data-project-media] {
     position: relative;
     display: block;
@@ -125,6 +102,8 @@
     overflow-wrap: normal;
     word-break: normal;
   }
+
+  [data-scene="shaurma-mobile"] .case__accent { white-space: nowrap; }
 
   [data-transition="road-to-phone"] {
     border-color: var(--border-dark);

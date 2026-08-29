@@ -40,7 +40,7 @@ export const caseChapter = (project: ProjectContent) => `
   <section class="scene case case--${project.theme}" id="${project.id}" data-scene="${project.id}" data-project aria-labelledby="${project.id}-title">
     <div class="scene__meta"><span>${project.eyebrow}</span></div>
     <div class="case__layout">
-      <div class="case__copy"><h2 id="${project.id}-title" class="case__title">${project.title}</h2><p class="case__headline">${project.headline} <span class="case__accent">${project.accent}</span></p><p>${project.description}</p><a class="case__action" data-project-action href="${project.action.href}">${project.action.label} <span aria-hidden="true">↗</span></a><span class="case__label">${project.chapterLabel}</span></div>
+      <div class="case__copy"><h2 id="${project.id}-title" class="case__title">${project.title}</h2><p class="case__headline">${project.headline} <span class="case__accent">${project.accent}</span></p><p>${project.description}</p><a class="case__action" data-project-action href="${project.action.href}" target="_blank" rel="noopener noreferrer">${project.action.label}</a></div>
       ${projectMedia(project)}
     </div>
   </section>`;

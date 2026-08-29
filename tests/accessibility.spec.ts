@@ -2,16 +2,21 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 const expectedLinks = [
-  { name: 'ILYA / WEB DEVELOPER', href: '#top' },
-  { name: '@girtopw ↗', href: 'https://t.me/girtopw' },
-  { name: 'Смотреть дальше ↓', href: '#about' },
+  { name: 'Обо мне', href: '#about' },
+  { name: 'Как я работаю', href: '#process' },
+  { name: 'Кейс 1', href: '#pivnoy-doner' },
+  { name: 'Кейс 2', href: '#driving-school' },
+  { name: 'Кейс 3', href: '#shaurma-mobile' },
+  { name: 'Кейс 4', href: '#telegram-shop' },
+  { name: 'Контакты', href: '#contact' },
+  { name: 'Смотреть портфолио', href: '#pivnoy-doner' },
+  { name: 'Обо мне', href: '#about' },
   { name: 'Открыть сайт', href: 'https://pivdoner.ru/' },
   { name: 'Открыть сайт', href: 'https://perekrestok-yaroslavl.netlify.app/' },
-  { name: 'Открыть mobile-сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
-  { name: 'Запустить бота', href: 'https://t.me/veachelsell_bot' },
-  { name: 'GitHub Ильи', href: 'https://github.com/fastnightshadow-bit' },
-  { name: 'Написать в Telegram →', href: 'https://t.me/girtopw' },
-  { name: '@girtopw', href: 'https://t.me/girtopw' },
+  { name: 'Открыть сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
+  { name: 'Открыть магазин', href: 'https://t.me/veachelsell_bot' },
+  { name: 'Открыть GitHub', href: 'https://github.com/fastnightshadow-bit' },
+  { name: 'Написать в Telegram', href: 'https://t.me/girtopw' },
 ] as const;
 
 const projectAlternatives = [
@@ -42,7 +47,7 @@ test('exposes one banner, named navigation, and main landmark', async ({ page })
   await expect(page.getByRole('banner')).toHaveCount(1);
   await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toHaveCount(1);
   await expect(page.getByRole('main')).toHaveCount(1);
-  await expect(page.getByRole('complementary', { name: 'Код тоже можно посмотреть.' })).toHaveCount(1);
+  await expect(page.getByRole('complementary', { name: 'Посмотрите, как я работаю с кодом' })).toHaveCount(1);
 });
 
 test('uses one h1 and never skips a heading level', async ({ page }) => {
@@ -101,8 +106,8 @@ test('every running-text color variant keeps at least 4.5:1 contrast', async ({ 
   }
 });
 
-test('portrait promise accent keeps readable contrast against the About background', async ({ page }) => {
-  const contrast = await page.locator('[data-about-promise] .about__promise-line:last-child > span').evaluate((accent) => {
+test('About description keeps readable contrast against its background', async ({ page }) => {
+  const contrast = await page.locator('[data-scene="about"] .about__lede').evaluate((description) => {
     const channels = (color: string) => color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
     const luminance = (color: string) => {
       const normalized = channels(color).map((channel) => {
@@ -111,8 +116,8 @@ test('portrait promise accent keeps readable contrast against the About backgrou
       });
       return .2126 * (normalized[0] ?? 0) + .7152 * (normalized[1] ?? 0) + .0722 * (normalized[2] ?? 0);
     };
-    const foreground = luminance(getComputedStyle(accent).color);
-    const background = luminance(getComputedStyle(accent.closest('.about')!).backgroundColor);
+    const foreground = luminance(getComputedStyle(description).color);
+    const background = luminance(getComputedStyle(description.closest('.about')!).backgroundColor);
     return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05);
   });
 
@@ -175,7 +180,7 @@ test('keyboard traversal keeps every complete focus ring visible at required vie
 
       expect(focusMetrics.outlineStyle).not.toBe('none');
       expect(focusMetrics.outlineWidth).toBeGreaterThanOrEqual(3);
-      if (expectedLink.name === 'Написать в Telegram →' || expectedLink.name === '@girtopw') {
+      if (expectedLink.name === 'Написать в Telegram') {
         expect(focusMetrics.contactContrast, `${expectedLink.name} outline ${focusMetrics.outlineColor} contrast`).toBeGreaterThanOrEqual(3);
       }
       expect(focusMetrics.ringTop, `${viewport.width}×${viewport.height} ${expectedLink.name} ring top`).toBeGreaterThanOrEqual(0);
@@ -193,10 +198,8 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
     await page.setViewportSize(viewport);
     await page.goto('/');
     await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
     const aboutLink = page.locator(':focus-visible');
-    await expect(aboutLink).toHaveAccessibleName('Смотреть дальше ↓');
+    await expect(aboutLink).toHaveAccessibleName('Обо мне');
 
     await page.keyboard.press('Enter');
     await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('#about');
@@ -210,21 +213,18 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
       return {
         headerBottom,
         targetTop: document.querySelector('#about')!.getBoundingClientRect().top,
-        metaTop: document.querySelector('#about .scene__meta')!.getBoundingClientRect().top,
+        copyTop: document.querySelector('#about .about__copy')!.getBoundingClientRect().top,
       };
     });
 
     expect(geometry.targetTop - geometry.headerBottom, `${viewport.width}×${viewport.height} target gap`).toBeGreaterThanOrEqual(12);
-    expect(geometry.metaTop - geometry.headerBottom, `${viewport.width}×${viewport.height} meta gap`).toBeGreaterThanOrEqual(12);
+    expect(geometry.copyTop - geometry.headerBottom, `${viewport.width}×${viewport.height} copy gap`).toBeGreaterThanOrEqual(12);
   }
 });
 
 test('portrait and six real project screenshots expose meaningful alternatives while selected transitions stay decorative', async ({ page }) => {
   await expect(page.locator('.about__portrait img')).toHaveAttribute('alt', 'Илья, веб-разработчик');
-  const promise = page.locator('[data-about-promise]');
-  await expect(promise).toBeVisible();
-  await expect(promise).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
-  await expect(promise).not.toHaveAttribute('aria-hidden', /.+/);
+  await expect(page.locator('[data-about-promise], [data-scene="about"] .about__facts')).toHaveCount(0);
 
   const images = page.locator('[data-project-media] img');
   await expect(images).toHaveCount(6);

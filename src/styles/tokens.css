@@ -1,4 +1,7 @@
 :root {
+  --font-display: 'Montserrat Black', Arial, sans-serif;
+  --font-body: Arial, sans-serif;
+  --header-height: 61px;
   --ink: #0c0c10;
   --paper: #f1eee6;
   --coral: #ff553d;

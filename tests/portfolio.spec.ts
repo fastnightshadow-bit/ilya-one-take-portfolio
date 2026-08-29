@@ -6,6 +6,7 @@ const approvedProjects = [
   {
     id: 'pivnoy-doner',
     primary: 'desktop',
+    eyebrow: 'Кейс 1 · Сайт для ресторана',
     action: { name: 'Открыть сайт', href: 'https://pivdoner.ru/' },
     shots: [
       { role: 'desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
@@ -15,6 +16,7 @@ const approvedProjects = [
   {
     id: 'driving-school',
     primary: 'mobile',
+    eyebrow: 'Кейс 2 · Сайт автошколы',
     action: { name: 'Открыть сайт', href: 'https://perekrestok-yaroslavl.netlify.app/' },
     shots: [
       { role: 'mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
@@ -24,7 +26,8 @@ const approvedProjects = [
   {
     id: 'shaurma-mobile',
     primary: 'mobile',
-    action: { name: 'Открыть mobile-сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
+    eyebrow: 'Кейс 3 · Сайт для заказа еды',
+    action: { name: 'Открыть сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
     shots: [
       { role: 'mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
     ],
@@ -32,7 +35,8 @@ const approvedProjects = [
   {
     id: 'telegram-shop',
     primary: 'mobile',
-    action: { name: 'Запустить бота', href: 'https://t.me/veachelsell_bot' },
+    eyebrow: 'Кейс 4 · Магазин в Telegram',
+    action: { name: 'Открыть магазин', href: 'https://t.me/veachelsell_bot' },
     shots: [
       { role: 'mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
     ],
@@ -73,12 +77,12 @@ const selectedTransitionContract = [
 ] as const;
 
 const tickerTracks = [
-  'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ → ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ',
-  'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ → БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ',
-  'ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ → ОТ ПЕРВОГО КЛИКА — К ПЕРВОЙ ПОЕЗДКЕ',
-  'ROAD → MOBILE → MENU → ORDER → ROAD → MOBILE → MENU → ORDER',
-  'WEB → CHAT → CATALOG → SHOP → WEB → CHAT → CATALOG → SHOP',
-  'DESIGN × CODE × BUSINESS → DESIGN × CODE × BUSINESS',
+  'ДАЛЬШЕ — ОБО МНЕ → ДАЛЬШЕ — ОБО МНЕ',
+  'ДАЛЬШЕ — ПРОЕКТЫ → ДАЛЬШЕ — ПРОЕКТЫ',
+  'СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА → СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА',
+  'СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ → СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ',
+  'СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM → СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM',
+  'ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ → ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ',
 ] as const;
 
 const tickerColors = [
@@ -125,6 +129,7 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
     const shots = media.locator('[data-project-shot]');
 
     await expect(scene).toBeVisible();
+    await expect(scene.locator('.scene__meta')).toHaveText(project.eyebrow);
     await expect(media).toBeVisible();
     await expect(media).toHaveClass(new RegExp(`\\bcase__media--primary-${project.primary}\\b`));
     await expect(shots).toHaveCount(project.shots.length);
@@ -176,7 +181,9 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
     await expect(action).toBeVisible();
     await expect(action).toHaveAccessibleName(project.action.name);
     await expect(action).toHaveAttribute('href', project.action.href);
-    await expect(action).not.toHaveAttribute('target', /.+/);
+    await expect(action).toHaveAttribute('target', '_blank');
+    await expect(action).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(action.locator('[aria-hidden="true"]')).toHaveCount(0);
     const actionBox = await action.boundingBox();
     expect(actionBox?.width, `${viewportWidth}px ${project.id} action width`).toBeGreaterThanOrEqual(44);
     expect(actionBox?.height, `${viewportWidth}px ${project.id} action height`).toBeGreaterThanOrEqual(44);
@@ -197,6 +204,42 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(page.locator('[data-github-link]')).toHaveCount(1);
   await expect(page.locator(oldMockups)).toHaveCount(0);
 
+  expect(await page.locator('.site-header__link').evaluateAll((links) => links.map((link) => ({
+    label: link.textContent?.trim(),
+    href: link.getAttribute('href'),
+  })))).toEqual([
+    { label: 'Обо мне', href: '#about' },
+    { label: 'Как я работаю', href: '#process' },
+    { label: 'Кейс 1', href: '#pivnoy-doner' },
+    { label: 'Кейс 2', href: '#driving-school' },
+    { label: 'Кейс 3', href: '#shaurma-mobile' },
+    { label: 'Кейс 4', href: '#telegram-shop' },
+    { label: 'Контакты', href: '#contact' },
+  ]);
+  await expect(page.locator([
+    '[data-scene="hero"] > .scene__meta',
+    '.hero__ghost',
+    '.hero__scroll',
+    '[data-scene="about"] > .scene__meta',
+    '[data-scene="about"] .eyebrow',
+    '[data-about-promise]',
+    '.about__facts',
+    '[data-project] .case__label',
+    '[data-project-action] [aria-hidden="true"]',
+    '[data-scene="contact"] > .scene__meta',
+    '.contact__handle',
+  ].join(', '))).toHaveCount(0);
+
+  const headings = await page.locator('h1, h2').allTextContents();
+  for (const heading of headings) expect(heading.trim()).not.toMatch(/[.!?]$/u);
+
+  await expect(page.locator('.github-strip p')).toHaveText('Исходный код открытых проектов и новые работы собраны в моём профиле.');
+  await expect(page.locator('.github-strip')).not.toContainText('Ильи');
+  await expect(page.locator('[data-scene="contact"] > p')).toContainText('Я отвечу лично');
+  expect(await page.locator('body').innerText()).not.toMatch(
+    /(?:^|[\s(«])(?:ты|тебе|твой|твоя|твоё|твои|напиши|давай)(?=$|[\s,.!?»)—])/iu,
+  );
+
   const microcopyMetrics = await page.evaluate(() => {
     const channels = (color: string) => {
       const value = color.trim();
@@ -212,7 +255,7 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
     };
     const rootStyles = getComputedStyle(document.documentElement);
     const checks = [
-      { selector: '.about__facts small', background: rootStyles.getPropertyValue('--paper') },
+      { selector: '.about__lede', background: rootStyles.getPropertyValue('--paper') },
       { selector: '.process p', background: rootStyles.getPropertyValue('--ink') },
     ] as const;
     return checks.flatMap(({ selector, background }) => [...document.querySelectorAll(selector)].map((element) => {
@@ -323,9 +366,10 @@ test('real project proofs load, stay visible, and expose approved actions at 390
     const githubLink = page.locator('[data-github-link]');
     await githubLink.scrollIntoViewIfNeeded();
     await expect(githubLink).toBeVisible();
-    await expect(githubLink).toHaveAccessibleName('GitHub Ильи');
+    await expect(githubLink).toHaveAccessibleName('Открыть GitHub');
     await expect(githubLink).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
-    await expect(githubLink).not.toHaveAttribute('target', /.+/);
+    await expect(githubLink).toHaveAttribute('target', '_blank');
+    await expect(githubLink).toHaveAttribute('rel', 'noopener noreferrer');
     const githubBox = await githubLink.boundingBox();
     expect(githubBox?.width, `${viewport.width}px GitHub action width`).toBeGreaterThanOrEqual(44);
     expect(githubBox?.height, `${viewport.width}px GitHub action height`).toBeGreaterThanOrEqual(44);
@@ -435,7 +479,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
   await expect(page.locator('#app')).toHaveAttribute('data-motion-ready', '');
 
   const fallback = page.locator('[data-hero-fallback]');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Сайты, которые цепляют. продают. помнят.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Сайты, которые цепляют продают работают');
   await expect(fallback).toHaveCSS('position', 'absolute');
   const rotatingWord = page.locator('[data-rotating-word]');
   await expect(rotatingWord).toBeVisible();
@@ -453,26 +497,15 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     { bridge: 5, target: '[data-scene="contact"] h2', source: '[data-scene="telegram-shop"] [data-project-media]' },
   ] as const;
 
-  const promiseLines = page.locator('[data-about-promise] .about__promise-line > span');
   const portrait = page.locator('.about__portrait');
   const portraitImage = portrait.locator('img');
-  await expect(promiseLines).toHaveCount(2);
+  const aboutCopy = page.locator('.about__copy');
+  await expect(page.locator('[data-about-promise], .about__facts')).toHaveCount(0);
+  await expect(aboutCopy).toBeVisible();
+  await expect(aboutCopy).toHaveCSS('transform', 'none');
+  await expect(aboutCopy).toHaveCSS('opacity', '1');
   await expect(portrait).toHaveCSS('transform', 'none');
   await expect(portrait).toHaveCSS('opacity', '1');
-  await expect(portraitImage).toHaveCSS('filter', 'none');
-  await expect.poll(() => promiseLines.first().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeLessThan(0.2);
-
-  await page.locator('.about').evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
-  });
-  await expect.poll(() => promiseLines.last().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
-  await expect.poll(() => promiseLines.evaluateAll((elements) => Math.max(...elements.map((element) => {
-    const line = element.parentElement!.getBoundingClientRect();
-    const inner = element.getBoundingClientRect();
-    return Math.abs(inner.top - line.top);
-  })))).toBeLessThanOrEqual(1);
-  await expect(portrait).toHaveCSS('transform', 'none');
   await expect(portraitImage).toHaveCSS('filter', 'none');
 
   for (const [index, handoff] of handoffs.entries()) {
@@ -506,7 +539,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     }
   }
 
-  const promotedLayers = await page.locator('[data-transition-line], [data-project] .case__copy, [data-project-media], [data-about-promise] .about__promise-line > span').evaluateAll(
+  const promotedLayers = await page.locator('[data-transition-line], [data-project] .case__copy, [data-project-media]').evaluateAll(
     (elements) => elements.filter((element) => getComputedStyle(element).willChange !== 'auto').length,
   );
   expect(promotedLayers).toBe(0);
@@ -533,9 +566,9 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   await expect(page.locator('#app')).not.toHaveAttribute('data-motion-ready', '');
   const fallback = page.locator('[data-hero-fallback]');
   await expect(fallback).toBeVisible();
-  await expect(fallback).toContainText('цепляют.');
-  await expect(fallback).toContainText('продают.');
-  await expect(fallback).toContainText('помнят.');
+  await expect(fallback).toContainText('цепляют');
+  await expect(fallback).toContainText('продают');
+  await expect(fallback).toContainText('работают');
   for (const copy of await page.locator('[data-project] .case__copy').all()) {
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
@@ -545,13 +578,10 @@ test('reduced motion keeps final compositions visible and static', async ({ page
     expect(await media.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
   }
   await expectRealProjectProofs(page, page.viewportSize()!.width);
-  const promise = page.locator('[data-about-promise]');
-  await expect(promise).toBeVisible();
-  await expect(promise).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
-  for (const line of await promise.locator('.about__promise-line > span').all()) {
-    await expect(line).toHaveCSS('opacity', '1');
-    await expect(line).toHaveCSS('transform', 'none');
-  }
+  await expect(page.locator('[data-about-promise], .about__facts')).toHaveCount(0);
+  await expect(page.locator('.about__copy')).toBeVisible();
+  await expect(page.locator('.about__copy')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.about__copy')).toHaveCSS('transform', 'none');
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', 'none');
   const word = page.locator('[data-rotating-word]');
   await expect(word).toBeHidden();
@@ -596,9 +626,9 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator('[data-scene="about"]')).toHaveCSS('background-color', 'rgb(241, 238, 230)');
   const fallback = page.locator('[data-hero-fallback]');
   await expect(fallback).toBeVisible();
-  await expect(fallback).toContainText('цепляют.');
-  await expect(fallback).toContainText('продают.');
-  await expect(fallback).toContainText('помнят.');
+  await expect(fallback).toContainText('цепляют');
+  await expect(fallback).toContainText('продают');
+  await expect(fallback).toContainText('работают');
   await expect(page.locator('[data-rotating-word]')).toBeHidden();
 
   await expect(page.locator('[data-scene]')).toHaveCount(7);
@@ -617,13 +647,20 @@ test('styled static story remains complete when the application script fails', a
     expect(await copy.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1);
     expect(await copy.evaluate((element) => getComputedStyle(element).transform)).toBe('none');
   }
-  await expect(page.locator('[data-about-promise]')).toBeVisible();
-  await expect(page.locator('[data-about-promise]')).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
+  await expect(page.locator('[data-about-promise], .about__facts, [data-project] .case__label')).toHaveCount(0);
+  await expect(page.locator('.about__copy')).toBeVisible();
   await expect(page.locator('.about__portrait img')).toHaveCSS('filter', 'none');
   await expectRealProjectProofs(page, expectedWidth);
-  await expect(page.locator('[data-github-link]')).toHaveAccessibleName('GitHub Ильи');
-  await expect(page.locator('[data-github-link]')).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
-  await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
+  const githubLink = page.locator('[data-github-link]');
+  await expect(githubLink).toHaveAccessibleName('Открыть GitHub');
+  await expect(githubLink).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');
+  await expect(githubLink).toHaveAttribute('target', '_blank');
+  await expect(githubLink).toHaveAttribute('rel', 'noopener noreferrer');
+  const contactLink = page.locator('[data-primary-cta]');
+  await expect(contactLink).toHaveCount(1);
+  await expect(contactLink).toHaveAttribute('href', 'https://t.me/girtopw');
+  await expect(contactLink).toHaveAttribute('target', '_blank');
+  await expect(contactLink).toHaveAttribute('rel', 'noopener noreferrer');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(abortedScripts.length).toBeGreaterThanOrEqual(1);
   const expectedAbortError = 'Failed to load resource: net::ERR_FAILED';
@@ -631,7 +668,7 @@ test('styled static story remains complete when the application script fails', a
   expect(errors.filter((message) => message !== expectedAbortError)).toEqual([]);
 });
 
-test('all primary CTAs use the approved safe Telegram destination without browser errors', async ({ page }) => {
+test('the contact CTA uses the approved safe Telegram destination in a new tab without browser errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(`console: ${message.text()}`);
@@ -640,19 +677,125 @@ test('all primary CTAs use the approved safe Telegram destination without browse
 
   await page.goto('/');
   const links = page.locator('[data-primary-cta]');
-  await expect(links).toHaveCount(3);
+  await expect(links).toHaveCount(1);
   for (const link of await links.all()) {
     await expect(link).toHaveAttribute('href', 'https://t.me/girtopw');
-    await expect(link).not.toHaveAttribute('target', /.+/);
+    await expect(link).toHaveAccessibleName('Написать в Telegram');
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     const bounds = await link.boundingBox();
     expect(bounds?.width).toBeGreaterThanOrEqual(44);
     expect(bounds?.height).toBeGreaterThanOrEqual(44);
   }
-  await expect(page.locator('.contact__handle')).toHaveAccessibleName('@girtopw');
+  await expect(page.locator('.contact__handle')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test('supported mobile, landscape, tablet, and desktop geometries do not overflow or hide either final CTA', async ({ page }) => {
+test('uses Montserrat Black for display headings and Arial for interface copy only', async ({ page }) => {
+  await page.goto('/');
+
+  const typography = await page.evaluate(() => {
+    const primaryFamily = (element: Element) => getComputedStyle(element).fontFamily
+      .split(',')[0]!
+      .trim()
+      .replace(/^['"]|['"]$/g, '');
+    const familiesFor = (selector: string) => [...document.querySelectorAll(selector)].map(primaryFamily);
+    const textSamples = [...document.querySelectorAll<HTMLElement>('body *')]
+      .filter((element) => [...element.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim()))
+      .filter((element) => {
+        const styles = getComputedStyle(element);
+        const bounds = element.getBoundingClientRect();
+        return styles.display !== 'none' && styles.visibility !== 'hidden' && bounds.width > 0 && bounds.height > 0;
+      })
+      .map((element) => ({
+        family: getComputedStyle(element).fontFamily,
+        primary: primaryFamily(element),
+        text: element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 60) ?? '',
+      }));
+
+    return {
+      display: familiesFor([
+        '[data-scene="hero"] h1',
+        '[data-scene="about"] h2',
+        '[data-project] .case__headline',
+        '.github-strip h2',
+        '[data-scene="contact"] h2',
+      ].join(', ')),
+      interface: familiesFor([
+        '.site-header__nav',
+        '[data-scene="hero"] p',
+        '.button',
+        '.process',
+        '[data-project] .scene__meta',
+        '[data-project] .case__title',
+        '[data-project] .case__action',
+        '.github-strip p',
+        '.github-strip__link',
+        '[data-scene="contact"] > p',
+      ].join(', ')),
+      textSamples,
+    };
+  });
+
+  expect(typography.display.length).toBeGreaterThan(0);
+  expect(typography.display.every((family) => family === 'Montserrat Black')).toBe(true);
+  expect(typography.interface.length).toBeGreaterThan(0);
+  expect(typography.interface.every((family) => family === 'Arial')).toBe(true);
+  for (const sample of typography.textSamples) {
+    expect(['Montserrat Black', 'Arial'], `${sample.text}: ${sample.family}`).toContain(sample.primary);
+    expect(sample.family, sample.text).not.toMatch(/Georgia|Impact|monospace/iu);
+  }
+});
+
+test('keeps display typography readable without colliding letters or lines', async ({ page }) => {
+  await page.goto('/');
+
+  const metrics = await page.locator([
+    '[data-scene="hero"] h1',
+    '[data-scene="about"] h2',
+    '[data-project] .case__headline',
+    '.github-strip h2',
+    '[data-scene="contact"] h2',
+    '[data-transition-line]',
+  ].join(', ')).evaluateAll((elements) => elements.map((element) => {
+    const styles = getComputedStyle(element);
+    const fontSize = Number.parseFloat(styles.fontSize);
+    return {
+      selector: element.id || element.className,
+      fontSize,
+      lineHeight: Number.parseFloat(styles.lineHeight),
+      letterSpacing: styles.letterSpacing === 'normal' ? 0 : Number.parseFloat(styles.letterSpacing),
+    };
+  }));
+
+  expect(metrics.length).toBeGreaterThan(0);
+  for (const metric of metrics) {
+    expect(metric.lineHeight / metric.fontSize, `${metric.selector} line-height`).toBeGreaterThanOrEqual(.86);
+    expect(metric.letterSpacing / metric.fontSize, `${metric.selector} letter-spacing`).toBeGreaterThanOrEqual(-.05);
+  }
+});
+
+test('final Telegram button keeps a pill silhouette on the contact background', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const shape = await page.locator('[data-scene="contact"] .button--contact').evaluate((button) => {
+    const styles = getComputedStyle(button);
+    return {
+      height: button.getBoundingClientRect().height,
+      radii: [
+        styles.borderTopLeftRadius,
+        styles.borderTopRightRadius,
+        styles.borderBottomRightRadius,
+        styles.borderBottomLeftRadius,
+      ].map(Number.parseFloat),
+    };
+  });
+
+  expect(Math.min(...shape.radii)).toBeGreaterThanOrEqual(shape.height / 2);
+});
+
+test('supported mobile, landscape, tablet, and desktop geometries do not overflow or hide the final CTA', async ({ page }) => {
   const viewports = [
     { width: 390, height: 844 },
     { width: 844, height: 390 },
@@ -673,7 +816,7 @@ test('supported mobile, landscape, tablet, and desktop geometries do not overflo
     expect(geometry.bodyWidth, `${viewport.width}×${viewport.height} body width`).toBeLessThanOrEqual(geometry.viewportWidth);
 
     const finalCtas = page.locator('[data-scene="contact"] [data-primary-cta]');
-    await expect(finalCtas).toHaveCount(2);
+    await expect(finalCtas).toHaveCount(1);
     for (const finalCta of await finalCtas.all()) {
       await finalCta.scrollIntoViewIfNeeded();
       await expect(finalCta, `${viewport.width}×${viewport.height} final CTA`).toBeVisible();

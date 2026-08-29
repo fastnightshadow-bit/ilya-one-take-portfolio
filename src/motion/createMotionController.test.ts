@@ -13,7 +13,6 @@ const markup = `
   ${transition('ticker-to-about', 'hero', 'about')}
   <section class="about" data-scene="about">
     <picture class="about__portrait"><img alt=""></picture>
-    <p data-about-promise><span class="about__promise-line"><span>Один человек.</span></span><span class="about__promise-line"><span>Весь сайт.</span></span></p>
   </section>
   ${transition('personal-to-poster', 'about', 'pivnoy-doner')}
   <section class="case--doner" data-scene="pivnoy-doner" data-project><div class="case__copy">Кейс</div><div data-project-media></div></section>
@@ -46,13 +45,10 @@ describe('createMotionController', () => {
     const root = createRoot();
     const copy = root.querySelector<HTMLElement>('.case__copy');
     const media = root.querySelector<HTMLElement>('[data-project-media]');
-    const promiseLine = root.querySelector<HTMLElement>('[data-about-promise] .about__promise-line > span');
     copy?.style.setProperty('opacity', '0.72', 'important');
     copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
     media?.style.setProperty('opacity', '0.81', 'important');
     media?.style.setProperty('transform', 'rotate(-1deg)', 'important');
-    promiseLine?.style.setProperty('opacity', '0.64', 'important');
-    promiseLine?.style.setProperty('transform', 'translateY(3px)', 'important');
     const context = vi.fn();
     const timeline = vi.fn(createTimeline);
     const controller = createMotionController({
@@ -72,8 +68,6 @@ describe('createMotionController', () => {
     expect(copy?.style.getPropertyValue('transform')).toBe('rotate(2deg)');
     expect(media?.style.getPropertyValue('opacity')).toBe('0.81');
     expect(media?.style.getPropertyValue('transform')).toBe('rotate(-1deg)');
-    expect(promiseLine?.style.getPropertyValue('opacity')).toBe('0.64');
-    expect(promiseLine?.style.getPropertyValue('transform')).toBe('translateY(3px)');
   });
 
   it('reverts its GSAP context, clears its timer, and removes readiness on destroy', () => {
@@ -119,7 +113,7 @@ describe('createMotionController', () => {
 
     controller.mount(root);
 
-    expect(timeline).toHaveBeenCalledTimes(11);
+    expect(timeline).toHaveBeenCalledTimes(10);
     const projectScenes = ['pivnoy-doner', 'driving-school', 'shaurma-mobile', 'telegram-shop'];
     projectScenes.forEach((scene, index) => {
       const media = root.querySelector(`[data-scene="${scene}"] [data-project-media]`);
@@ -256,15 +250,12 @@ describe('createMotionController', () => {
     const root = createRoot();
     const copy = root.querySelector<HTMLElement>('.case__copy');
     const media = root.querySelector<HTMLElement>('[data-project-media]');
-    const promiseLine = root.querySelector<HTMLElement>('[data-about-promise] .about__promise-line > span');
     const transitionPhrase = root.querySelector<HTMLElement>('[data-transition-line]');
     root.setAttribute('data-motion-ready', 'authored');
     copy?.style.setProperty('opacity', '0.72', 'important');
     copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
     media?.style.setProperty('opacity', '0.81', 'important');
     media?.style.setProperty('transform', 'rotate(-1deg)', 'important');
-    promiseLine?.style.setProperty('opacity', '0.64', 'important');
-    promiseLine?.style.setProperty('transform', 'translateY(3px)', 'important');
     transitionPhrase?.style.setProperty('opacity', '0.67', 'important');
     transitionPhrase?.style.setProperty('transform', 'rotate(7deg)', 'important');
     const controller = createMotionController({
@@ -281,8 +272,6 @@ describe('createMotionController', () => {
     copy?.style.setProperty('transform', 'translateY(70px)');
     media?.style.setProperty('opacity', '0.1');
     media?.style.setProperty('transform', 'translateY(90px)');
-    promiseLine?.style.setProperty('opacity', '0.1');
-    promiseLine?.style.setProperty('transform', 'translateY(50px)');
     transitionPhrase?.style.setProperty('opacity', '0.1');
     transitionPhrase?.style.setProperty('transform', 'translateX(-40px)');
     controller.destroy();
@@ -296,10 +285,6 @@ describe('createMotionController', () => {
     expect(media?.style.getPropertyPriority('opacity')).toBe('important');
     expect(media?.style.getPropertyValue('transform')).toBe('rotate(-1deg)');
     expect(media?.style.getPropertyPriority('transform')).toBe('important');
-    expect(promiseLine?.style.getPropertyValue('opacity')).toBe('0.64');
-    expect(promiseLine?.style.getPropertyPriority('opacity')).toBe('important');
-    expect(promiseLine?.style.getPropertyValue('transform')).toBe('translateY(3px)');
-    expect(promiseLine?.style.getPropertyPriority('transform')).toBe('important');
     expect(transitionPhrase?.style.getPropertyValue('opacity')).toBe('0.67');
     expect(transitionPhrase?.style.getPropertyValue('transform')).toBe('rotate(7deg)');
   });

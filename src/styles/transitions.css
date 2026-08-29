@@ -16,8 +16,8 @@
   display: block;
   flex: 0 0 auto;
   width: max-content;
-  font: 900 clamp(2rem, 5.7vw, 4.75rem)/.82 Arial, sans-serif;
-  letter-spacing: -.06em;
+  font: 900 clamp(2rem, 5.7vw, 4.75rem)/.96 var(--font-display);
+  letter-spacing: -.02em;
   white-space: nowrap;
 }
 

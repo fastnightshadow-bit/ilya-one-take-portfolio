@@ -1,8 +1,17 @@
+@font-face {
+  font-family: 'Montserrat Black';
+  src: url('../assets/fonts/Montserrat-Black.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 4.75rem; background: var(--ink); }
-body { margin: 0; overflow-x: clip; background: var(--ink); color: var(--paper); font-family: Inter, Arial, sans-serif; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + 15px); background: var(--ink); }
+body { margin: 0; overflow-x: clip; background: var(--ink); color: var(--paper); font-family: var(--font-body); }
 button, a { font: inherit; }
 a { color: inherit; }
 img, svg { display: block; max-width: 100%; }
 :focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
-.button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: .85rem 1.1rem; border-radius: 999px; background: var(--paper); color: var(--ink); font: 900 .75rem/1 ui-monospace, monospace; text-transform: uppercase; text-decoration: none; }
+.button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: .85rem 1.1rem; border-radius: 999px; background: var(--paper); color: var(--ink); font: 700 .8rem/1 var(--font-body); text-decoration: none; }
+.button--secondary { border: 1px solid #55545c; background: transparent; color: var(--paper); }

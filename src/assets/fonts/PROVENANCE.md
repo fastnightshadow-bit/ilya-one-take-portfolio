@@ -6,4 +6,4 @@
 - License: SIL Open Font License 1.1. `OFL.txt` preserves the legal text; one trailing whitespace character was normalized for repository whitespace checks.
 - SHA-256: `ea67b37f8776eebea135cd1fe9adeaf6f9427683e8dc11ab8398b6be5f102c60`
 
-The social-card generator turns this versioned font into SVG paths with `opentype.js`; it never relies on host-installed fonts.
+The site loads this versioned file for display headings, and the social-card generator turns the same font into SVG paths with `opentype.js`. Neither path relies on host-installed fonts.

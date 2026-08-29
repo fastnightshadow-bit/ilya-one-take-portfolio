@@ -15,7 +15,7 @@ export function renderSiteMarkup(content: SiteContent): string {
   if (!toAbout || !toDoner || !toSchool || !toShaurma || !toTelegram || !toContact || content.transitions.length !== 6) throw new Error('Six transitions are required');
 
   return `<div class="site-shell" data-site-static>
-    ${siteHeader(content)}
+    ${siteHeader()}
     <main>
       ${heroScene(content)}
       ${transitionBridge(toAbout)}
