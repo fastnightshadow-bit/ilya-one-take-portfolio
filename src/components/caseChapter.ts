@@ -1,7 +1,7 @@
 import type { ProjectContent } from '../content/siteContent.ts';
 
 const screenshotPath = (project: ProjectContent, role: 'desktop' | 'mobile') =>
-  `/assets/projects/${project.id}-${role}`;
+  `./assets/projects/${project.id}-${role}`;
 
 const projectScreenshot = (project: ProjectContent, role: 'desktop' | 'mobile', primary: boolean) => {
   const screenshot = project.presentation.kind === 'responsive'

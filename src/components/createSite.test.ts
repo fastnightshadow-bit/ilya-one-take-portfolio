@@ -106,6 +106,27 @@ describe('createSite', () => {
     expect(image?.getAttribute('fetchpriority')).toBeNull();
   });
 
+  it('renders every owned image with a project-path-safe relative URL', () => {
+    const site = createSite(siteContent);
+    const ownedSources = [...site.querySelectorAll<HTMLSourceElement>('.about__portrait source, [data-project-media] source')];
+    const ownedImages = [...site.querySelectorAll<HTMLImageElement>('.about__portrait img, [data-project-media] img')];
+
+    expect(ownedSources.length).toBeGreaterThan(0);
+    expect(ownedImages.length).toBeGreaterThan(0);
+    for (const source of ownedSources) {
+      const candidates = source.getAttribute('srcset')?.split(',').map((candidate) => candidate.trim().split(/\s+/)[0]);
+      expect(candidates?.every((candidate) => candidate?.startsWith('./assets/'))).toBe(true);
+    }
+    for (const image of ownedImages) {
+      expect(image.getAttribute('src')?.startsWith('./assets/')).toBe(true);
+      const srcset = image.getAttribute('srcset');
+      if (srcset) {
+        const candidates = srcset.split(',').map((candidate) => candidate.trim().split(/\s+/)[0]);
+        expect(candidates.every((candidate) => candidate?.startsWith('./assets/'))).toBe(true);
+      }
+    }
+  });
+
   it('renders every hero idea as stable semantic fallback content', () => {
     const site = createSite(siteContent);
     const heading = site.querySelector<HTMLElement>('#hero-title');

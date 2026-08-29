@@ -4,6 +4,7 @@ import { siteContent } from './src/content/siteContent.ts';
 import { renderMetadataMarkup } from './src/seo/applyMetadata.ts';
 
 export default defineConfig({
+  base: './',
   plugins: [{
     name: 'static-portfolio-markup',
     transformIndexHtml(html) {

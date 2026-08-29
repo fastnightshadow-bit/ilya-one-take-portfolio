@@ -8,9 +8,9 @@ export const aboutScene = () => `
       <p class="about__promise" data-about-promise><span class="about__promise-line"><span>ОДИН ЧЕЛОВЕК.</span></span> <span class="about__promise-line"><span>ВЕСЬ САЙТ.</span></span></p>
     </div>
     <picture class="about__portrait">
-      <source type="image/avif" srcset="/assets/portrait/portrait-720.avif 720w, /assets/portrait/portrait-1200.avif 1200w" sizes="(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)">
-      <source type="image/webp" srcset="/assets/portrait/portrait-720.webp 720w, /assets/portrait/portrait-1200.webp 1200w" sizes="(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)">
-      <img src="/assets/portrait/portrait-1200.png" width="1200" height="1500" sizes="(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)" alt="Илья, веб-разработчик" loading="lazy" decoding="async">
+      <source type="image/avif" srcset="./assets/portrait/portrait-720.avif 720w, ./assets/portrait/portrait-1200.avif 1200w" sizes="(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)">
+      <source type="image/webp" srcset="./assets/portrait/portrait-720.webp 720w, ./assets/portrait/portrait-1200.webp 1200w" sizes="(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)">
+      <img src="./assets/portrait/portrait-1200.png" width="1200" height="1500" sizes="(max-width: 700px) 92vw, min(44vw, 72.652svh, 637.92px)" alt="Илья, веб-разработчик" loading="lazy" decoding="async">
     </picture>
     <div class="about__facts">
       <p><b>01</b><span>Общение напрямую<small>Без потерянных деталей между людьми</small></span></p>
