@@ -99,6 +99,123 @@ const frozenTailPresentation = (page: Page) => page.evaluate(() => {
   };
 });
 
+const projectGeometry = (page: Page, id: string) => page.locator(`[data-scene="${id}"]`).evaluate((scene) => {
+  const chapter = scene.getBoundingClientRect();
+  const copy = scene.querySelector<HTMLElement>('.case__copy')!.getBoundingClientRect();
+  const media = scene.querySelector<HTMLElement>('[data-project-media]')!.getBoundingClientRect();
+  return { chapter, copy, media };
+});
+
+test('mobile hero fills the usable screen and centers its copy intentionally', async ({ page }) => {
+  for (const height of [664, 844]) {
+    await page.setViewportSize({ width: 390, height });
+    await page.goto('/');
+    const metrics = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>('.site-header')!.getBoundingClientRect();
+      const hero = document.querySelector<HTMLElement>('[data-scene="hero"]')!;
+      const box = hero.getBoundingClientRect();
+      const copy = hero.querySelector<HTMLElement>('.hero__copy')!.getBoundingClientRect();
+      return {
+        headerBottom: header.bottom,
+        heroTop: box.top,
+        heroBottom: box.bottom,
+        heroHeight: box.height,
+        usableHeight: innerHeight - header.height,
+        display: getComputedStyle(hero).display,
+        centerDelta: Math.abs((copy.top + copy.height / 2) - (box.top + box.height / 2)),
+        ghostDisplay: getComputedStyle(hero.querySelector<HTMLElement>('.hero__ghost')!).display,
+        scrollDisplay: getComputedStyle(hero.querySelector<HTMLElement>('.hero__scroll')!).display,
+      };
+    });
+    expect(Math.abs(metrics.heroTop - metrics.headerBottom)).toBeLessThanOrEqual(1);
+    expect(Math.abs(metrics.heroHeight - metrics.usableHeight)).toBeLessThanOrEqual(1);
+    expect(Math.abs(metrics.heroBottom - height)).toBeLessThanOrEqual(1);
+    expect(metrics.display).toBe('grid');
+    expect(metrics.centerDelta).toBeLessThanOrEqual(72);
+    expect(metrics.ghostDisplay).toBe('none');
+    expect(metrics.scrollDisplay).toBe('none');
+  }
+});
+
+test('mobile About stays in compact normal flow', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const metrics = await page.locator('[data-scene="about"]').evaluate((about) => {
+    const bounds = about.getBoundingClientRect();
+    const portrait = about.querySelector<HTMLElement>('.about__portrait')!;
+    const facts = about.querySelector<HTMLElement>('.about__facts')!;
+    return {
+      height: bounds.height,
+      columns: getComputedStyle(about).gridTemplateColumns.split(' ').length,
+      portraitPosition: getComputedStyle(portrait).position,
+      factsPosition: getComputedStyle(facts).position,
+      portraitBottom: portrait.getBoundingClientRect().bottom,
+      factsBottom: facts.getBoundingClientRect().bottom,
+      aboutBottom: bounds.bottom,
+    };
+  });
+  expect(metrics.height).toBeLessThan(850);
+  expect(metrics.columns).toBe(2);
+  expect(metrics.portraitPosition).not.toBe('absolute');
+  expect(metrics.factsPosition).not.toBe('absolute');
+  expect(metrics.portraitBottom).toBeLessThanOrEqual(metrics.aboutBottom + .5);
+  expect(metrics.factsBottom).toBeLessThanOrEqual(metrics.aboutBottom + .5);
+});
+
+test('Doner is a compact non-overlapping angled composition on phones', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const scene = page.locator('[data-scene="pivnoy-doner"]');
+  const geometry = await projectGeometry(page, 'pivnoy-doner');
+  const angles = await scene.locator('[data-project-shot]').evaluateAll((shots) => shots.map((shot) => {
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(shot).transform);
+    return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+  }));
+  expect(geometry.copy.right).toBeLessThanOrEqual(geometry.media.left);
+  expect(Math.abs((geometry.copy.top + geometry.copy.height / 2) - (geometry.media.top + geometry.media.height / 2))).toBeLessThan(90);
+  expect(geometry.media.height / geometry.chapter.height).toBeGreaterThan(.6);
+  expect(angles[0]).toBeLessThan(0);
+  expect(angles[1]).toBeGreaterThan(0);
+});
+
+test('School shows one tilted phone beside centered copy and a styled action', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const scene = page.locator('[data-scene="driving-school"]');
+  const geometry = await projectGeometry(page, 'driving-school');
+  await expect(scene.locator('[data-project-shot="mobile"]')).toBeVisible();
+  await expect(scene.locator('[data-project-shot="desktop"]')).toBeHidden();
+  expect(geometry.copy.right).toBeLessThanOrEqual(geometry.media.left);
+  expect(Math.abs((geometry.copy.top + geometry.copy.height / 2) - (geometry.media.top + geometry.media.height / 2))).toBeLessThan(90);
+  await expect(scene.locator('.case__action')).toHaveCSS('background-color', 'rgb(245, 207, 69)');
+  await expect(scene.locator('.case__action')).not.toHaveCSS('box-shadow', 'none');
+});
+
+test('Shaurma headline wraps as two meaningful lines without changing its phone structure', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const scene = page.locator('[data-scene="shaurma-mobile"]');
+  await expect(scene.locator('[data-project-shot]')).toHaveCount(1);
+  const lineCounts = await scene.locator('.case__headline').evaluate((headline) => {
+    const first = document.createRange();
+    first.selectNodeContents(headline.firstChild!);
+    const accent = document.createRange();
+    accent.selectNodeContents(headline.querySelector('.case__accent')!);
+    return { first: first.getClientRects().length, accent: accent.getClientRects().length };
+  });
+  expect(lineCounts).toEqual({ first: 1, accent: 1 });
+});
+
+test('School to Shaurma running text uses the requested black strip', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const bridge = page.locator('[data-transition="road-to-phone"]');
+  await expect(bridge).toHaveCSS('background-color', 'rgb(17, 17, 22)');
+  await expect(bridge).toHaveCSS('color', 'rgb(241, 238, 230)');
+});
+
 const desktopProjectPresentation = (page: Page) => page.evaluate(() => {
   const rect = (element: Element) => {
     const { x, y, width, height, top, right, bottom, left } = element.getBoundingClientRect();

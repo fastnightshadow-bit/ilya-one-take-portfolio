@@ -132,12 +132,19 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
     for (const [index, expectedShot] of project.shots.entries()) {
       const shot = shots.nth(index);
       const image = shot.locator('img');
-      await expect(shot).toBeVisible();
-      await expect(image).toBeVisible();
       await expect(image).toHaveAttribute('alt', expectedShot.alt);
       await expect(image).toHaveAttribute('loading', 'lazy');
       await expect(image).toHaveAttribute('decoding', 'async');
       await expect(shot.locator('source')).toHaveCount(2);
+
+      const isHiddenSchoolDesktop = project.id === 'driving-school' && expectedShot.role === 'desktop' && viewportWidth <= 700;
+      if (isHiddenSchoolDesktop) {
+        await expect(shot).toBeHidden();
+        continue;
+      }
+
+      await expect(shot).toBeVisible();
+      await expect(image).toBeVisible();
       await expectImageLoaded(image, project.id, expectedShot.role);
 
       const imageBox = await image.boundingBox();
@@ -380,6 +387,11 @@ test('AutoSchool keeps its mobile proof visually primary at every supported layo
     const secondary = scene.locator('[data-project-shot="desktop"]');
     await primary.scrollIntoViewIfNeeded();
     await expect(primary).toBeVisible();
+    if (viewport.width <= 700) {
+      await expect(secondary).toBeHidden();
+      continue;
+    }
+
     await expect(secondary).toBeVisible();
 
     const primaryBox = await primary.boundingBox();
