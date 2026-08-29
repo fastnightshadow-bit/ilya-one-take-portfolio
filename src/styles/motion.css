@@ -1,9 +1,7 @@
-[data-motion-ready] .about__portrait img { filter: grayscale(1) contrast(1.08); }
 [data-motion-ready] .about__promise-line > span { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-  .about__portrait img { filter: grayscale(0) contrast(1.02) !important; }
   .about__promise-line > span { opacity: 1 !important; transform: none !important; }
   [data-project] .case__copy { opacity: 1 !important; transform: none !important; }
   [data-project-media] { opacity: 1 !important; transform: none !important; }

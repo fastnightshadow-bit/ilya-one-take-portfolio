@@ -45,6 +45,8 @@ test('GitHub Pages workflow deploys a verified dist artifact from main', async (
   assert.match(workflow, /- run:\s*npm run test/);
   assert.match(workflow, /- run:\s*npm run build/);
   assert.match(workflow, /- run:\s*npm run verify:dist-seo/);
+  assert.match(workflow, /- run:\s*npx playwright install --with-deps chromium webkit/);
+  assert.match(workflow, /- run:\s*npm run e2e:prod/);
   assert.match(workflow, /uses:\s*actions\/configure-pages@[0-9a-f]{40}/);
   assert.match(workflow, /uses:\s*actions\/upload-pages-artifact@[0-9a-f]{40}[\s\S]*?path:\s*\.\/dist/);
   assert.match(workflow, /id:\s*deployment\s*\n\s+uses:\s*actions\/deploy-pages@[0-9a-f]{40}/);

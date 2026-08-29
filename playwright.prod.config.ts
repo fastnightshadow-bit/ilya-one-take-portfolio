@@ -11,5 +11,6 @@ export default defineConfig({
   projects: [
     { name: 'mobile', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'webkit-portrait', testMatch: /portrait-layout\.spec\.ts/, use: { ...devices['iPhone 13'], browserName: 'webkit' } },
   ],
 });

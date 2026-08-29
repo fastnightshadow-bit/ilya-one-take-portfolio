@@ -46,13 +46,11 @@ describe('createMotionController', () => {
     const root = createRoot();
     const copy = root.querySelector<HTMLElement>('.case__copy');
     const media = root.querySelector<HTMLElement>('[data-project-media]');
-    const portrait = root.querySelector<HTMLElement>('.about__portrait img');
     const promiseLine = root.querySelector<HTMLElement>('[data-about-promise] .about__promise-line > span');
     copy?.style.setProperty('opacity', '0.72', 'important');
     copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
     media?.style.setProperty('opacity', '0.81', 'important');
     media?.style.setProperty('transform', 'rotate(-1deg)', 'important');
-    portrait?.style.setProperty('filter', 'sepia(0.2)', 'important');
     promiseLine?.style.setProperty('opacity', '0.64', 'important');
     promiseLine?.style.setProperty('transform', 'translateY(3px)', 'important');
     const context = vi.fn();
@@ -74,7 +72,6 @@ describe('createMotionController', () => {
     expect(copy?.style.getPropertyValue('transform')).toBe('rotate(2deg)');
     expect(media?.style.getPropertyValue('opacity')).toBe('0.81');
     expect(media?.style.getPropertyValue('transform')).toBe('rotate(-1deg)');
-    expect(portrait?.style.getPropertyValue('filter')).toBe('sepia(0.2)');
     expect(promiseLine?.style.getPropertyValue('opacity')).toBe('0.64');
     expect(promiseLine?.style.getPropertyValue('transform')).toBe('translateY(3px)');
   });
@@ -259,7 +256,6 @@ describe('createMotionController', () => {
     const root = createRoot();
     const copy = root.querySelector<HTMLElement>('.case__copy');
     const media = root.querySelector<HTMLElement>('[data-project-media]');
-    const portrait = root.querySelector<HTMLElement>('.about__portrait img');
     const promiseLine = root.querySelector<HTMLElement>('[data-about-promise] .about__promise-line > span');
     const transitionPhrase = root.querySelector<HTMLElement>('[data-transition-line]');
     root.setAttribute('data-motion-ready', 'authored');
@@ -267,7 +263,6 @@ describe('createMotionController', () => {
     copy?.style.setProperty('transform', 'rotate(2deg)', 'important');
     media?.style.setProperty('opacity', '0.81', 'important');
     media?.style.setProperty('transform', 'rotate(-1deg)', 'important');
-    portrait?.style.setProperty('filter', 'sepia(0.2)', 'important');
     promiseLine?.style.setProperty('opacity', '0.64', 'important');
     promiseLine?.style.setProperty('transform', 'translateY(3px)', 'important');
     transitionPhrase?.style.setProperty('opacity', '0.67', 'important');
@@ -286,7 +281,6 @@ describe('createMotionController', () => {
     copy?.style.setProperty('transform', 'translateY(70px)');
     media?.style.setProperty('opacity', '0.1');
     media?.style.setProperty('transform', 'translateY(90px)');
-    portrait?.style.setProperty('filter', 'grayscale(1)');
     promiseLine?.style.setProperty('opacity', '0.1');
     promiseLine?.style.setProperty('transform', 'translateY(50px)');
     transitionPhrase?.style.setProperty('opacity', '0.1');
@@ -302,8 +296,6 @@ describe('createMotionController', () => {
     expect(media?.style.getPropertyPriority('opacity')).toBe('important');
     expect(media?.style.getPropertyValue('transform')).toBe('rotate(-1deg)');
     expect(media?.style.getPropertyPriority('transform')).toBe('important');
-    expect(portrait?.style.getPropertyValue('filter')).toBe('sepia(0.2)');
-    expect(portrait?.style.getPropertyPriority('filter')).toBe('important');
     expect(promiseLine?.style.getPropertyValue('opacity')).toBe('0.64');
     expect(promiseLine?.style.getPropertyPriority('opacity')).toBe('important');
     expect(promiseLine?.style.getPropertyValue('transform')).toBe('translateY(3px)');

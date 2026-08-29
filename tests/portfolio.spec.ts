@@ -446,7 +446,6 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
   expect(Math.abs(secondWidth - firstWidth)).toBeLessThanOrEqual(0.5);
 
   const handoffs = [
-    { bridge: 0, target: '.about__portrait' },
     { bridge: 1, target: '[data-scene="pivnoy-doner"] [data-project-media]' },
     { bridge: 2, target: '[data-scene="driving-school"] [data-project-media]' },
     { bridge: 3, target: '[data-scene="shaurma-mobile"] [data-project-media]' },
@@ -455,9 +454,27 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
   ] as const;
 
   const promiseLines = page.locator('[data-about-promise] .about__promise-line > span');
+  const portrait = page.locator('.about__portrait');
+  const portraitImage = portrait.locator('img');
   await expect(promiseLines).toHaveCount(2);
-  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(1\)/);
+  await expect(portrait).toHaveCSS('transform', 'none');
+  await expect(portrait).toHaveCSS('opacity', '1');
+  await expect(portraitImage).toHaveCSS('filter', 'none');
   await expect.poll(() => promiseLines.first().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeLessThan(0.2);
+
+  await page.locator('.about').evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
+  });
+  await expect.poll(() => promiseLines.last().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
+  await expect.poll(() => promiseLines.evaluateAll((elements) => Math.max(...elements.map((element) => {
+    const line = element.parentElement!.getBoundingClientRect();
+    const inner = element.getBoundingClientRect();
+    return Math.abs(inner.top - line.top);
+  })))).toBeLessThanOrEqual(1);
+  await expect(portrait).toHaveCSS('transform', 'none');
+  await expect(portraitImage).toHaveCSS('filter', 'none');
+
   for (const [index, handoff] of handoffs.entries()) {
     const bridge = page.locator('[data-transition]').nth(handoff.bridge);
     const target = page.locator(handoff.target);
@@ -478,20 +495,6 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     }
 
     if (index === 0) {
-      await page.locator('.about').evaluate((element) => {
-        const bounds = element.getBoundingClientRect();
-        window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.3);
-      });
-      await expect.poll(() => promiseLines.last().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95);
-      await expect.poll(() => promiseLines.evaluateAll((elements) => Math.max(...elements.map((element) => {
-        const line = element.parentElement!.getBoundingClientRect();
-        const inner = element.getBoundingClientRect();
-        return Math.abs(inner.top - line.top);
-      })))).toBeLessThanOrEqual(1);
-      await expect.poll(() => page.locator('.about__portrait img').evaluate((element) => getComputedStyle(element).filter)).toContain('grayscale(0)');
-    }
-
-    if (index === 1) {
       const project = page.locator('[data-project]').first();
       const caseCopy = project.locator('.case__copy');
       await project.evaluate((element) => {
@@ -549,7 +552,7 @@ test('reduced motion keeps final compositions visible and static', async ({ page
     await expect(line).toHaveCSS('opacity', '1');
     await expect(line).toHaveCSS('transform', 'none');
   }
-  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
+  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', 'none');
   const word = page.locator('[data-rotating-word]');
   await expect(word).toBeHidden();
   const staticWord = await word.textContent();
@@ -616,7 +619,7 @@ test('styled static story remains complete when the application script fails', a
   }
   await expect(page.locator('[data-about-promise]')).toBeVisible();
   await expect(page.locator('[data-about-promise]')).toHaveText(/ОДИН ЧЕЛОВЕК\.\s*ВЕСЬ САЙТ\./);
-  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', /grayscale\(0\)/);
+  await expect(page.locator('.about__portrait img')).toHaveCSS('filter', 'none');
   await expectRealProjectProofs(page, expectedWidth);
   await expect(page.locator('[data-github-link]')).toHaveAccessibleName('GitHub Ильи');
   await expect(page.locator('[data-github-link]')).toHaveAttribute('href', 'https://github.com/fastnightshadow-bit');

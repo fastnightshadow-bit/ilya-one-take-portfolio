@@ -1,4 +1,23 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import sharp from 'sharp';
+
+async function expectPortraitRasterPainted(page: Page, portrait: Locator, label: string) {
+  const clip = await portrait.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const left = Math.max(0, bounds.left);
+    const top = Math.max(0, bounds.top);
+    const right = Math.min(window.innerWidth, bounds.right);
+    const bottom = Math.min(window.innerHeight, bounds.bottom);
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  });
+  expect(clip.width, `${label} painted width`).toBeGreaterThan(80);
+  expect(clip.height, `${label} painted height`).toBeGreaterThan(96);
+
+  const screenshot = await page.screenshot({ clip });
+  const stats = await sharp(screenshot).stats();
+  expect(stats.entropy, `${label} raster entropy`).toBeGreaterThan(4);
+  expect(Math.max(...stats.channels.slice(0, 3).map((channel) => channel.stdev)), `${label} raster deviation`).toBeGreaterThan(18);
+}
 
 test('keeps the portrait visible after the real About CTA jump in short landscape', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
@@ -11,6 +30,89 @@ test('keeps the portrait visible after the real About CTA jump in short landscap
     const bounds = portrait.getBoundingClientRect();
     return Math.max(0, Math.min(bounds.bottom, window.innerHeight) - Math.max(bounds.top, 0));
   }), { message: '844×390 portrait viewport intersection' }).toBeGreaterThanOrEqual(96);
+});
+
+test('keeps the clipped portrait out of a transformed compositor layer after scrolling away and back', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.evaluate(() => document.documentElement.style.scrollBehavior = 'auto');
+
+  const portrait = page.locator('.about__portrait');
+  const image = portrait.locator('img');
+  await image.evaluate((node) => (node as HTMLImageElement).decode());
+  const documentBounds = await portrait.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      top: window.scrollY + bounds.top,
+      bottom: window.scrollY + bounds.bottom,
+    };
+  });
+
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), documentBounds.bottom - 12);
+  await portrait.evaluate((element) => window.scrollBy(0, element.getBoundingClientRect().bottom - 8));
+  const edgeBottom = await expect.poll(() => portrait.evaluate((element) => element.getBoundingClientRect().bottom), {
+    message: 'portrait should leave only a small edge in the viewport',
+  });
+  await edgeBottom.toBeGreaterThanOrEqual(4);
+  await edgeBottom.toBeLessThanOrEqual(12);
+
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), documentBounds.top - 50);
+  const returnedTop = await expect.poll(() => portrait.evaluate((element) => element.getBoundingClientRect().top), {
+    message: 'portrait should return near the top of the viewport',
+  });
+  await returnedTop.toBeGreaterThanOrEqual(40);
+  await returnedTop.toBeLessThanOrEqual(60);
+
+  await expect(portrait).toHaveCSS('transform', 'none');
+  await expect(portrait).toHaveCSS('opacity', '1');
+  await expect(image).toBeVisible();
+  await expect(image).toHaveCSS('filter', 'none');
+  const decodedImage = await image.evaluate((node) => ({
+    complete: (node as HTMLImageElement).complete,
+    naturalWidth: (node as HTMLImageElement).naturalWidth,
+  }));
+  expect(decodedImage.complete).toBe(true);
+  expect(decodedImage.naturalWidth).toBeGreaterThan(0);
+  await expectPortraitRasterPainted(page, portrait, '390×844 portrait after reverse scroll');
+});
+
+test('keeps the short-landscape portrait paint layer stable after reverse scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1256, height: 542 });
+  await page.goto('/');
+  await page.evaluate(() => document.documentElement.style.scrollBehavior = 'auto');
+
+  const about = page.locator('.about');
+  const portrait = about.locator('.about__portrait');
+  const image = portrait.locator('img');
+  await image.evaluate((node) => (node as HTMLImageElement).decode());
+  const sceneBounds = await about.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      top: window.scrollY + bounds.top,
+      bottom: window.scrollY + bounds.bottom,
+    };
+  });
+
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), sceneBounds.bottom - 12);
+  await portrait.evaluate((element) => window.scrollBy(0, element.getBoundingClientRect().bottom - 8));
+  const edgeBottom = await expect.poll(() => portrait.evaluate((element) => element.getBoundingClientRect().bottom), {
+    message: 'short-landscape portrait should leave only a small edge in the viewport',
+  });
+  await edgeBottom.toBeGreaterThanOrEqual(4);
+  await edgeBottom.toBeLessThanOrEqual(12);
+
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), sceneBounds.top);
+  await expect(portrait).toBeVisible();
+  await expect(portrait).toHaveCSS('transform', 'none');
+  await expect(portrait).toHaveCSS('opacity', '1');
+  await expect(image).toHaveCSS('filter', 'none');
+  expect(await image.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const returnedTop = await expect.poll(() => portrait.evaluate((element) => element.getBoundingClientRect().top), {
+    message: 'short-landscape portrait should return to its sticky top offset',
+  });
+  await returnedTop.toBeGreaterThanOrEqual(40);
+  await returnedTop.toBeLessThanOrEqual(60);
+  await expectPortraitRasterPainted(page, portrait, '1256×542 portrait after reverse scroll');
 });
 
 test('keeps most of the portrait visible through the bottom of About on short wide screens', async ({ page }) => {

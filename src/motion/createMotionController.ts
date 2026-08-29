@@ -54,7 +54,6 @@ const handoffConfigs: Readonly<Record<string, HandoffConfig>> = {
   about: {
     steps: [
       { scope: 'source', selector: '.hero__word', from: { desktop: { y: 0, opacity: 1 } }, to: { desktop: { y: -14, opacity: 0.7 } }, desktopOnly: true },
-      { scope: 'target', selector: '.about__portrait', from: { desktop: { xPercent: 12, y: 24, opacity: 0.72 }, mobile: { xPercent: 5, y: 10, opacity: 0.82 } }, to: { desktop: { xPercent: 0, y: 0, opacity: 1 } } },
     ],
   },
   'pivnoy-doner': {
@@ -102,8 +101,7 @@ const findAdjacentScene = (bridge: HTMLElement, direction: 'previous' | 'next'):
 const ownedStyleRules = [
   { selector: '[data-scene="hero"] .hero__word, [data-transition-line]', properties: ['opacity', 'transform'] },
   { selector: '[data-project] .case__copy', properties: ['opacity', 'transform'] },
-  { selector: '.about__portrait, [data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
-  { selector: '.about__portrait img', properties: ['filter'] },
+  { selector: '[data-about-promise] .about__promise-line > span', properties: ['opacity', 'transform'] },
   { selector: '[data-project-media]', properties: ['opacity', 'transform'] },
   { selector: '[data-scene="contact"] h2, [data-scene="contact"] .button--contact', properties: ['opacity', 'transform'] },
 ] as const;
@@ -236,7 +234,6 @@ export function createMotionController(dependencies: MotionDependencies = defaul
 
             const about = root.querySelector<HTMLElement>('.about');
             const promiseLines = about?.querySelectorAll<HTMLElement>('[data-about-promise] .about__promise-line > span');
-            const portrait = about?.querySelector<HTMLElement>('.about__portrait img');
             if (about) {
               const aboutTimeline = dependencies.timeline({
                 scrollTrigger: {
@@ -251,14 +248,6 @@ export function createMotionController(dependencies: MotionDependencies = defaul
                   promiseLines,
                   { yPercent: 110, opacity: 0 },
                   { yPercent: 0, opacity: 1, stagger: 0.08, ease: 'none', immediateRender: false },
-                  0,
-                );
-              }
-              if (portrait) {
-                aboutTimeline.fromTo(
-                  portrait,
-                  { filter: 'grayscale(1) contrast(1.08)' },
-                  { filter: 'grayscale(0) contrast(1.02)', ease: 'none', immediateRender: false },
                   0,
                 );
               }
