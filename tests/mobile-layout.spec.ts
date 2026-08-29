@@ -185,7 +185,13 @@ test('School shows one tilted phone beside centered copy and a styled action', a
   await page.goto('/');
   const scene = page.locator('[data-scene="driving-school"]');
   const geometry = await projectGeometry(page, 'driving-school');
-  await expect(scene.locator('[data-project-shot="mobile"]')).toBeVisible();
+  const mobileProof = scene.locator('[data-project-shot="mobile"]');
+  await expect(mobileProof).toBeVisible();
+  const mobileAngle = await mobileProof.evaluate((shot) => {
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(shot).transform);
+    return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+  });
+  expect(mobileAngle).toBeLessThan(0);
   await expect(scene.locator('[data-project-shot="desktop"]')).toBeHidden();
   expect(geometry.copy.right).toBeLessThanOrEqual(geometry.media.left);
   expect(Math.abs((geometry.copy.top + geometry.copy.height / 2) - (geometry.media.top + geometry.media.height / 2))).toBeLessThan(90);

@@ -90,6 +90,11 @@ const tickerColors = [
   { background: 'rgb(17, 17, 22)', foreground: 'rgb(255, 85, 61)' },
 ] as const;
 
+const tickerColorForViewport = (transition: string | null, viewportWidth: number, index: number) =>
+  transition === 'road-to-phone' && viewportWidth <= 700
+    ? { background: 'rgb(17, 17, 22)', foreground: 'rgb(241, 238, 230)' }
+    : tickerColors[index];
+
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
 async function expectImageLoaded(image: Locator, projectId: string, role: string) {
@@ -139,6 +144,17 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
 
       const isHiddenSchoolDesktop = project.id === 'driving-school' && expectedShot.role === 'desktop' && viewportWidth <= 700;
       if (isHiddenSchoolDesktop) {
+        const projectAssetPath = `./assets/projects/${project.id}-${expectedShot.role}`;
+        const sources = shot.locator('source');
+        await expect(image).toHaveAttribute('src', `${projectAssetPath}-1280.jpg`);
+        await expect(sources.nth(0)).toHaveAttribute(
+          'srcset',
+          `${projectAssetPath}-720.avif 720w, ${projectAssetPath}-1280.avif 1280w`,
+        );
+        await expect(sources.nth(1)).toHaveAttribute(
+          'srcset',
+          `${projectAssetPath}-720.webp 720w, ${projectAssetPath}-1280.webp 1280w`,
+        );
         await expect(shot).toBeHidden();
         continue;
       }
@@ -254,7 +270,7 @@ test('all handoffs are exact compact a14 running-text strips', async ({ page }) 
       expect(
         { background: metrics.background, foreground: metrics.foreground },
         `${viewport.width}px transition ${index + 1} exact a14 colors`,
-      ).toEqual(tickerColors[index]);
+      ).toEqual(tickerColorForViewport(await transition.getAttribute('data-transition')!, viewport.width, index));
       expect(metrics.overflow, `${viewport.width}px transition ${index + 1} clipping`).toBe('hidden');
       expect(metrics.whiteSpace, `${viewport.width}px transition ${index + 1} nowrap`).toBe('nowrap');
       expect(metrics.trackWidth, `${viewport.width}px transition ${index + 1} running track`).toBeGreaterThan(viewport.width);
