@@ -13,6 +13,24 @@ test('keeps the portrait visible after the real About CTA jump in short landscap
   }), { message: '844×390 portrait viewport intersection' }).toBeGreaterThanOrEqual(96);
 });
 
+test('keeps most of the portrait visible through the bottom of About on short wide screens', async ({ page }) => {
+  await page.setViewportSize({ width: 1256, height: 542 });
+  await page.goto('/');
+
+  const portrait = page.locator('.about__portrait');
+  await portrait.locator('img').evaluate((image) => (image as HTMLImageElement).decode());
+  await page.locator('.process').evaluate((process) => {
+    const processTop = window.scrollY + process.getBoundingClientRect().top;
+    window.scrollTo(0, processTop - window.innerHeight);
+  });
+
+  await expect.poll(() => portrait.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const visibleHeight = Math.max(0, Math.min(bounds.bottom, window.innerHeight) - Math.max(bounds.top, 0));
+    return visibleHeight / bounds.height;
+  }), { message: '1256×542 portrait visibility before the Process strip' }).toBeGreaterThanOrEqual(.65);
+});
+
 test('keeps at least 90% of the portrait source height visible on wide screens', async ({ page }) => {
   for (const viewport of [
     { width: 1920, height: 1080 },

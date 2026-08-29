@@ -83,7 +83,9 @@
 }
 
 @media (min-width: 701px) and (max-height: 600px) {
-  .about__portrait { top: 0; bottom: auto; }
+  .about { display: grid; grid-template-rows: auto 1fr; }
+  .about__copy { grid-row: 2; grid-column: 1; }
+  .about__portrait { position: sticky; top: 48px; right: auto; bottom: auto; grid-row: 1 / -1; grid-column: 1; align-self: start; justify-self: end; margin-right: calc(var(--page-pad) * -1); }
 }
 
 .github-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem; align-items: center; padding: clamp(2.2rem, 5vw, 4rem) var(--page-pad); border-block: 1px solid var(--border-dark); background: var(--ink); color: var(--paper); }
