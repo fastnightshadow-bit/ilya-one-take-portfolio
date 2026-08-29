@@ -70,7 +70,9 @@ const selectedTransitionContract = [
   ['message-to-contact', 'telegram-shop', 'contact'],
 ] as const;
 
-const rejectedCleanTakeoverCompositions = /^(?:d1?|split-shutter|diagonal-split|horizontal-strips|3d-flip|camera-fly-through)$/;
+const rejectedCleanTakeoverCompositions = [
+  'd', 'd1', 'split-shutter', 'diagonal-split', 'horizontal-strips', '3d-flip', 'camera-fly-through',
+] as const;
 
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
@@ -256,13 +258,13 @@ test('third bridge is the approved T1 clean poster takeover rather than a reject
     target: element.querySelector('[data-transition-target]')?.getAttribute('data-transition-target'),
     morph: element.querySelector('[data-transition-morph]')?.getAttribute('data-transition-morph'),
   }));
-  const rejectedMarkers = await cleanTakeover.evaluate((element) => [element, ...element.querySelectorAll<HTMLElement>(
+  const rejectedMarkers = await cleanTakeover.evaluate((element, rejectedCompositions) => [element, ...element.querySelectorAll<HTMLElement>(
     '[data-transition-composition], [data-transition-effect], [data-transition-mode]',
   )].flatMap((node) => [
     node.getAttribute('data-transition-composition'),
     node.getAttribute('data-transition-effect'),
     node.getAttribute('data-transition-mode'),
-  ].filter((value): value is string => value !== null && rejectedCleanTakeoverCompositions.test(value))));
+  ].filter((value): value is string => value !== null && rejectedCompositions.includes(value))), rejectedCleanTakeoverCompositions);
 
   expect(t1Contract).toEqual({
     composition: 't1-clean-takeover',
