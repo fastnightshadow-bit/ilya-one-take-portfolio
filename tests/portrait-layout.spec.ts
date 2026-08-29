@@ -82,20 +82,34 @@ test('keeps About copy clear of the portrait at supported breakpoints', async ({
     await page.goto('/');
     await expect(page.locator('[data-about-promise]')).toBeVisible();
 
-    const { ledeBottom, promiseBottom, portraitTop } = await page.locator('.about').evaluate((scene) => {
+    const { copyRight, copyBottom, portraitLeft, portraitRight, portraitBottom, factsTop, factsBottom, sceneWidth, sceneHeight, overlapArea } = await page.locator('.about').evaluate((scene) => {
+      const sceneBounds = scene.getBoundingClientRect();
+      const copy = scene.querySelector('.about__copy')!.getBoundingClientRect();
       const sceneTop = scene.getBoundingClientRect().top;
-      const lede = scene.querySelector('.about__lede')!.getBoundingClientRect();
-      const promise = scene.querySelector('[data-about-promise]')!.getBoundingClientRect();
       const portrait = scene.querySelector('.about__portrait')!.getBoundingClientRect();
+      const facts = scene.querySelector('.about__facts')!.getBoundingClientRect();
+      const overlapWidth = Math.max(0, Math.min(copy.right, portrait.right) - Math.max(copy.left, portrait.left));
+      const overlapHeight = Math.max(0, Math.min(copy.bottom, portrait.bottom) - Math.max(copy.top, portrait.top));
       return {
-        ledeBottom: lede.bottom - sceneTop,
-        promiseBottom: promise.bottom - sceneTop,
-        portraitTop: portrait.top - sceneTop,
+        copyRight: copy.right - sceneBounds.left,
+        copyBottom: copy.bottom - sceneTop,
+        portraitLeft: portrait.left - sceneBounds.left,
+        portraitRight: portrait.right - sceneBounds.left,
+        portraitBottom: portrait.bottom - sceneTop,
+        factsTop: facts.top - sceneTop,
+        factsBottom: facts.bottom - sceneTop,
+        sceneWidth: sceneBounds.width,
+        sceneHeight: sceneBounds.height,
+        overlapArea: overlapWidth * overlapHeight,
       };
     });
 
-    expect(ledeBottom, `${width}px lede should clear portrait`).toBeLessThanOrEqual(portraitTop - 24);
-    expect(promiseBottom, `${width}px promise should clear portrait`).toBeLessThanOrEqual(portraitTop - 24);
+    expect(overlapArea, `${width}px About copy and portrait should not overlap`).toBe(0);
+    expect(copyRight, `${width}px About copy should stay left of the portrait`).toBeLessThanOrEqual(portraitLeft - 12);
+    expect(copyBottom, `${width}px About copy should clear the facts row`).toBeLessThanOrEqual(factsTop - 16);
+    expect(portraitBottom, `${width}px portrait should clear the facts row`).toBeLessThanOrEqual(factsTop - 16);
+    expect(portraitRight, `${width}px portrait should stay within About`).toBeLessThanOrEqual(sceneWidth + .5);
+    expect(factsBottom, `${width}px facts should stay within About`).toBeLessThanOrEqual(sceneHeight + .5);
   }
 
   const desktopViewports = [
