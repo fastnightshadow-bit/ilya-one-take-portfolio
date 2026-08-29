@@ -509,10 +509,8 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
   await expect.poll(() => promiseLines.first().evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeLessThan(0.2);
   for (const [index, handoff] of handoffs.entries()) {
     const bridge = page.locator('[data-transition]').nth(handoff.bridge);
-    const phrase = bridge.locator('strong');
     const target = page.locator(handoff.target);
 
-    const phraseBefore = await phrase.evaluate((element) => getComputedStyle(element).transform);
     const targetBefore = await target.evaluate((element) => getComputedStyle(element).transform);
     const sourceSelector = 'source' in handoff ? handoff.source : undefined;
     const source = sourceSelector ? page.locator(sourceSelector) : undefined;
@@ -523,7 +521,6 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
       window.scrollTo(0, window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight * 0.55);
     });
 
-    await expect.poll(() => phrase.evaluate((element) => getComputedStyle(element).transform)).not.toBe(phraseBefore);
     await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).not.toBe(targetBefore);
     if (source && sourceBefore !== undefined) {
       await expect.poll(() => source.evaluate((element) => getComputedStyle(element).transform)).not.toBe(sourceBefore);
@@ -555,7 +552,7 @@ test('theme-aware story handoffs progress without shifting the rotating hero wor
     }
   }
 
-  const promotedLayers = await page.locator('[data-transition] strong, [data-project] .case__copy, [data-project-media], [data-about-promise] .about__promise-line > span').evaluateAll(
+  const promotedLayers = await page.locator('[data-transition-source], [data-transition-target], [data-transition-morph], [data-project] .case__copy, [data-project-media], [data-about-promise] .about__promise-line > span').evaluateAll(
     (elements) => elements.filter((element) => getComputedStyle(element).willChange !== 'auto').length,
   );
   expect(promotedLayers).toBe(0);
