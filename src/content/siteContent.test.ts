@@ -67,12 +67,13 @@ describe('siteContent', () => {
       ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
     expect(transitions.map(({ phrase, variant }) => [phrase, variant])).toEqual([
-      ['ДАЛЬШЕ — ОБО МНЕ', 'ink'],
-      ['ДАЛЬШЕ — ПРОЕКТЫ', 'ink'],
-      ['СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА', 'route'],
-      ['СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ', 'mobile'],
-      ['СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM', 'chat'],
-      ['ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ', 'final'],
+      ['ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', 'ink'],
+      ['БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', 'ink'],
+      ['ОТ ПЕРВОГО КЛИКА → К ПЕРВОЙ ПОЕЗДКЕ', 'route'],
+      ['САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ', 'mobile'],
+      ['САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН', 'chat'],
+      ['ДИЗАЙН × КОД × БИЗНЕС', 'final'],
     ]);
+    expect(JSON.stringify(siteContent)).not.toContain('—');
   });
 });

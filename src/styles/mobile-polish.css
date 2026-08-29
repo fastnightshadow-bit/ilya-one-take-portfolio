@@ -21,7 +21,7 @@
   }
 
   [data-scene="about"] .about__copy { grid-column: 1; grid-row: 1; width: auto; padding-top: 1.5rem; }
-  [data-scene="about"] h2 { font-size: clamp(2.35rem, 11vw, 3rem); }
+  [data-scene="about"] h2 { font-size: clamp(2rem, 9vw, 2.7rem); }
   [data-scene="about"] .about__lede { font-size: .78rem; }
   [data-scene="about"] .about__portrait {
     position: relative;
@@ -41,7 +41,7 @@
     padding-top: 2rem;
   }
 
-  [data-scene="pivnoy-doner"] .case__headline { font-size: clamp(1.85rem, 8vw, 2.2rem); }
+  [data-scene="pivnoy-doner"] .case__headline { font-size: clamp(1.35rem, 5.8vw, 1.65rem); }
   [data-scene="pivnoy-doner"] .case__headline + p { font-size: .75rem; }
   [data-scene="pivnoy-doner"] [data-project-media] {
     position: relative;
@@ -70,7 +70,7 @@
     padding-top: 2rem;
   }
 
-  [data-scene="driving-school"] .case__headline { font-size: clamp(1.75rem, 7.5vw, 2.05rem); }
+  [data-scene="driving-school"] .case__headline { font-size: clamp(1.3rem, 6vw, 1.65rem); }
   [data-scene="driving-school"] .case__headline + p { font-size: .75rem; }
   [data-scene="driving-school"] [data-project-media] {
     position: relative;
@@ -97,17 +97,30 @@
   [data-scene="shaurma-mobile"] .case__copy { align-self: center; }
 
   [data-scene="shaurma-mobile"] .case__headline {
-    font-size: clamp(1.55rem, 6.7vw, 1.85rem);
-    line-height: .92;
+    font-size: clamp(1.4rem, 6vw, 1.8rem);
+    line-height: .98;
     overflow-wrap: normal;
     word-break: normal;
   }
 
-  [data-scene="shaurma-mobile"] .case__accent { white-space: nowrap; }
+  [data-scene="shaurma-mobile"] .case__accent { white-space: normal; }
 
   [data-transition="road-to-phone"] {
+    --bridge-bg: #111116;
     border-color: var(--border-dark);
     background: #111116;
     color: var(--paper);
   }
+}
+
+@media (max-width: 360px) {
+  [data-scene="pivnoy-doner"] .case__layout,
+  [data-scene="driving-school"] .case__layout,
+  [data-scene="shaurma-mobile"] .case__layout,
+  [data-scene="telegram-shop"] .case__layout { grid-template-columns: 1fr; }
+
+  [data-scene="pivnoy-doner"] .case__headline,
+  [data-scene="driving-school"] .case__headline,
+  [data-scene="shaurma-mobile"] .case__headline,
+  [data-scene="telegram-shop"] .case__headline { font-size: clamp(2rem, 10.5vw, 2.45rem); }
 }

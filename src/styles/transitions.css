@@ -1,4 +1,5 @@
 .bridge {
+  --bridge-bg: #111116;
   position: relative;
   display: flex;
   min-height: 118px;
@@ -6,10 +7,22 @@
   overflow: hidden;
   padding: 1.25rem var(--page-pad);
   border-block: 1px solid var(--border-dark);
-  background: #111116;
+  background: var(--bridge-bg);
   color: var(--paper);
   pointer-events: none;
 }
+
+.bridge::before,
+.bridge::after {
+  position: absolute;
+  inset-block: 0;
+  z-index: 2;
+  width: max(1rem, var(--page-pad));
+  content: '';
+}
+
+.bridge::before { left: 0; background: linear-gradient(90deg, var(--bridge-bg), transparent); }
+.bridge::after { right: 0; background: linear-gradient(270deg, var(--bridge-bg), transparent); }
 
 .bridge [data-transition-line] {
   position: relative;
@@ -22,20 +35,20 @@
 }
 
 .bridge--route {
+  --bridge-bg: var(--blue);
   border-color: rgb(255 255 255 / .25);
-  background: var(--blue);
   color: #f7f3e9;
 }
 
 .bridge--mobile {
+  --bridge-bg: #ffb438;
   border-color: rgb(12 12 16 / .2);
-  background: #ffb438;
   color: var(--ink);
 }
 
 .bridge--chat {
+  --bridge-bg: var(--mint);
   border-color: rgb(12 12 16 / .18);
-  background: var(--mint);
   color: var(--ink);
 }
 

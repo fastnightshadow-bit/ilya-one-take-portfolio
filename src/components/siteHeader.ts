@@ -1,5 +1,11 @@
-export const siteHeader = () => `
+import type { SiteContent } from '../content/siteContent.ts';
+
+export const siteHeader = (content: SiteContent) => `
   <header class="site-header">
+    <div class="site-header__identity">
+      <a class="site-header__brand" href="#top">ILYA / WEB DEVELOPER</a>
+      <a class="site-header__contact" href="${content.telegramUrl}" target="_blank" rel="noopener noreferrer">${content.telegramHandle} ↗</a>
+    </div>
     <nav class="site-header__nav" aria-label="Основная навигация">
       <a class="site-header__link" href="#about">Обо мне</a>
       <a class="site-header__link" href="#process">Как я работаю</a>

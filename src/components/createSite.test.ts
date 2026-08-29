@@ -89,6 +89,15 @@ describe('createSite', () => {
       { text: 'Кейс 4', href: '#telegram-shop' },
       { text: 'Контакты', href: '#contact' },
     ]));
+
+    const brand = site.querySelector<HTMLAnchorElement>('.site-header__brand');
+    const telegram = site.querySelector<HTMLAnchorElement>('.site-header__contact');
+    expect(brand?.textContent?.trim()).toBe('ILYA / WEB DEVELOPER');
+    expect(brand?.getAttribute('href')).toBe('#top');
+    expect(telegram?.textContent?.trim()).toBe('@GIRTOPW ↗');
+    expect(telegram?.href).toBe('https://t.me/girtopw');
+    expect(telegram?.target).toBe('_blank');
+    expect(telegram?.rel).toBe('noopener noreferrer');
   });
 
   it('uses the two approved hero shortcuts', () => {
@@ -109,6 +118,7 @@ describe('createSite', () => {
 
     expect(visibleCopy).not.toMatch(/(?:^|[^\p{L}])(?:ты|твой|тебя|давай|напиши)(?=$|[^\p{L}])/iu);
     expect(visibleCopy).not.toContain('Привет. Я — Илья');
+    expect(visibleCopy).not.toContain('—');
     expect(visibleCopy).not.toMatch(/профиль Ильи|GitHub Ильи/iu);
     expect(github?.textContent).toContain('в моём профиле');
     expect(github?.querySelector('[data-github-link]')?.textContent?.trim()).toBe('Открыть GitHub');
@@ -241,12 +251,12 @@ describe('createSite', () => {
       ['message-to-contact', 'telegram-shop', 'contact'],
     ]);
     expect(transitions.map((transition) => transition.querySelector('[data-transition-line]')?.textContent?.trim())).toEqual([
-      'ДАЛЬШЕ — ОБО МНЕ → ДАЛЬШЕ — ОБО МНЕ',
-      'ДАЛЬШЕ — ПРОЕКТЫ → ДАЛЬШЕ — ПРОЕКТЫ',
-      'СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА → СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА',
-      'СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ → СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ',
-      'СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM → СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM',
-      'ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ → ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ',
+      'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ → ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ',
+      'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ → БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ',
+      'ОТ ПЕРВОГО КЛИКА → К ПЕРВОЙ ПОЕЗДКЕ → ОТ ПЕРВОГО КЛИКА → К ПЕРВОЙ ПОЕЗДКЕ',
+      'САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ → САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ',
+      'САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН → САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН',
+      'ДИЗАЙН × КОД × БИЗНЕС → ДИЗАЙН × КОД × БИЗНЕС',
     ]);
     expect(transitions.map((transition) => transition.className)).toEqual([
       'bridge bridge--ink',

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { siteContent } from '../content/siteContent.ts';
 import { applyMetadata, renderMetadataMarkup } from './applyMetadata.ts';
 
-const description = 'Илья лично проектирует и разрабатывает современные сайты для бизнеса — от идеи до запуска.';
+const description = 'Илья лично проектирует и разрабатывает современные сайты для бизнеса от идеи до запуска.';
 const publicSiteUrl = 'https://fastnightshadow-bit.github.io/ilya-one-take-portfolio/';
 const socialImageUrl = `${publicSiteUrl}social-card.png`;
 const ownedMetadataSelectors = [
@@ -35,7 +35,7 @@ describe('portfolio metadata', () => {
   it('sets exact public canonical, social metadata, favicon, and Person JSON-LD', () => {
     applyMetadata(document, siteContent);
 
-    expect(document.title).toBe('Илья — веб-разработчик для бизнеса');
+    expect(document.title).toBe('Илья, веб-разработчик для бизнеса');
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(description);
     expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(document.title);
     expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toBe(description);

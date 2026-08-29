@@ -1,7 +1,7 @@
 import type { SiteContent } from '../content/siteContent.ts';
 
-const title = 'Илья — веб-разработчик для бизнеса';
-const description = 'Илья лично проектирует и разрабатывает современные сайты для бизнеса — от идеи до запуска.';
+const title = 'Илья, веб-разработчик для бизнеса';
+const description = 'Илья лично проектирует и разрабатывает современные сайты для бизнеса от идеи до запуска.';
 const publicSiteUrl = 'https://fastnightshadow-bit.github.io/ilya-one-take-portfolio/';
 const socialImageUrl = `${publicSiteUrl}social-card.png`;
 const socialImageAlt = 'Портфолио веб-разработчика Ильи';

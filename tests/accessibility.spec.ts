@@ -2,6 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 const expectedLinks = [
+  { name: 'ILYA / WEB DEVELOPER', href: '#top' },
+  { name: '@GIRTOPW ↗', href: 'https://t.me/girtopw' },
   { name: 'Обо мне', href: '#about' },
   { name: 'Как я работаю', href: '#process' },
   { name: 'Кейс 1', href: '#pivnoy-doner' },
@@ -197,6 +199,8 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.goto('/');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     const aboutLink = page.locator(':focus-visible');
     await expect(aboutLink).toHaveAccessibleName('Обо мне');

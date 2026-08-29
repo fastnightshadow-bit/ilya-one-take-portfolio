@@ -200,7 +200,7 @@ test('Doner is one large right-aligned phone at every compact width', async ({ p
       const overlapHeight = Math.max(0, Math.min(copy.bottom, phoneBounds.bottom) - Math.max(copy.top, phoneBounds.top));
       return {
         chapter: { left: chapter.left, top: chapter.top, right: chapter.right, bottom: chapter.bottom },
-        copy: { right: copy.right },
+        copy: { right: copy.right, bottom: copy.bottom },
         media: { right: media.right, width: media.width, height: media.height },
         phone: {
           left: phoneBounds.left,
@@ -217,7 +217,11 @@ test('Doner is one large right-aligned phone at every compact width', async ({ p
 
     expect(geometry.angle, `${viewport.width}px Doner phone angle`).toBeGreaterThan(0);
     expect(geometry.overlapArea, `${viewport.width}px Doner copy/phone overlap`).toBe(0);
-    expect(geometry.copy.right, `${viewport.width}px Doner horizontal separation`).toBeLessThanOrEqual(geometry.phone.left + .5);
+    if (viewport.width <= 360) {
+      expect(geometry.copy.bottom, `${viewport.width}px Doner vertical separation`).toBeLessThanOrEqual(geometry.phone.top + .5);
+    } else {
+      expect(geometry.copy.right, `${viewport.width}px Doner horizontal separation`).toBeLessThanOrEqual(geometry.phone.left + .5);
+    }
     expect(geometry.phone.left, `${viewport.width}px Doner phone left`).toBeGreaterThanOrEqual(geometry.chapter.left - .5);
     expect(geometry.phone.top, `${viewport.width}px Doner phone top`).toBeGreaterThanOrEqual(geometry.chapter.top - .5);
     expect(geometry.phone.right, `${viewport.width}px Doner phone right`).toBeLessThanOrEqual(geometry.chapter.right + .5);
@@ -431,7 +435,6 @@ test('keeps the Telegram proof and cleaned final actions readable on mobile', as
     columns: presentation.columns,
     gap: presentation.gap,
     alignItems: presentation.alignItems,
-    headlineSize: presentation.headlineSize,
     actionBackground: presentation.actionBackground,
     actionColor: presentation.actionColor,
     phoneShadow: presentation.phoneShadow,
@@ -440,11 +443,12 @@ test('keeps the Telegram proof and cleaned final actions readable on mobile', as
     columns: 2,
     gap: '12px',
     alignItems: 'center',
-    headlineSize: 39,
     actionBackground: 'rgb(11, 87, 208)',
     actionColor: 'rgb(255, 255, 255)',
     phoneShadow: 'rgb(11, 87, 208) 9px 10px 0px 0px',
   });
+  expect(presentation.headlineSize).toBeGreaterThanOrEqual(27);
+  expect(presentation.headlineSize).toBeLessThanOrEqual(30);
   expect(presentation.phoneAngle).toBeCloseTo(1.5, 1);
 
   expect(frozenTail.github.columns).toBe(1);

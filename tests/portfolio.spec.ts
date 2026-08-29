@@ -77,12 +77,12 @@ const selectedTransitionContract = [
 ] as const;
 
 const tickerTracks = [
-  'ДАЛЬШЕ — ОБО МНЕ → ДАЛЬШЕ — ОБО МНЕ',
-  'ДАЛЬШЕ — ПРОЕКТЫ → ДАЛЬШЕ — ПРОЕКТЫ',
-  'СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА → СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА',
-  'СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ → СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ',
-  'СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM → СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM',
-  'ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ → ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ',
+  'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ → ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ',
+  'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ → БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ',
+  'ОТ ПЕРВОГО КЛИКА → К ПЕРВОЙ ПОЕЗДКЕ → ОТ ПЕРВОГО КЛИКА → К ПЕРВОЙ ПОЕЗДКЕ',
+  'САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ → САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ',
+  'САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН → САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН',
+  'ДИЗАЙН × КОД × БИЗНЕС → ДИЗАЙН × КОД × БИЗНЕС',
 ] as const;
 
 const tickerColors = [
@@ -275,6 +275,104 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   expect(await page.locator('.site-header').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
+});
+
+test('mobile header keeps the identity, Telegram link, and every destination fully visible', async ({ page }) => {
+  for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const brand = page.locator('.site-header__brand');
+    const telegram = page.locator('.site-header__contact');
+    await expect(brand).toHaveText('ILYA / WEB DEVELOPER');
+    await expect(telegram).toHaveText('@GIRTOPW ↗');
+    await expect(telegram).toHaveAttribute('href', 'https://t.me/girtopw');
+    await expect(telegram).toHaveAttribute('target', '_blank');
+    await expect(telegram).toHaveAttribute('rel', 'noopener noreferrer');
+
+    const geometry = await page.locator('.site-header').evaluate((header) => {
+      const visibleLinks = [...header.querySelectorAll<HTMLElement>('a')].map((link) => {
+        const bounds = link.getBoundingClientRect();
+        return { label: link.textContent?.trim(), left: bounds.left, right: bounds.right };
+      });
+      const nav = header.querySelector<HTMLElement>('.site-header__nav')!;
+      return {
+        headerWidth: header.getBoundingClientRect().width,
+        navClientWidth: nav.clientWidth,
+        navScrollWidth: nav.scrollWidth,
+        visibleLinks,
+      };
+    });
+
+    expect(geometry.headerWidth).toBeLessThanOrEqual(viewport.width);
+    expect(geometry.navScrollWidth, `${viewport.width}px navigation width`).toBeLessThanOrEqual(geometry.navClientWidth);
+    for (const link of geometry.visibleLinks) {
+      expect(link.left, `${viewport.width}px ${link.label} left`).toBeGreaterThanOrEqual(0);
+      expect(link.right, `${viewport.width}px ${link.label} right`).toBeLessThanOrEqual(viewport.width);
+    }
+    const brandBounds = geometry.visibleLinks.find((link) => link.label === 'ILYA / WEB DEVELOPER')!;
+    const telegramBounds = geometry.visibleLinks.find((link) => link.label === '@GIRTOPW ↗')!;
+    expect(brandBounds.left, `${viewport.width}px identity left edge`).toBeLessThanOrEqual(24);
+    expect(telegramBounds.right, `${viewport.width}px Telegram right edge`).toBeGreaterThanOrEqual(viewport.width - 24);
+    expect(brandBounds.right, `${viewport.width}px identity before Telegram`).toBeLessThan(telegramBounds.left);
+  }
+});
+
+test('mobile headings keep every whole word inside its own content column', async ({ page }) => {
+  const selectors = [
+    '[data-scene="hero"] h1',
+    '[data-scene="about"] h2',
+    '[data-project] .case__headline',
+    '.github-strip h2',
+    '[data-scene="contact"] h2',
+  ].join(', ');
+
+  for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+
+    const failures = await page.locator(selectors).evaluateAll((elements) => {
+      const issues: string[] = [];
+      const inspect = (element: Element) => {
+        const owner = element.closest<HTMLElement>('.case__copy, .hero__copy, .about__copy, .github-strip, .contact')!;
+        const ownerBounds = owner.getBoundingClientRect();
+        const ownerStyles = getComputedStyle(owner);
+        const left = ownerBounds.left + Number.parseFloat(ownerStyles.paddingLeft || '0');
+        const right = ownerBounds.right - Number.parseFloat(ownerStyles.paddingRight || '0');
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode() as Text | null;
+        while (node) {
+          if (!node.parentElement?.closest('[data-hero-fallback]')) {
+            for (const match of node.data.matchAll(/\S+/gu)) {
+              const start = match.index ?? 0;
+              const range = document.createRange();
+              range.setStart(node, start);
+              range.setEnd(node, start + match[0].length);
+              const rects = [...range.getClientRects()].filter((rect) => rect.width > .1 && rect.height > .1);
+              if (rects.length !== 1 || rects.some((rect) => rect.left < left - .5 || rect.right > right + .5)) {
+                issues.push(`${element.id || element.className}: ${match[0]} [${rects.map((rect) => `${rect.left.toFixed(1)}..${rect.right.toFixed(1)}`).join(', ')}] within ${left.toFixed(1)}..${right.toFixed(1)}`);
+              }
+            }
+          }
+          node = walker.nextNode() as Text | null;
+        }
+      };
+
+      for (const element of elements) inspect(element);
+      const rotatingWord = document.querySelector<HTMLElement>('[data-rotating-word]')!;
+      const authored = rotatingWord.dataset.words?.split('|') ?? [];
+      for (const word of authored) {
+        rotatingWord.textContent = word;
+        inspect(rotatingWord.closest('h1')!);
+      }
+      return [...new Set(issues)];
+    });
+
+    expect(failures, `${viewport.width}px clipped or split words`).toEqual([]);
+    expect(await page.locator('.case__title').evaluateAll((titles) =>
+      titles.map((title) => getComputedStyle(title, '::before').display),
+    )).toEqual(['none', 'none', 'none', 'none']);
+  }
 });
 
 test('all handoffs are exact compact a14 running-text strips', async ({ page }) => {

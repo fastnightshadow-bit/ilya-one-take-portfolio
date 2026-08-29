@@ -65,6 +65,7 @@ export interface TransitionContent {
 
 export interface SiteContent {
   readonly telegramUrl: string;
+  readonly telegramHandle: string;
   readonly githubUrl: `https://${string}`;
   readonly rotatingWords: readonly string[];
   readonly process: readonly { number: string; title: string; detail: string }[];
@@ -73,16 +74,17 @@ export interface SiteContent {
 }
 
 const transitions = [
-  { kind: 'ticker-to-about', from: 'hero', to: 'about', phrase: 'ДАЛЬШЕ — ОБО МНЕ', variant: 'ink' },
-  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner', phrase: 'ДАЛЬШЕ — ПРОЕКТЫ', variant: 'ink' },
-  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school', phrase: 'СЛЕДУЮЩИЙ КЕЙС — АВТОШКОЛА', variant: 'route' },
-  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile', phrase: 'СЛЕДУЮЩИЙ КЕЙС — ЗАКАЗ ЕДЫ', variant: 'mobile' },
-  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop', phrase: 'СЛЕДУЮЩИЙ КЕЙС — МАГАЗИН В TELEGRAM', variant: 'chat' },
-  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact', phrase: 'ЕСТЬ ЗАДАЧА — ДАВАЙТЕ ОБСУДИМ', variant: 'final' },
+  { kind: 'ticker-to-about', from: 'hero', to: 'about', phrase: 'ИДЕЯ → ДИЗАЙН → КОД → РЕЗУЛЬТАТ', variant: 'ink' },
+  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner', phrase: 'БИЗНЕС → ВКУС → БРЕНД → ЗАКАЗ', variant: 'ink' },
+  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school', phrase: 'ОТ ПЕРВОГО КЛИКА → К ПЕРВОЙ ПОЕЗДКЕ', variant: 'route' },
+  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile', phrase: 'САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ', variant: 'mobile' },
+  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop', phrase: 'САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН', variant: 'chat' },
+  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact', phrase: 'ДИЗАЙН × КОД × БИЗНЕС', variant: 'final' },
 ] as const satisfies readonly TransitionContent[];
 
 export const siteContent: SiteContent = {
   telegramUrl: 'https://t.me/girtopw',
+  telegramHandle: '@GIRTOPW',
   githubUrl: 'https://github.com/fastnightshadow-bit',
   rotatingWords: ['цепляют', 'продают', 'работают'],
   process: [
