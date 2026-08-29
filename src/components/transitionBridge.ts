@@ -1,38 +1,53 @@
 import type { TransitionContent } from '../content/siteContent.ts';
 
-const artwork: Record<TransitionContent['variant'], string> = {
-  portrait: `
-    <span class="bridge__object bridge__type" data-transition-source data-transition-shape="type">ИДЕЯ</span>
-    <span class="bridge__object bridge__portrait" data-transition-target data-transition-shape="portrait"><i></i><i></i></span>
-    <span class="bridge__accent bridge__accent--portrait" data-transition-accent></span>`,
-  brand: `
-    <span class="bridge__object bridge__line" data-transition-source data-transition-shape="line"></span>
-    <span class="bridge__object bridge__frame" data-transition-target data-transition-shape="frame"><i></i></span>
-    <span class="bridge__accent bridge__accent--brand" data-transition-accent></span>`,
-  route: `
-    <span class="bridge__object bridge__frame bridge__frame--departing" data-transition-source data-transition-shape="frame"><i></i></span>
-    <span class="bridge__object bridge__road" data-transition-target data-transition-shape="road"><i></i></span>
-    <span class="bridge__accent bridge__accent--route" data-transition-accent>GO</span>`,
-  mobile: `
-    <span class="bridge__object bridge__road bridge__road--departing" data-transition-source data-transition-shape="road"><i></i></span>
-    <span class="bridge__object bridge__phone" data-transition-target data-transition-shape="phone"><i></i><b></b></span>
-    <span class="bridge__accent bridge__accent--mobile" data-transition-accent>↘</span>`,
-  chat: `
-    <span class="bridge__object bridge__phone bridge__phone--departing" data-transition-source data-transition-shape="phone"><i></i><b></b></span>
-    <span class="bridge__object bridge__chat" data-transition-target data-transition-shape="chat"><i></i><i></i><i></i></span>
-    <span class="bridge__accent bridge__accent--chat" data-transition-accent><i></i><i></i><i></i></span>`,
-  final: `
-    <span class="bridge__object bridge__chat bridge__chat--departing" data-transition-source data-transition-shape="chat"><i></i><i></i><i></i></span>
-    <span class="bridge__object bridge__wipe" data-transition-target data-transition-shape="wipe"><i>ДАВАЙ</i></span>
-    <span class="bridge__accent bridge__accent--final" data-transition-accent>↘</span>`,
+const decorativeImage = (src: string, width: number, height: number) =>
+  `<img src="${src}" width="${width}" height="${height}" loading="lazy" decoding="async" alt="">`;
+
+const artwork: Record<TransitionContent['kind'], string> = {
+  'ticker-to-about': `
+    <span class="bridge__art bridge__ticker" data-transition-source="story-ticker">
+      <span>ИДЕЯ / ДИЗАЙН / КОД / ЗАПУСК</span>
+    </span>
+    <span class="bridge__art bridge__about-plane" data-transition-target="about-plane"></span>
+    <span class="bridge__art bridge__personal-mark" data-transition-morph="personal-mark">ЛИЧНО.</span>`,
+  'personal-to-poster': `
+    <span class="bridge__art bridge__personal-source" data-transition-source="personal-word">ЛИЧНО.</span>
+    <span class="bridge__art bridge__doner-card" data-transition-target="doner-card">
+      <span>ПИВНОЙ</span><b>ДОНЕР</b>
+    </span>
+    <span class="bridge__art bridge__poster-field" data-transition-morph="personal-poster"><i></i></span>`,
+  'clean-takeover': `
+    <span class="bridge__art bridge__takeover-poster" data-transition-source="doner-poster">
+      <i><span>ПИВНОЙ</span><b>ДОНЕР</b></i>
+    </span>
+    <span class="bridge__art bridge__takeover-road" data-transition-target="school-road"><i></i></span>
+    <span class="bridge__art bridge__takeover-field" data-transition-morph="poster-takeover"></span>`,
+  'road-to-phone': `
+    <span class="bridge__art bridge__road-source" data-transition-source="school-road"><i></i></span>
+    <span class="bridge__art bridge__food-phone" data-transition-target="shaurma-phone">
+      ${decorativeImage('/assets/projects/shaurma-mobile-mobile-390.webp', 390, 844)}
+    </span>
+    <span class="bridge__art bridge__road-frame" data-transition-morph="road-frame"></span>`,
+  'phone-to-telegram': `
+    <span class="bridge__art bridge__food-phone bridge__food-phone--source" data-transition-source="shaurma-phone">
+      ${decorativeImage('/assets/projects/shaurma-mobile-mobile-390.webp', 390, 844)}
+    </span>
+    <span class="bridge__art bridge__telegram-phone" data-transition-target="telegram-phone">
+      ${decorativeImage('/assets/projects/telegram-shop-mobile-390.webp', 390, 844)}
+    </span>
+    <span class="bridge__art bridge__phone-handoff" data-transition-morph="phone-handoff"></span>`,
+  'message-to-contact': `
+    <span class="bridge__art bridge__message-source" data-transition-source="last-message"><i></i><b>Готово. Запускаем?</b></span>
+    <span class="bridge__art bridge__contact-word" data-transition-target="contact-word">ДАВАЙ</span>
+    <span class="bridge__art bridge__contact-field" data-transition-morph="message-field"></span>`,
 };
 
 export const transitionBridge = (transition: TransitionContent) => `
-  <div class="bridge bridge--${transition.variant}" data-transition="${transition.variant}" aria-hidden="true">
+  <div class="bridge bridge--${transition.kind}" data-transition="${transition.kind}" data-transition-from="${transition.from}" data-transition-to="${transition.to}"${transition.kind === 'clean-takeover' ? ' data-transition-composition="t1-clean-takeover"' : ''} aria-hidden="true">
     <div class="bridge__stage" data-transition-stage>
       <strong class="bridge__copy" data-transition-copy>${transition.phrase}</strong>
       <div class="bridge__carrier" data-transition-carrier>
-        ${artwork[transition.variant]}
+        ${artwork[transition.kind]}
       </div>
     </div>
   </div>`;

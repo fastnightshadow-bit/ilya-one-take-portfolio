@@ -37,9 +37,28 @@ export interface ProjectContent {
   readonly presentation: ProjectPresentation;
 }
 
+export type SceneId =
+  | 'hero'
+  | 'about'
+  | 'pivnoy-doner'
+  | 'driving-school'
+  | 'shaurma-mobile'
+  | 'telegram-shop'
+  | 'contact';
+
+export type TransitionKind =
+  | 'ticker-to-about'
+  | 'personal-to-poster'
+  | 'clean-takeover'
+  | 'road-to-phone'
+  | 'phone-to-telegram'
+  | 'message-to-contact';
+
 export interface TransitionContent {
+  readonly kind: TransitionKind;
+  readonly from: SceneId;
+  readonly to: SceneId;
   readonly phrase: string;
-  readonly variant: 'portrait' | 'brand' | 'route' | 'mobile' | 'chat' | 'final';
 }
 
 export interface SiteContent {
@@ -51,6 +70,15 @@ export interface SiteContent {
   readonly projects: readonly ProjectContent[];
   readonly transitions: readonly TransitionContent[];
 }
+
+const transitions = [
+  { kind: 'ticker-to-about', from: 'hero', to: 'about', phrase: 'ИДЕЯ / ДИЗАЙН / КОД / ЗАПУСК' },
+  { kind: 'personal-to-poster', from: 'about', to: 'pivnoy-doner', phrase: 'ЛИЧНО. → ПИВНОЙ ДОНЕР' },
+  { kind: 'clean-takeover', from: 'pivnoy-doner', to: 'driving-school', phrase: 'ПИВНОЙ ДОНЕР → АВТОШКОЛА' },
+  { kind: 'road-to-phone', from: 'driving-school', to: 'shaurma-mobile', phrase: 'ДОРОГА → ТЕЛЕФОН' },
+  { kind: 'phone-to-telegram', from: 'shaurma-mobile', to: 'telegram-shop', phrase: 'ШАУРМА → TELEGRAM' },
+  { kind: 'message-to-contact', from: 'telegram-shop', to: 'contact', phrase: 'СООБЩЕНИЕ → ДАВАЙ' },
+] as const satisfies readonly TransitionContent[];
 
 export const siteContent: SiteContent = {
   telegramUrl: 'https://t.me/girtopw',
@@ -131,12 +159,5 @@ export const siteContent: SiteContent = {
       },
     },
   ],
-  transitions: [
-    { phrase: 'ИДЕЯ → ЛИЧНОСТЬ', variant: 'portrait' },
-    { phrase: 'ЛИНИЯ → РАМКА → БРЕНД', variant: 'brand' },
-    { phrase: 'РАМКА → МАРШРУТ', variant: 'route' },
-    { phrase: 'ДОРОГА → ТЕЛЕФОН', variant: 'mobile' },
-    { phrase: 'ЭКРАН → ДИАЛОГ', variant: 'chat' },
-    { phrase: 'ПРОЕКТЫ → ТВОЙ САЙТ', variant: 'final' },
-  ],
+  transitions,
 };
