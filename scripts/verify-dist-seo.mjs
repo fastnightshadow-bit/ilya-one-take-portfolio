@@ -31,17 +31,17 @@ const ownedMetadataSelectors = [
   'script[data-seo-person-jsonld]',
 ];
 
-assert.equal(document.title, 'Илья — веб-разработчик для бизнеса');
-expectContent('meta[name="description"]', 'Илья лично проектирует и разрабатывает современные сайты для бизнеса — от идеи до запуска.');
-expectContent('meta[property="og:title"]', 'Илья — веб-разработчик для бизнеса');
-expectContent('meta[property="og:description"]', 'Илья лично проектирует и разрабатывает современные сайты для бизнеса — от идеи до запуска.');
+assert.equal(document.title, 'Илья, веб-разработчик для бизнеса');
+expectContent('meta[name="description"]', 'Илья лично проектирует и разрабатывает современные сайты для бизнеса от идеи до запуска.');
+expectContent('meta[property="og:title"]', 'Илья, веб-разработчик для бизнеса');
+expectContent('meta[property="og:description"]', 'Илья лично проектирует и разрабатывает современные сайты для бизнеса от идеи до запуска.');
 expectContent('meta[property="og:type"]', 'profile');
 expectContent('meta[property="og:locale"]', 'ru_RU');
 expectContent('meta[property="og:url"]', publicSiteUrl);
 expectContent('meta[property="og:image"]', socialImageUrl);
 expectContent('meta[name="twitter:card"]', 'summary_large_image');
-expectContent('meta[name="twitter:title"]', 'Илья — веб-разработчик для бизнеса');
-expectContent('meta[name="twitter:description"]', 'Илья лично проектирует и разрабатывает современные сайты для бизнеса — от идеи до запуска.');
+expectContent('meta[name="twitter:title"]', 'Илья, веб-разработчик для бизнеса');
+expectContent('meta[name="twitter:description"]', 'Илья лично проектирует и разрабатывает современные сайты для бизнеса от идеи до запуска.');
 expectContent('meta[name="twitter:image"]', socialImageUrl);
 ownedMetadataSelectors.forEach(expectOne);
 expectOne('link[rel="stylesheet"]');
