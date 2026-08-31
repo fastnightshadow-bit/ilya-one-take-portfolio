@@ -562,6 +562,11 @@ test('Shaurma and Telegram galleries use bounded loaded shots at mobile and desk
       await scene.scrollIntoViewIfNeeded();
       const shots = scene.locator('[data-project-shot]:visible');
       await expect(shots).toHaveCount(viewport.width === 390 ? 1 : 3);
+      for (const shot of await shots.all()) {
+        await expect.poll(() => shot.locator('img').evaluate((image: HTMLImageElement) =>
+          image.complete && image.naturalWidth > 0 && image.naturalHeight > 0,
+        )).toBe(true);
+      }
 
       const metrics = await scene.evaluate((element) => {
         const media = element.querySelector<HTMLElement>('[data-project-media]')!.getBoundingClientRect();

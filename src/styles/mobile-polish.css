@@ -124,4 +124,6 @@
   [data-scene="driving-school"] .case__headline,
   [data-scene="shaurma-mobile"] .case__headline,
   [data-scene="telegram-shop"] .case__headline { font-size: clamp(2rem, 10.5vw, 2.45rem); }
+
+  [data-scene="pivnoy-doner"] .case__headline { font-size: clamp(1.8rem, 9vw, 2.1rem); }
 }
