@@ -9,6 +9,10 @@ All captures were approved for use in Ilya's portfolio during the 2026-08-28 wor
 | `driving-school-desktop.jpg` | <https://perekrestok-yaroslavl.netlify.app/> | 1280×720 desktop | 2026-08-28 |
 | `driving-school-mobile.jpg` | <https://perekrestok-yaroslavl.netlify.app/> | 390×844 mobile, primary proof | 2026-08-28 |
 | `shaurma-mobile-mobile.jpg` | <https://fastnightshadow-bit.github.io/chaurma/> | 390×844 mobile-only | 2026-08-28 |
+| `shaurma-mobile-menu.jpg` | Screenshot supplied by Ilya for <https://fastnightshadow-bit.github.io/chaurma/> | 590×1280 mobile menu | 2026-08-29 |
+| `shaurma-mobile-cart.jpg` | Screenshot supplied by Ilya for <https://fastnightshadow-bit.github.io/chaurma/> | 590×1280 mobile cart | 2026-08-29 |
 | `telegram-shop-mobile.jpg` | Screenshot supplied by Ilya for <https://t.me/veachelsell_bot> | 590×1280 mobile-only | 2026-08-28 |
+| `telegram-shop-cart.jpg` | Screenshot supplied by Ilya for <https://t.me/veachelsell_bot> | 590×1280 mobile cart | 2026-08-29 |
+| `telegram-shop-checkout.jpg` | Screenshot supplied by Ilya for <https://t.me/veachelsell_bot> | 590×1280 mobile checkout | 2026-08-29 |
 
 Before a public commercial launch, the portfolio owner should confirm that any client logos, people, product photography, and third-party UI shown in these captures may be published as portfolio material.

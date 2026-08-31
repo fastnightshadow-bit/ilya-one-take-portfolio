@@ -30,14 +30,16 @@
 .case__headline + p { max-width: 28rem; font-size: .9rem; line-height: 1.55; }
 .case__action, .github-strip__link { display: inline-flex; min-height: 48px; max-width: 100%; align-items: center; justify-content: center; margin-top: 1.65rem; padding: .8rem 1.1rem; border: 2px solid currentColor; border-radius: 999px; color: inherit; font: 700 .78rem/1.15 var(--font-body); text-decoration: none; }
 .case__media { position: relative; min-width: 0; max-width: 100%; }
-.case__detail { display: none; }
 .project-shot { position: relative; display: block; min-width: 0; max-width: 100%; overflow: hidden; line-height: 0; }
 .project-shot img { display: block; width: 100%; height: auto; object-fit: cover; object-position: top; }
 .project-shot--desktop { padding-top: 28px; border: 3px solid var(--ink); border-radius: 18px; background: var(--ink); box-shadow: 16px 16px 0 rgb(12 12 16 / .2); }
 .project-shot--desktop::before { position: absolute; left: 12px; top: 10px; width: 7px; height: 7px; border-radius: 50%; background: #777780; box-shadow: 13px 0 #777780, 26px 0 #777780; content: ''; }
 .project-shot--mobile { border: 4px solid var(--ink); border-radius: 36px; background: var(--ink); box-shadow: 14px 15px 0 rgb(12 12 16 / .2); }
 .case--doner { background: var(--doner-paper); color: var(--ink); }
-.case--doner .case__accent { color: var(--doner-red); font-size: .68em; font-weight: 900; text-transform: uppercase; }
+.case--doner .case__headline { font-size: clamp(3.25rem, 4.4vw, 4.75rem); line-height: 1.06; letter-spacing: -.006em; text-wrap: wrap; }
+.case--doner [data-headline-line], .case--doner [data-accent-line] { display: block; width: max-content; max-width: 100%; line-height: 1.06; letter-spacing: -.006em; }
+.case--doner .case__accent { margin-top: .12em; color: var(--doner-red); font-size: .68em; font-weight: 900; line-height: 1.1; letter-spacing: -.004em; text-transform: uppercase; }
+.case--doner [data-accent-line] { line-height: 1.1; letter-spacing: -.004em; }
 .case--doner .case__media { padding: 1rem clamp(3rem, 4vw, 4.5rem) 4.5rem 0; }
 .case--doner .project-shot--desktop { width: 100%; transform: rotate(.8deg); }
 .case--doner .project-shot--mobile { position: absolute; right: 0; bottom: 0; z-index: 2; width: clamp(9rem, 25%, 11rem); transform: rotate(2deg); }
@@ -56,13 +58,14 @@
 .case--telegram .case__accent { color: #0b57d0; }
 .case--telegram .case__action { border-color: var(--ink); background: #0b57d0; color: #fff; box-shadow: 7px 7px 0 var(--ink); }
 .case__media--phone { display: grid; min-height: 38rem; place-items: center; padding: 1rem 1.25rem 1.5rem; }
+.case__phone-gallery { position: relative; display: grid; width: 100%; min-height: inherit; place-items: center; isolation: isolate; }
+.case__phone-gallery .project-shot--secondary { display: none; }
 .case__media--phone .project-shot--mobile { width: clamp(15rem, 48%, 17rem); }
 .case--mobile .project-shot--mobile { transform: rotate(-1.5deg); }
 .case--telegram .project-shot--mobile { border-color: #24272d; background: #24272d; box-shadow: 16px 18px 0 #0b57d0; transform: rotate(1.5deg); }
 
 @media (min-width: 701px) {
   .case--mobile .case__media--phone { display: block; min-height: 42rem; }
-  .case--mobile .case__detail { position: absolute; left: 0; top: 19%; display: block; width: 68%; height: 62%; border: 3px solid var(--ink); border-radius: 18px; background: url('/assets/projects/shaurma-mobile-mobile-390.webp') center top / 100% auto no-repeat; box-shadow: 14px 15px 0 rgb(12 12 16 / .16); filter: saturate(.82) contrast(.94); }
   .case--mobile .case__media--phone .project-shot--mobile { position: absolute; right: 1rem; top: 50%; z-index: 2; width: clamp(11.5rem, 62%, 18rem); transform: translateY(-50%) rotate(-1.5deg); }
 }
 
@@ -100,6 +103,37 @@
   .case--mobile .case__layout, .case--telegram .case__layout { grid-template-columns: minmax(0, 1fr) minmax(15rem, .65fr); gap: clamp(2rem, 5vw, 4rem); }
   .case__media--phone { min-height: 0; padding: 1rem 1.25rem 1.5rem; }
   .case__media--phone .project-shot--mobile { width: min(100%, 17rem); }
+}
+
+@media (min-width: 1200px) {
+  .case__media--phone .case__phone-gallery { min-height: 38rem; }
+  .case__media--phone .case__phone-gallery > .project-shot--mobile {
+    position: absolute;
+    top: 50%;
+    display: block;
+    width: clamp(11rem, 34%, 16rem);
+    margin: 0;
+  }
+  .case__media--phone .case__phone-gallery > .project-shot--mobile:nth-child(1) {
+    left: 50%;
+    right: auto;
+    z-index: 3;
+    transform: translate(-50%, -50%) rotate(-1deg);
+  }
+  .case__media--phone .case__phone-gallery > .project-shot--mobile:nth-child(2) {
+    left: 6%;
+    right: auto;
+    z-index: 1;
+    transform: translateY(-50%) rotate(-5deg);
+  }
+  .case__media--phone .case__phone-gallery > .project-shot--mobile:nth-child(3) {
+    left: auto;
+    right: 6%;
+    z-index: 2;
+    transform: translateY(-50%) rotate(5deg);
+  }
+  .case--mobile .case__phone-gallery > .project-shot--mobile:nth-child(1) { transform: translate(-50%, -50%) rotate(-1.5deg); }
+  .case--telegram .case__phone-gallery > .project-shot--mobile:nth-child(1) { transform: translate(-50%, -50%) rotate(1.5deg); }
 }
 
 @media (max-width: 700px) {

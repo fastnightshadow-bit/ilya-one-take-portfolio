@@ -49,6 +49,73 @@ describe('siteContent', () => {
     expect(serialized).not.toMatch(/\d+%|отзыв|наград|лет опыта/i);
   });
 
+  it('defines authored Doner headline lines instead of relying on incidental wrapping', () => {
+    const doner = siteContent.projects.find((project) => project.id === 'pivnoy-doner') as typeof siteContent.projects[number] & {
+      readonly headlineLines?: readonly string[];
+      readonly accentLines?: readonly string[];
+    };
+
+    expect(doner.headlineLines).toEqual(['Из локального', 'ресторана']);
+    expect(doner.accentLines).toEqual(['в узнаваемый', 'бренд']);
+    expect([...doner.headlineLines ?? [], ...doner.accentLines ?? []].join(' ')).toBe(
+      'Из локального ресторана в узнаваемый бренд',
+    );
+  });
+
+  it('defines two semantic desktop gallery screens for each phone project', () => {
+    type GalleryShot = {
+      readonly assetId: string;
+      readonly alt: string;
+      readonly width: number;
+      readonly height: number;
+    };
+    const phoneProjects = siteContent.projects
+      .filter((project) => project.presentation.kind === 'phone')
+      .map((project) => ({
+        id: project.id,
+        desktopGallery: (project.presentation as typeof project.presentation & {
+          readonly desktopGallery?: readonly GalleryShot[];
+        }).desktopGallery,
+      }));
+
+    expect(phoneProjects).toEqual([
+      {
+        id: 'shaurma-mobile',
+        desktopGallery: [
+          {
+            assetId: 'shaurma-mobile-menu',
+            alt: 'Меню сайта «Шаурма Халяль 1» на телефоне',
+            width: 390,
+            height: 844,
+          },
+          {
+            assetId: 'shaurma-mobile-cart',
+            alt: 'Корзина сайта «Шаурма Халяль 1» на телефоне',
+            width: 390,
+            height: 844,
+          },
+        ],
+      },
+      {
+        id: 'telegram-shop',
+        desktopGallery: [
+          {
+            assetId: 'telegram-shop-cart',
+            alt: 'Корзина Telegram-магазина VeachelSell',
+            width: 390,
+            height: 844,
+          },
+          {
+            assetId: 'telegram-shop-checkout',
+            alt: 'Оформление заказа в Telegram-магазине VeachelSell',
+            width: 390,
+            height: 844,
+          },
+        ],
+      },
+    ]);
+  });
+
   it('defines the six compact ticker handoffs with the exact approved phrases', () => {
     const transitions = siteContent.transitions as ReadonlyArray<{
       kind?: string;

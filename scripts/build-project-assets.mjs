@@ -8,7 +8,11 @@ export const projectCaptures = [
   { id: 'driving-school-desktop', file: 'driving-school-desktop.jpg', kind: 'desktop' },
   { id: 'driving-school-mobile', file: 'driving-school-mobile.jpg', kind: 'mobile' },
   { id: 'shaurma-mobile-mobile', file: 'shaurma-mobile-mobile.jpg', kind: 'mobile' },
+  { id: 'shaurma-mobile-menu', file: 'shaurma-mobile-menu.jpg', kind: 'mobile' },
+  { id: 'shaurma-mobile-cart', file: 'shaurma-mobile-cart.jpg', kind: 'mobile' },
   { id: 'telegram-shop-mobile', file: 'telegram-shop-mobile.jpg', kind: 'mobile' },
+  { id: 'telegram-shop-cart', file: 'telegram-shop-cart.jpg', kind: 'mobile' },
+  { id: 'telegram-shop-checkout', file: 'telegram-shop-checkout.jpg', kind: 'mobile' },
 ];
 
 function projectAsset(capture, sourceRoot, outputRoot, width, extension) {

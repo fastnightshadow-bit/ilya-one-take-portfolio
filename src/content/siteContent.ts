@@ -6,6 +6,10 @@ export interface ProjectScreenshot {
   readonly height: number;
 }
 
+export interface ProjectGalleryScreenshot extends ProjectScreenshot {
+  readonly assetId: string;
+}
+
 export type ProjectPresentation =
   | {
       readonly kind: 'responsive';
@@ -17,6 +21,7 @@ export type ProjectPresentation =
       readonly kind: 'phone';
       readonly primary: 'mobile';
       readonly mobile: ProjectScreenshot;
+      readonly desktopGallery: readonly ProjectGalleryScreenshot[];
     };
 
 export interface ProjectAction {
@@ -30,6 +35,8 @@ export interface ProjectContent {
   readonly eyebrow: string;
   readonly headline: string;
   readonly accent: string;
+  readonly headlineLines?: readonly string[];
+  readonly accentLines?: readonly string[];
   readonly description: string;
   readonly theme: ProjectTheme;
   readonly action: ProjectAction;
@@ -116,6 +123,8 @@ export const siteContent: SiteContent = {
       eyebrow: 'Кейс 1 · Сайт для ресторана',
       headline: 'Из локального ресторана',
       accent: 'в узнаваемый бренд',
+      headlineLines: ['Из локального', 'ресторана'],
+      accentLines: ['в узнаваемый', 'бренд'],
       description: 'Сайт с ярким образом, понятным меню и быстрым переходом к заказу.',
       theme: 'doner',
       action: { href: 'https://pivdoner.ru/', label: 'Открыть сайт' },
@@ -155,6 +164,20 @@ export const siteContent: SiteContent = {
         kind: 'phone',
         primary: 'mobile',
         mobile: { alt: 'Главная страница «Шаурма Халяль 1» на телефоне', width: 390, height: 844 },
+        desktopGallery: [
+          {
+            assetId: 'shaurma-mobile-menu',
+            alt: 'Меню сайта «Шаурма Халяль 1» на телефоне',
+            width: 390,
+            height: 844,
+          },
+          {
+            assetId: 'shaurma-mobile-cart',
+            alt: 'Корзина сайта «Шаурма Халяль 1» на телефоне',
+            width: 390,
+            height: 844,
+          },
+        ],
       },
     },
     {
@@ -170,6 +193,20 @@ export const siteContent: SiteContent = {
         kind: 'phone',
         primary: 'mobile',
         mobile: { alt: 'Каталог Telegram-магазина VeachelSell', width: 390, height: 844 },
+        desktopGallery: [
+          {
+            assetId: 'telegram-shop-cart',
+            alt: 'Корзина Telegram-магазина VeachelSell',
+            width: 390,
+            height: 844,
+          },
+          {
+            assetId: 'telegram-shop-checkout',
+            alt: 'Оформление заказа в Telegram-магазине VeachelSell',
+            width: 390,
+            height: 844,
+          },
+        ],
       },
     },
   ],

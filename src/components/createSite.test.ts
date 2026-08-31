@@ -29,14 +29,14 @@ describe('createSite', () => {
       { text: 'Открыть магазин', href: 'https://t.me/veachelsell_bot' },
     ]);
     expect(site.querySelectorAll('[data-project-media]')).toHaveLength(4);
-    expect(projectImages).toHaveLength(6);
+    expect(projectImages).toHaveLength(10);
     expect([...site.querySelectorAll('[data-project]')].map((project) =>
       [...project.querySelectorAll<HTMLElement>('[data-project-shot]')].map((shot) => shot.dataset.projectShot),
     )).toEqual([
       ['desktop', 'mobile'],
       ['mobile', 'desktop'],
-      ['mobile'],
-      ['mobile'],
+      ['mobile', 'menu', 'cart'],
+      ['mobile', 'cart', 'checkout'],
     ]);
     expect(projectImages.every((image) => Boolean(image.alt.trim()))).toBe(true);
     expect(projectImages.every((image) => image.getAttribute('loading') === 'lazy' && image.getAttribute('decoding') === 'async')).toBe(true);
@@ -48,18 +48,75 @@ describe('createSite', () => {
     expect(githubLinks).toHaveLength(1);
   });
 
-  it('renders one non-semantic Shaurma detail without adding a semantic project image', () => {
+  it('renders semantic three-screen phone galleries without the old decorative detail', () => {
     const site = createSite(siteContent);
-    const details = [...site.querySelectorAll<HTMLElement>('[data-project-detail]')];
-    const shaurma = site.querySelector<HTMLElement>('[data-scene="shaurma-mobile"]');
+    const expectedGalleries = [
+      {
+        scene: 'shaurma-mobile',
+        shots: [
+          {
+            id: 'mobile',
+            src: './assets/projects/shaurma-mobile-mobile-390.jpg',
+            alt: 'Главная страница «Шаурма Халяль 1» на телефоне',
+          },
+          {
+            id: 'menu',
+            src: './assets/projects/shaurma-mobile-menu-390.jpg',
+            alt: 'Меню сайта «Шаурма Халяль 1» на телефоне',
+          },
+          {
+            id: 'cart',
+            src: './assets/projects/shaurma-mobile-cart-390.jpg',
+            alt: 'Корзина сайта «Шаурма Халяль 1» на телефоне',
+          },
+        ],
+      },
+      {
+        scene: 'telegram-shop',
+        shots: [
+          {
+            id: 'mobile',
+            src: './assets/projects/telegram-shop-mobile-390.jpg',
+            alt: 'Каталог Telegram-магазина VeachelSell',
+          },
+          {
+            id: 'cart',
+            src: './assets/projects/telegram-shop-cart-390.jpg',
+            alt: 'Корзина Telegram-магазина VeachelSell',
+          },
+          {
+            id: 'checkout',
+            src: './assets/projects/telegram-shop-checkout-390.jpg',
+            alt: 'Оформление заказа в Telegram-магазине VeachelSell',
+          },
+        ],
+      },
+    ] as const;
 
-    expect(details).toHaveLength(1);
-    expect(shaurma?.querySelectorAll('[data-project-detail]')).toHaveLength(1);
-    expect(details[0]?.getAttribute('aria-hidden')).toBe('true');
-    expect(details[0]?.querySelector('img, picture')).toBeNull();
-    expect([...site.querySelectorAll('[data-project]:not([data-scene="shaurma-mobile"])')]
-      .every((project) => project.querySelector('[data-project-detail]') === null)).toBe(true);
-    expect(site.querySelectorAll('[data-project-media] img')).toHaveLength(6);
+    for (const expected of expectedGalleries) {
+      const shots = [...site.querySelectorAll<HTMLElement>(`[data-scene="${expected.scene}"] [data-project-shot]`)];
+      expect(shots.map((shot) => ({
+        id: shot.dataset.projectShot,
+        src: shot.querySelector('img')?.getAttribute('src'),
+        alt: shot.querySelector('img')?.getAttribute('alt'),
+      }))).toEqual(expected.shots);
+      expect(shots[0]?.classList.contains('project-shot--primary')).toBe(true);
+      expect(shots.slice(1).every((shot) => shot.classList.contains('project-shot--secondary'))).toBe(true);
+    }
+
+    expect(site.querySelector('[data-project-detail]')).toBeNull();
+    expect(site.querySelectorAll('[data-project-media] img')).toHaveLength(10);
+  });
+
+  it('renders the Doner headline from authored semantic lines', () => {
+    const site = createSite(siteContent);
+    const headline = site.querySelector<HTMLElement>('[data-scene="pivnoy-doner"] .case__headline');
+
+    expect([...headline?.querySelectorAll<HTMLElement>('[data-headline-line]') ?? []]
+      .map((line) => line.textContent?.trim())).toEqual(['Из локального', 'ресторана']);
+    expect([...headline?.querySelectorAll<HTMLElement>('[data-accent-line]') ?? []]
+      .map((line) => line.textContent?.trim())).toEqual(['в узнаваемый', 'бренд']);
+    expect(headline?.textContent?.trim().replace(/\s+/g, ' ')).toBe('Из локального ресторана в узнаваемый бренд');
   });
 
   it('renders one clear final contact as a safe Telegram link', () => {
@@ -257,6 +314,17 @@ describe('createSite', () => {
       'САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ → САЙТ → ТЕЛЕФОН → МЕНЮ → ЗАКАЗ',
       'САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН → САЙТ → ЧАТ → КАТАЛОГ → МАГАЗИН',
       'ДИЗАЙН × КОД × БИЗНЕС → ДИЗАЙН × КОД × БИЗНЕС',
+    ]);
+    expect(transitions.map((transition) =>
+      [...transition.querySelectorAll<HTMLElement>('[data-transition-arrow]')]
+        .map((arrow) => arrow.textContent?.trim()),
+    )).toEqual([
+      ['→', '→', '→', '→', '→', '→', '→'],
+      ['→', '→', '→', '→', '→', '→', '→'],
+      ['→', '→', '→'],
+      ['→', '→', '→', '→', '→', '→', '→'],
+      ['→', '→', '→', '→', '→', '→', '→'],
+      ['→'],
     ]);
     expect(transitions.map((transition) => transition.className)).toEqual([
       'bridge bridge--ink',

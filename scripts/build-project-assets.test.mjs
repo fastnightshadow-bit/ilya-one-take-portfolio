@@ -6,6 +6,21 @@ import test from 'node:test';
 import sharp from 'sharp';
 import { buildProjectAssets, projectCaptures } from './build-project-assets.mjs';
 
+test('declares the exact approved project capture matrix', () => {
+  assert.deepEqual(projectCaptures, [
+    { id: 'pivnoy-doner-desktop', file: 'pivnoy-doner-desktop.jpg', kind: 'desktop' },
+    { id: 'pivnoy-doner-mobile', file: 'pivnoy-doner-mobile.jpg', kind: 'mobile' },
+    { id: 'driving-school-desktop', file: 'driving-school-desktop.jpg', kind: 'desktop' },
+    { id: 'driving-school-mobile', file: 'driving-school-mobile.jpg', kind: 'mobile' },
+    { id: 'shaurma-mobile-mobile', file: 'shaurma-mobile-mobile.jpg', kind: 'mobile' },
+    { id: 'shaurma-mobile-menu', file: 'shaurma-mobile-menu.jpg', kind: 'mobile' },
+    { id: 'shaurma-mobile-cart', file: 'shaurma-mobile-cart.jpg', kind: 'mobile' },
+    { id: 'telegram-shop-mobile', file: 'telegram-shop-mobile.jpg', kind: 'mobile' },
+    { id: 'telegram-shop-cart', file: 'telegram-shop-cart.jpg', kind: 'mobile' },
+    { id: 'telegram-shop-checkout', file: 'telegram-shop-checkout.jpg', kind: 'mobile' },
+  ]);
+});
+
 test('project asset builder removes stale output and rebuilds an exact isolated matrix', async () => {
   const outputRoot = await mkdtemp(join(tmpdir(), 'ilya-project-assets-'));
   const stalePath = join(outputRoot, 'stale-project-proof.txt');

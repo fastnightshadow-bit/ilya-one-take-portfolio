@@ -8,7 +8,11 @@ const captures = [
   { id: 'driving-school-desktop', width: 1280, height: 720, orientation: 'landscape' },
   { id: 'driving-school-mobile', width: 390, height: 844, orientation: 'portrait' },
   { id: 'shaurma-mobile-mobile', width: 390, height: 844, orientation: 'portrait' },
+  { id: 'shaurma-mobile-menu', width: 390, height: 844, orientation: 'portrait' },
+  { id: 'shaurma-mobile-cart', width: 390, height: 844, orientation: 'portrait' },
   { id: 'telegram-shop-mobile', width: 390, height: 844, orientation: 'portrait' },
+  { id: 'telegram-shop-cart', width: 390, height: 844, orientation: 'portrait' },
+  { id: 'telegram-shop-checkout', width: 390, height: 844, orientation: 'portrait' },
 ] as const;
 
 const formats = [

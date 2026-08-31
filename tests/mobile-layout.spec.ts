@@ -303,7 +303,8 @@ test('Shaurma keeps two semantic headline runs clear of its authored phone', asy
 
     const scene = page.locator('[data-scene="shaurma-mobile"]');
     const phone = scene.locator('[data-project-shot="mobile"]');
-    await expect(scene.locator('[data-project-shot]')).toHaveCount(1);
+    await expect(scene.locator('[data-project-shot]')).toHaveCount(3);
+    await expect(scene.locator('[data-project-shot]:visible')).toHaveCount(1);
     await expect(phone).toBeVisible();
 
     const presentation = await scene.evaluate((element) => {

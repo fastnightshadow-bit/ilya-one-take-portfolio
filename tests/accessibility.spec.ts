@@ -22,12 +22,16 @@ const expectedLinks = [
 ] as const;
 
 const projectAlternatives = [
-  { scene: 'pivnoy-doner', role: 'desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
-  { scene: 'pivnoy-doner', role: 'mobile', alt: 'Главная страница «Пивного Донера» на телефоне' },
-  { scene: 'driving-school', role: 'mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
-  { scene: 'driving-school', role: 'desktop', alt: 'Главная страница автошколы «Перекрёсток» на компьютере' },
-  { scene: 'shaurma-mobile', role: 'mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
-  { scene: 'telegram-shop', role: 'mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
+  { scene: 'pivnoy-doner', shot: 'desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
+  { scene: 'pivnoy-doner', shot: 'mobile', alt: 'Главная страница «Пивного Донера» на телефоне' },
+  { scene: 'driving-school', shot: 'mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
+  { scene: 'driving-school', shot: 'desktop', alt: 'Главная страница автошколы «Перекрёсток» на компьютере' },
+  { scene: 'shaurma-mobile', shot: 'mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
+  { scene: 'shaurma-mobile', shot: 'menu', alt: 'Меню сайта «Шаурма Халяль 1» на телефоне' },
+  { scene: 'shaurma-mobile', shot: 'cart', alt: 'Корзина сайта «Шаурма Халяль 1» на телефоне' },
+  { scene: 'telegram-shop', shot: 'mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
+  { scene: 'telegram-shop', shot: 'cart', alt: 'Корзина Telegram-магазина VeachelSell' },
+  { scene: 'telegram-shop', shot: 'checkout', alt: 'Оформление заказа в Telegram-магазине VeachelSell' },
 ] as const;
 
 const requiredViewports = {
@@ -226,15 +230,15 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
   }
 });
 
-test('portrait and six real project screenshots expose meaningful alternatives while selected transitions stay decorative', async ({ page }) => {
+test('portrait and ten real project screenshots expose meaningful alternatives while selected transitions stay decorative', async ({ page }) => {
   await expect(page.locator('.about__portrait img')).toHaveAttribute('alt', 'Илья, веб-разработчик');
   await expect(page.locator('[data-about-promise], [data-scene="about"] .about__facts')).toHaveCount(0);
 
   const images = page.locator('[data-project-media] img');
-  await expect(images).toHaveCount(6);
+  await expect(images).toHaveCount(10);
   for (const expectedImage of projectAlternatives) {
     const image = page.locator(
-      `[data-scene="${expectedImage.scene}"] [data-project-shot="${expectedImage.role}"] img`,
+      `[data-scene="${expectedImage.scene}"] [data-project-shot="${expectedImage.shot}"] img`,
     );
     await expect(image).toHaveCount(1);
     await expect(image).toHaveAttribute('alt', expectedImage.alt);

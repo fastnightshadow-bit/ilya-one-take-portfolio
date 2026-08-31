@@ -9,8 +9,8 @@ const approvedProjects = [
     eyebrow: 'Кейс 1 · Сайт для ресторана',
     action: { name: 'Открыть сайт', href: 'https://pivdoner.ru/' },
     shots: [
-      { role: 'desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
-      { role: 'mobile', alt: 'Главная страница «Пивного Донера» на телефоне' },
+      { id: 'desktop', role: 'desktop', assetId: 'pivnoy-doner-desktop', alt: 'Главная страница «Пивного Донера» на компьютере' },
+      { id: 'mobile', role: 'mobile', assetId: 'pivnoy-doner-mobile', alt: 'Главная страница «Пивного Донера» на телефоне' },
     ],
   },
   {
@@ -19,8 +19,8 @@ const approvedProjects = [
     eyebrow: 'Кейс 2 · Сайт автошколы',
     action: { name: 'Открыть сайт', href: 'https://perekrestok-yaroslavl.netlify.app/' },
     shots: [
-      { role: 'mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
-      { role: 'desktop', alt: 'Главная страница автошколы «Перекрёсток» на компьютере' },
+      { id: 'mobile', role: 'mobile', assetId: 'driving-school-mobile', alt: 'Главная страница автошколы «Перекрёсток» на телефоне' },
+      { id: 'desktop', role: 'desktop', assetId: 'driving-school-desktop', alt: 'Главная страница автошколы «Перекрёсток» на компьютере' },
     ],
   },
   {
@@ -29,7 +29,9 @@ const approvedProjects = [
     eyebrow: 'Кейс 3 · Сайт для заказа еды',
     action: { name: 'Открыть сайт', href: 'https://fastnightshadow-bit.github.io/chaurma/' },
     shots: [
-      { role: 'mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
+      { id: 'mobile', role: 'mobile', assetId: 'shaurma-mobile-mobile', alt: 'Главная страница «Шаурма Халяль 1» на телефоне' },
+      { id: 'menu', role: 'mobile', assetId: 'shaurma-mobile-menu', alt: 'Меню сайта «Шаурма Халяль 1» на телефоне' },
+      { id: 'cart', role: 'mobile', assetId: 'shaurma-mobile-cart', alt: 'Корзина сайта «Шаурма Халяль 1» на телефоне' },
     ],
   },
   {
@@ -38,7 +40,9 @@ const approvedProjects = [
     eyebrow: 'Кейс 4 · Магазин в Telegram',
     action: { name: 'Открыть магазин', href: 'https://t.me/veachelsell_bot' },
     shots: [
-      { role: 'mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
+      { id: 'mobile', role: 'mobile', assetId: 'telegram-shop-mobile', alt: 'Каталог Telegram-магазина VeachelSell' },
+      { id: 'cart', role: 'mobile', assetId: 'telegram-shop-cart', alt: 'Корзина Telegram-магазина VeachelSell' },
+      { id: 'checkout', role: 'mobile', assetId: 'telegram-shop-checkout', alt: 'Оформление заказа в Telegram-магазине VeachelSell' },
     ],
   },
 ] as const;
@@ -101,7 +105,7 @@ const tickerColorForViewport = (transition: string | null, viewportWidth: number
 
 const oldMockups = '.doner-poster, .school-road, .bot-phone, .school-sign';
 
-async function expectImageLoaded(image: Locator, projectId: string, role: string) {
+async function expectImageLoaded(image: Locator, projectId: string, role: string, assetId = `${projectId}-${role}`) {
   await expect.poll(
     () => image.evaluate((element: HTMLImageElement) =>
       element.complete && Boolean(element.currentSrc) && element.naturalHeight > 0 && element.naturalWidth > 0,
@@ -115,7 +119,7 @@ async function expectImageLoaded(image: Locator, projectId: string, role: string
     naturalWidth: element.naturalWidth,
   }));
   expect(loaded.currentSrc, `${projectId}/${role} current source`).toMatch(
-    new RegExp(`/assets/projects/${projectId}-${role}-(?:390|720|1280)\\.(?:avif|webp|jpg)$`),
+    new RegExp(`/assets/projects/${assetId}-(?:390|720|1280)\\.(?:avif|webp|jpg)$`),
   );
   expect(loaded.naturalWidth, `${projectId}/${role} natural width`).toBeGreaterThan(0);
   expect(loaded.naturalHeight, `${projectId}/${role} natural height`).toBeGreaterThan(0);
@@ -134,7 +138,7 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
     await expect(media).toHaveClass(new RegExp(`\\bcase__media--primary-${project.primary}\\b`));
     await expect(shots).toHaveCount(project.shots.length);
     expect(await shots.evaluateAll((elements) => elements.map((element) => element.getAttribute('data-project-shot')))).toEqual(
-      project.shots.map(({ role }) => role),
+      project.shots.map(({ id }) => id),
     );
     await expect(shots.first()).toHaveClass(/\bproject-shot--primary\b/);
 
@@ -150,25 +154,28 @@ async function expectRealProjectProofs(page: Page, viewportWidth: number) {
       const isHiddenCompactDesktop = (
         project.id === 'pivnoy-doner' || project.id === 'driving-school'
       ) && expectedShot.role === 'desktop' && viewportWidth <= 700;
-      if (isHiddenCompactDesktop) {
-        const projectAssetPath = `./assets/projects/${project.id}-${expectedShot.role}`;
+      const isHiddenCompactGallery = (
+        project.id === 'shaurma-mobile' || project.id === 'telegram-shop'
+      ) && index > 0 && viewportWidth < 1200;
+      if (isHiddenCompactDesktop || isHiddenCompactGallery) {
+        const projectAssetPath = `./assets/projects/${expectedShot.assetId}`;
         const sources = shot.locator('source');
-        await expect(image).toHaveAttribute('src', `${projectAssetPath}-1280.jpg`);
-        await expect(sources.nth(0)).toHaveAttribute(
-          'srcset',
-          `${projectAssetPath}-720.avif 720w, ${projectAssetPath}-1280.avif 1280w`,
-        );
-        await expect(sources.nth(1)).toHaveAttribute(
-          'srcset',
-          `${projectAssetPath}-720.webp 720w, ${projectAssetPath}-1280.webp 1280w`,
-        );
+        if (expectedShot.role === 'desktop') {
+          await expect(image).toHaveAttribute('src', `${projectAssetPath}-1280.jpg`);
+          await expect(sources.nth(0)).toHaveAttribute('srcset', `${projectAssetPath}-720.avif 720w, ${projectAssetPath}-1280.avif 1280w`);
+          await expect(sources.nth(1)).toHaveAttribute('srcset', `${projectAssetPath}-720.webp 720w, ${projectAssetPath}-1280.webp 1280w`);
+        } else {
+          await expect(image).toHaveAttribute('src', `${projectAssetPath}-390.jpg`);
+          await expect(sources.nth(0)).toHaveAttribute('srcset', `${projectAssetPath}-390.avif 390w`);
+          await expect(sources.nth(1)).toHaveAttribute('srcset', `${projectAssetPath}-390.webp 390w`);
+        }
         await expect(shot).toBeHidden();
         continue;
       }
 
       await expect(shot).toBeVisible();
       await expect(image).toBeVisible();
-      await expectImageLoaded(image, project.id, expectedShot.role);
+      await expectImageLoaded(image, project.id, expectedShot.role, expectedShot.assetId);
 
       const imageBox = await image.boundingBox();
       expect(imageBox, `${viewportWidth}px ${project.id}/${expectedShot.role} box`).not.toBeNull();
@@ -199,7 +206,7 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(projects).toHaveCount(4);
   for (const project of await projects.all()) await expect(project).toBeVisible();
   await expect(page.locator('[data-project-media]')).toHaveCount(4);
-  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(10);
   await expect(page.locator('[data-project-action]')).toHaveCount(4);
   await expect(page.locator('[data-github-link]')).toHaveCount(1);
   await expect(page.locator(oldMockups)).toHaveCount(0);
@@ -423,6 +430,176 @@ test('all handoffs are exact compact a14 running-text strips', async ({ page }) 
   }
 });
 
+test('every running-text arrow has an aligned semantic wrapper without changing the marquee copy', async ({ page }) => {
+  const viewports = [{ width: 390, height: 844 }, { width: 1440, height: 900 }] as const;
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    const metrics = await page.locator('[data-transition-line]').evaluateAll((lines) => lines.map((line) => {
+      const text = line.textContent?.trim() ?? '';
+      const arrows = [...line.querySelectorAll<HTMLElement>('[data-transition-arrow]')].map((arrow) => {
+        const arrowBounds = arrow.getBoundingClientRect();
+        const copy = arrow.previousElementSibling;
+        const copyBounds = copy?.getBoundingClientRect();
+        return {
+          hasAdjacentCopy: copy?.matches('[data-transition-copy]') ?? false,
+          arrowCenter: (arrowBounds.top + arrowBounds.bottom) / 2,
+          copyCenter: copyBounds ? (copyBounds.top + copyBounds.bottom) / 2 : Number.NaN,
+        };
+      });
+      return { text, arrows };
+    }));
+
+    expect(metrics.map(({ text }) => text), `${viewport.width}px marquee text`).toEqual(tickerTracks);
+    expect(metrics.flatMap(({ arrows }) => arrows)).not.toHaveLength(0);
+    for (const arrow of metrics.flatMap(({ arrows }) => arrows)) {
+      expect(arrow.hasAdjacentCopy, `${viewport.width}px arrow adjacent copy`).toBe(true);
+      expect(Math.abs(arrow.arrowCenter - arrow.copyCenter), `${viewport.width}px arrow vertical alignment`).toBeLessThanOrEqual(2);
+    }
+  }
+});
+
+test('Doner desktop headline exposes authored lines without collisions or tracking collapse', async ({ page }) => {
+  const viewports = [701, 900, 1199, 1200, 1440, 1600] as const;
+  for (const width of viewports) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const scene = page.locator('[data-scene="pivnoy-doner"]');
+    await scene.scrollIntoViewIfNeeded();
+
+    const metrics = await scene.evaluate((element) => {
+      const headlineLines = [...element.querySelectorAll<HTMLElement>('[data-headline-line]')];
+      const accentLines = [...element.querySelectorAll<HTMLElement>('[data-accent-line]')];
+      const lines = [...headlineLines, ...accentLines];
+      const sceneBounds = element.getBoundingClientRect();
+      return {
+        headlineTexts: headlineLines.map((line) => line.textContent?.trim()),
+        accentTexts: accentLines.map((line) => line.textContent?.trim()),
+        lines: lines.map((line) => {
+          const bounds = line.getBoundingClientRect();
+          const styles = getComputedStyle(line);
+          const fontSize = Number.parseFloat(styles.fontSize);
+          return {
+            left: bounds.left,
+            right: bounds.right,
+            top: bounds.top,
+            bottom: bounds.bottom,
+            rectCount: line.getClientRects().length,
+            lineHeightRatio: Number.parseFloat(styles.lineHeight) / fontSize,
+            trackingRatio: (styles.letterSpacing === 'normal' ? 0 : Number.parseFloat(styles.letterSpacing)) / fontSize,
+            sceneLeft: sceneBounds.left,
+            sceneRight: sceneBounds.right,
+          };
+        }),
+      };
+    });
+
+    expect(metrics.headlineTexts, `${width}px Doner headline`).toEqual(['Из локального', 'ресторана']);
+    expect(metrics.accentTexts, `${width}px Doner accent`).toEqual(['в узнаваемый', 'бренд']);
+    for (const line of metrics.lines) {
+      expect(line.rectCount, `${width}px authored line rect count`).toBe(1);
+      expect(line.left, `${width}px authored line left`).toBeGreaterThanOrEqual(line.sceneLeft);
+      expect(line.right, `${width}px authored line right`).toBeLessThanOrEqual(line.sceneRight);
+      expect(line.lineHeightRatio, `${width}px authored line-height`).toBeGreaterThanOrEqual(1.02);
+      expect(line.trackingRatio, `${width}px authored tracking`).toBeGreaterThanOrEqual(-.015);
+    }
+    for (let index = 1; index < metrics.lines.length; index += 1) {
+      expect(metrics.lines[index]!.top, `${width}px authored line separation`).toBeGreaterThanOrEqual(metrics.lines[index - 1]!.bottom);
+    }
+  }
+});
+
+test('Doner headline stays inside the page at compact mobile widths', async ({ page }) => {
+  for (const width of [320, 360, 361, 390, 700] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    const geometry = await page.locator('[data-scene="pivnoy-doner"]').evaluate((scene) => {
+      const bounds = scene.getBoundingClientRect();
+      const lines = [...scene.querySelectorAll<HTMLElement>('[data-headline-line], [data-accent-line]')];
+      return {
+        sceneLeft: bounds.left,
+        sceneRight: bounds.right,
+        lines: lines.map((line) => {
+          const rect = line.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(line);
+          return {
+            text: line.textContent?.trim(),
+            left: rect.left,
+            right: rect.right,
+            renderedLineCount: range.getClientRects().length,
+          };
+        }),
+        documentWidth: document.documentElement.scrollWidth,
+      };
+    });
+    expect(geometry.documentWidth, `${width}px document width`).toBeLessThanOrEqual(width);
+    expect(geometry.lines.map((line) => line.text), `${width}px Doner authored lines`).toEqual([
+      'Из локального',
+      'ресторана',
+      'в узнаваемый',
+      'бренд',
+    ]);
+    for (const line of geometry.lines) {
+      expect(line.renderedLineCount, `${width}px Doner rendered line count`).toBe(1);
+      expect(line.left, `${width}px Doner line left`).toBeGreaterThanOrEqual(geometry.sceneLeft - .5);
+      expect(line.right, `${width}px Doner line right`).toBeLessThanOrEqual(geometry.sceneRight + .5);
+    }
+  }
+});
+
+test('Shaurma and Telegram galleries use bounded loaded shots at mobile and desktop widths', async ({ page }) => {
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }] as const) {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    for (const sceneId of ['shaurma-mobile', 'telegram-shop'] as const) {
+      const scene = page.locator(`[data-scene="${sceneId}"]`);
+      await scene.scrollIntoViewIfNeeded();
+      const shots = scene.locator('[data-project-shot]:visible');
+      await expect(shots).toHaveCount(viewport.width === 390 ? 1 : 3);
+
+      const metrics = await scene.evaluate((element) => {
+        const media = element.querySelector<HTMLElement>('[data-project-media]')!.getBoundingClientRect();
+        return [...element.querySelectorAll<HTMLElement>('[data-project-shot]:not([aria-hidden="true"])')]
+          .filter((shot) => {
+            const styles = getComputedStyle(shot);
+            const rect = shot.getBoundingClientRect();
+            return styles.display !== 'none' && styles.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+          })
+          .map((shot) => {
+            const rect = shot.getBoundingClientRect();
+            const image = shot.querySelector<HTMLImageElement>('img')!;
+            const matrix = new DOMMatrixReadOnly(getComputedStyle(shot).transform);
+            return {
+              left: rect.left,
+              right: rect.right,
+              top: rect.top,
+              bottom: rect.bottom,
+              mediaLeft: media.left,
+              mediaRight: media.right,
+              mediaTop: media.top,
+              mediaBottom: media.bottom,
+              angle: Math.atan2(matrix.b, matrix.a) * 180 / Math.PI,
+              loaded: image.complete && image.naturalWidth > 0 && image.naturalHeight > 0,
+            };
+          });
+      });
+
+      expect(metrics.every((shot) => shot.loaded), `${viewport.width}px ${sceneId} loaded`).toBe(true);
+      expect(metrics.every((shot) => shot.left >= shot.mediaLeft - .5 && shot.right <= shot.mediaRight + .5), `${viewport.width}px ${sceneId} horizontal bounds`).toBe(true);
+      expect(metrics.every((shot) => shot.top >= shot.mediaTop - .5 && shot.bottom <= shot.mediaBottom + .5), `${viewport.width}px ${sceneId} vertical bounds`).toBe(true);
+      expect(new Set(metrics.map((shot) => shot.angle).map((angle) => angle.toFixed(2))).size, `${viewport.width}px ${sceneId} distinct angles`).toBe(metrics.length);
+    }
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+  }
+});
+
 test('every compact ticker track scrubs left as its strip crosses the viewport', async ({ page }) => {
   for (const viewport of transitionViewports) {
     await page.setViewportSize(viewport);
@@ -482,59 +659,6 @@ test('real project proofs load, stay visible, and expose approved actions at 390
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
-});
-
-test('Shaurma uses one bounded decorative detail to fill its tablet and desktop media area', async ({ page }) => {
-  for (const viewport of [
-    { width: 701, height: 900 },
-    { width: 1440, height: 900 },
-  ] as const) {
-    await page.setViewportSize(viewport);
-    await page.goto('/');
-
-    const scene = page.locator('[data-scene="shaurma-mobile"]');
-    const media = scene.locator('[data-project-media]');
-    const phone = media.locator('[data-project-shot="mobile"]');
-    const detail = media.locator('[data-project-detail]');
-    await media.scrollIntoViewIfNeeded();
-    await expect(detail).toHaveCount(1);
-    await expect(detail).toBeVisible();
-
-    const geometry = await media.evaluate((element) => {
-      const mediaBounds = element.getBoundingClientRect();
-      const phoneBounds = element.querySelector<HTMLElement>('[data-project-shot="mobile"]')!.getBoundingClientRect();
-      const detailBounds = element.querySelector<HTMLElement>('[data-project-detail]')!.getBoundingClientRect();
-      const union = {
-        left: Math.min(phoneBounds.left, detailBounds.left),
-        top: Math.min(phoneBounds.top, detailBounds.top),
-        right: Math.max(phoneBounds.right, detailBounds.right),
-        bottom: Math.max(phoneBounds.bottom, detailBounds.bottom),
-      };
-      return {
-        media: { left: mediaBounds.left, top: mediaBounds.top, right: mediaBounds.right, bottom: mediaBounds.bottom },
-        phone: { left: phoneBounds.left, top: phoneBounds.top, right: phoneBounds.right, bottom: phoneBounds.bottom },
-        detail: { left: detailBounds.left, top: detailBounds.top, right: detailBounds.right, bottom: detailBounds.bottom },
-        footprint: ((union.right - union.left) * (union.bottom - union.top)) / (mediaBounds.width * mediaBounds.height),
-      };
-    });
-
-    for (const [name, bounds] of [['phone', geometry.phone], ['detail', geometry.detail]] as const) {
-      expect(bounds.left, `${viewport.width}px Shaurma ${name} left`).toBeGreaterThanOrEqual(geometry.media.left - .5);
-      expect(bounds.top, `${viewport.width}px Shaurma ${name} top`).toBeGreaterThanOrEqual(geometry.media.top - .5);
-      expect(bounds.right, `${viewport.width}px Shaurma ${name} right`).toBeLessThanOrEqual(geometry.media.right + .5);
-      expect(bounds.bottom, `${viewport.width}px Shaurma ${name} bottom`).toBeLessThanOrEqual(geometry.media.bottom + .5);
-    }
-    expect(geometry.footprint, `${viewport.width}px Shaurma combined media footprint`).toBeGreaterThanOrEqual(.55);
-    await expect(phone).toBeVisible();
-  }
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  const mobileDetail = page.locator('[data-scene="shaurma-mobile"] [data-project-detail]');
-  await expect(mobileDetail).toHaveCount(1);
-  await expect(mobileDetail).toBeHidden();
-  await expect(page.locator('[data-project-detail]')).toHaveCount(1);
-  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
 });
 
 test('AutoSchool keeps its mobile proof visually primary at every supported layout tier', async ({ page }) => {
@@ -658,7 +782,7 @@ test('reduced motion keeps final compositions visible and static', async ({ page
   await expect(page.locator('[data-transition]')).toHaveCount(6);
   await expect(page.locator('[data-project]')).toHaveCount(4);
   await expect(page.locator('[data-project-media]')).toHaveCount(4);
-  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(10);
   await expect(page.locator(oldMockups)).toHaveCount(0);
   await expect(page.locator('[data-scene="contact"]')).toBeVisible();
   await expect(page.locator('#app')).not.toHaveAttribute('data-motion-ready', '');
@@ -733,7 +857,7 @@ test('styled static story remains complete when the application script fails', a
   await expect(page.locator('[data-transition]')).toHaveCount(6);
   await expect(page.locator('[data-project]')).toHaveCount(4);
   await expect(page.locator('[data-project-media]')).toHaveCount(4);
-  await expect(page.locator('[data-project-media] img')).toHaveCount(6);
+  await expect(page.locator('[data-project-media] img')).toHaveCount(10);
   for (const scene of await page.locator('[data-scene]').all()) await expect(scene).toBeVisible();
   await expect(page.locator('[data-transition-line]')).toHaveCount(6);
   expect(await page.locator('[data-transition-stage], [data-transition-carrier], [data-transition-source], [data-transition-target], [data-transition-morph]').count()).toBe(0);
