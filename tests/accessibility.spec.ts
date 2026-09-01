@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 const expectedLinks = [
   { name: 'ILYA / WEB DEVELOPER', href: '#top' },
-  { name: '@GIRTOPW ↗', href: 'https://t.me/girtopw' },
+  { name: '@GIRTOPW', href: 'https://t.me/girtopw' },
   { name: 'Обо мне', href: '#about' },
   { name: 'Как я работаю', href: '#process' },
   { name: 'Кейс 1', href: '#pivnoy-doner' },
@@ -51,9 +51,11 @@ test.beforeEach(async ({ page }) => {
 
 test('exposes one banner, named navigation, and main landmark', async ({ page }) => {
   await expect(page.getByRole('banner')).toHaveCount(1);
-  await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toHaveCount(1);
   await expect(page.getByRole('main')).toHaveCount(1);
   await expect(page.getByRole('complementary', { name: 'Посмотрите, как я работаю с кодом' })).toHaveCount(1);
+  const menuToggle = page.locator('[data-mobile-nav-toggle]');
+  if (await menuToggle.isVisible()) await menuToggle.click();
+  await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toHaveCount(1);
 });
 
 test('uses one h1 and never skips a heading level', async ({ page }) => {
@@ -68,11 +70,25 @@ test('uses one h1 and never skips a heading level', async ({ page }) => {
 });
 
 test('gives every link an approved accessible name and destination', async ({ page }) => {
-  const links = page.getByRole('link');
+  const links = page.locator('a');
   await expect(links).toHaveCount(expectedLinks.length);
-  for (const [index, expectedLink] of expectedLinks.entries()) {
-    await expect(links.nth(index)).toHaveAccessibleName(expectedLink.name);
-    await expect(links.nth(index)).toHaveAttribute('href', expectedLink.href);
+  const assertLinks = async (start: number, end: number) => {
+    for (let index = start; index < end; index += 1) {
+      const expectedLink = expectedLinks[index]!;
+      await expect(links.nth(index)).toHaveAccessibleName(expectedLink.name);
+      await expect(links.nth(index)).toHaveAttribute('href', expectedLink.href);
+    }
+  };
+
+  const menuToggle = page.locator('[data-mobile-nav-toggle]');
+  if (await menuToggle.isVisible()) {
+    await assertLinks(0, 2);
+    await menuToggle.click();
+    await assertLinks(2, 9);
+    await page.keyboard.press('Escape');
+    await assertLinks(9, expectedLinks.length);
+  } else {
+    await assertLinks(0, expectedLinks.length);
   }
 });
 
@@ -135,10 +151,10 @@ test('keyboard traversal keeps every complete focus ring visible at required vie
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.goto('/');
-    for (const expectedLink of expectedLinks) {
-      await page.keyboard.press('Tab');
+
+    const assertCurrentFocus = async (expectedName: string) => {
       const focused = page.locator(':focus-visible');
-      await expect(focused).toHaveAccessibleName(expectedLink.name);
+      await expect(focused).toHaveAccessibleName(expectedName);
       await expect(focused).toBeVisible();
 
       await expect.poll(() => focused.evaluate((element) => {
@@ -146,7 +162,7 @@ test('keyboard traversal keeps every complete focus ring visible at required vie
         const bounds = element.getBoundingClientRect();
         const ringExpansion = Number.parseFloat(styles.outlineWidth) + Number.parseFloat(styles.outlineOffset);
         return bounds.bottom + ringExpansion;
-      }), { message: `${viewport.width}×${viewport.height} ${expectedLink.name} focus ring bottom` }).toBeLessThanOrEqual(viewport.height);
+      }), { message: `${viewport.width}×${viewport.height} ${expectedName} focus ring bottom` }).toBeLessThanOrEqual(viewport.height);
 
       const focusMetrics = await focused.evaluate((element) => {
         const colorChannels = (color: string) => color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
@@ -186,14 +202,35 @@ test('keyboard traversal keeps every complete focus ring visible at required vie
 
       expect(focusMetrics.outlineStyle).not.toBe('none');
       expect(focusMetrics.outlineWidth).toBeGreaterThanOrEqual(3);
-      if (expectedLink.name === 'Написать в Telegram') {
-        expect(focusMetrics.contactContrast, `${expectedLink.name} outline ${focusMetrics.outlineColor} contrast`).toBeGreaterThanOrEqual(3);
+      if (expectedName === 'Написать в Telegram') {
+        expect(focusMetrics.contactContrast, `${expectedName} outline ${focusMetrics.outlineColor} contrast`).toBeGreaterThanOrEqual(3);
       }
-      expect(focusMetrics.ringTop, `${viewport.width}×${viewport.height} ${expectedLink.name} ring top`).toBeGreaterThanOrEqual(0);
-      expect(focusMetrics.ringRight, `${viewport.width}×${viewport.height} ${expectedLink.name} ring right`).toBeLessThanOrEqual(viewport.width);
-      expect(focusMetrics.ringBottom, `${viewport.width}×${viewport.height} ${expectedLink.name} ring bottom`).toBeLessThanOrEqual(viewport.height);
-      expect(focusMetrics.ringLeft, `${viewport.width}×${viewport.height} ${expectedLink.name} ring left`).toBeGreaterThanOrEqual(0);
+      expect(focusMetrics.ringTop, `${viewport.width}×${viewport.height} ${expectedName} ring top`).toBeGreaterThanOrEqual(0);
+      expect(focusMetrics.ringRight, `${viewport.width}×${viewport.height} ${expectedName} ring right`).toBeLessThanOrEqual(viewport.width);
+      expect(focusMetrics.ringBottom, `${viewport.width}×${viewport.height} ${expectedName} ring bottom`).toBeLessThanOrEqual(viewport.height);
+      expect(focusMetrics.ringLeft, `${viewport.width}×${viewport.height} ${expectedName} ring left`).toBeGreaterThanOrEqual(0);
       if (!focusMetrics.withinHeader) expect(focusMetrics.ringTop).toBeGreaterThanOrEqual(focusMetrics.headerBottom + 4);
+    };
+
+    const tabThrough = async (links: readonly { name: string }[]) => {
+      for (const link of links) {
+        await page.keyboard.press('Tab');
+        await assertCurrentFocus(link.name);
+      }
+    };
+
+    if (viewport.width <= 900) {
+      await tabThrough(expectedLinks.slice(0, 2));
+      await page.keyboard.press('Tab');
+      await assertCurrentFocus('Открыть меню');
+      await page.keyboard.press('Enter');
+      await expect(page.locator('[data-mobile-nav-toggle]')).toHaveAttribute('aria-expanded', 'true');
+      await tabThrough(expectedLinks.slice(2, 9));
+      await page.keyboard.press('Escape');
+      await assertCurrentFocus('Открыть меню');
+      await tabThrough(expectedLinks.slice(9));
+    } else {
+      await tabThrough(expectedLinks);
     }
   }
 });
@@ -206,6 +243,11 @@ test('keyboard activation scrolls the About target clear of the sticky header', 
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
+    if (viewport.width <= 900) {
+      await expect(page.locator(':focus-visible')).toHaveAccessibleName('Открыть меню');
+      await page.keyboard.press('Enter');
+      await page.keyboard.press('Tab');
+    }
     const aboutLink = page.locator(':focus-visible');
     await expect(aboutLink).toHaveAccessibleName('Обо мне');
 

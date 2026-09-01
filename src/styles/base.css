@@ -15,3 +15,16 @@ img, svg { display: block; max-width: 100%; }
 :focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 .button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: .85rem 1.1rem; border-radius: 999px; background: var(--paper); color: var(--ink); font: 700 .8rem/1 var(--font-body); text-decoration: none; }
 .button--secondary { border: 1px solid #55545c; background: transparent; color: var(--paper); }
+
+:where(.button, .case__action, .github-strip__link) {
+  cursor: pointer;
+  transform-origin: center;
+  transition: transform 160ms cubic-bezier(.2, .8, .2, 1), filter 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.button, .case__action, .github-strip__link):hover { filter: brightness(1.04); transform: translateY(-3px) scale(1.015); }
+}
+
+:where(.button, .case__action, .github-strip__link):active { filter: brightness(.98); transform: translateY(1px) scale(.985); }
+:where(.button, .case__action, .github-strip__link):focus-visible { transform: translateY(-2px); }

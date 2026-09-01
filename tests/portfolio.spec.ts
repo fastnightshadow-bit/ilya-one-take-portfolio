@@ -284,7 +284,7 @@ test('story is ordered, readable, and has no horizontal overflow', async ({ page
   await expect(page.locator('[data-primary-cta]').last()).toHaveAttribute('href', 'https://t.me/girtopw');
 });
 
-test('mobile header keeps the identity, Telegram link, and every destination fully visible', async ({ page }) => {
+test('mobile header keeps the identity, Telegram link, and menu control fully visible', async ({ page }) => {
   for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto('/');
@@ -292,37 +292,109 @@ test('mobile header keeps the identity, Telegram link, and every destination ful
     const brand = page.locator('.site-header__brand');
     const telegram = page.locator('.site-header__contact');
     await expect(brand).toHaveText('ILYA / WEB DEVELOPER');
-    await expect(telegram).toHaveText('@GIRTOPW ↗');
+    await expect(telegram).toHaveText('@GIRTOPW');
     await expect(telegram).toHaveAttribute('href', 'https://t.me/girtopw');
     await expect(telegram).toHaveAttribute('target', '_blank');
     await expect(telegram).toHaveAttribute('rel', 'noopener noreferrer');
 
     const geometry = await page.locator('.site-header').evaluate((header) => {
-      const visibleLinks = [...header.querySelectorAll<HTMLElement>('a')].map((link) => {
+      const visibleLinks = [...header.querySelectorAll<HTMLElement>('.site-header__identity a')].map((link) => {
         const bounds = link.getBoundingClientRect();
         return { label: link.textContent?.trim(), left: bounds.left, right: bounds.right };
       });
-      const nav = header.querySelector<HTMLElement>('.site-header__nav')!;
+      const toggleBounds = header.querySelector<HTMLElement>('[data-mobile-nav-toggle]')!.getBoundingClientRect();
       return {
         headerWidth: header.getBoundingClientRect().width,
-        navClientWidth: nav.clientWidth,
-        navScrollWidth: nav.scrollWidth,
+        toggleLeft: toggleBounds.left,
+        toggleRight: toggleBounds.right,
         visibleLinks,
       };
     });
 
     expect(geometry.headerWidth).toBeLessThanOrEqual(viewport.width);
-    expect(geometry.navScrollWidth, `${viewport.width}px navigation width`).toBeLessThanOrEqual(geometry.navClientWidth);
     for (const link of geometry.visibleLinks) {
       expect(link.left, `${viewport.width}px ${link.label} left`).toBeGreaterThanOrEqual(0);
       expect(link.right, `${viewport.width}px ${link.label} right`).toBeLessThanOrEqual(viewport.width);
     }
     const brandBounds = geometry.visibleLinks.find((link) => link.label === 'ILYA / WEB DEVELOPER')!;
-    const telegramBounds = geometry.visibleLinks.find((link) => link.label === '@GIRTOPW ↗')!;
+    const telegramBounds = geometry.visibleLinks.find((link) => link.label === '@GIRTOPW')!;
     expect(brandBounds.left, `${viewport.width}px identity left edge`).toBeLessThanOrEqual(24);
-    expect(telegramBounds.right, `${viewport.width}px Telegram right edge`).toBeGreaterThanOrEqual(viewport.width - 24);
     expect(brandBounds.right, `${viewport.width}px identity before Telegram`).toBeLessThan(telegramBounds.left);
+    expect(telegramBounds.right, `${viewport.width}px Telegram before menu`).toBeLessThan(geometry.toggleLeft);
+    expect(geometry.toggleRight, `${viewport.width}px menu right edge`).toBeLessThanOrEqual(viewport.width - 16);
   }
+});
+
+test('mobile header opens a full-screen accessible menu and restores the page after closing', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const header = page.locator('.site-header');
+  const toggle = page.locator('[data-mobile-nav-toggle]');
+  const navigation = page.locator('#site-navigation');
+  const main = page.locator('main');
+
+  expect((await header.boundingBox())!.height).toBeLessThanOrEqual(72);
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle).toHaveAccessibleName('Открыть меню');
+  await expect(navigation).toBeHidden();
+  await expect(main).not.toHaveAttribute('inert', '');
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(toggle).toHaveAccessibleName('Закрыть меню');
+  await expect(navigation).toBeVisible();
+  await expect(main).toHaveAttribute('inert', '');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).toBe('hidden');
+  await expect(navigation.locator('.site-header__link')).toHaveCount(7);
+  for (const link of await navigation.locator('.site-header__link').all()) await expect(link).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(navigation).toBeHidden();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle).toBeFocused();
+  await expect(main).not.toHaveAttribute('inert', '');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).not.toBe('hidden');
+
+  await toggle.click();
+  await navigation.getByRole('link', { name: 'Обо мне' }).click();
+  await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('#about');
+  await expect(navigation).toBeHidden();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('desktop navigation remains visible without the mobile menu control', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+
+  await expect(page.locator('[data-mobile-nav-toggle]')).toBeHidden();
+  await expect(page.locator('#site-navigation')).toBeVisible();
+  await expect(page.locator('#site-navigation .site-header__link')).toHaveCount(7);
+});
+
+test('interactive calls to action lift on hover, press on click, and stay static for reduced motion', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  if (!await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)) return;
+
+  const action = page.locator('[data-scene="hero"] .button').first();
+  const restingTransform = await action.evaluate((element) => getComputedStyle(element).transform);
+  await action.hover();
+  await expect.poll(() => action.evaluate((element) => getComputedStyle(element).transform)).not.toBe(restingTransform);
+  const hoverTransform = await action.evaluate((element) => getComputedStyle(element).transform);
+  const box = await action.boundingBox();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await expect.poll(() => action.evaluate((element) => getComputedStyle(element).transform)).not.toBe(hoverTransform);
+  await page.mouse.up();
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  const reducedAction = page.locator('[data-scene="hero"] .button').first();
+  const reducedRestingTransform = await reducedAction.evaluate((element) => getComputedStyle(element).transform);
+  await reducedAction.hover();
+  await expect(reducedAction).toHaveCSS('transform', reducedRestingTransform);
 });
 
 test('mobile headings keep every whole word inside its own content column', async ({ page }) => {

@@ -151,10 +151,17 @@ describe('createSite', () => {
     const telegram = site.querySelector<HTMLAnchorElement>('.site-header__contact');
     expect(brand?.textContent?.trim()).toBe('ILYA / WEB DEVELOPER');
     expect(brand?.getAttribute('href')).toBe('#top');
-    expect(telegram?.textContent?.trim()).toBe('@GIRTOPW ↗');
+    expect(telegram?.textContent?.trim()).toBe('@GIRTOPW');
     expect(telegram?.href).toBe('https://t.me/girtopw');
     expect(telegram?.target).toBe('_blank');
     expect(telegram?.rel).toBe('noopener noreferrer');
+
+    const mobileToggle = site.querySelector<HTMLButtonElement>('[data-mobile-nav-toggle]');
+    expect(mobileToggle?.type).toBe('button');
+    expect(mobileToggle?.getAttribute('aria-controls')).toBe('site-navigation');
+    expect(mobileToggle?.getAttribute('aria-expanded')).toBe('false');
+    expect(mobileToggle?.getAttribute('aria-label')).toBe('Открыть меню');
+    expect(navigation?.id).toBe('site-navigation');
   });
 
   it('uses the two approved hero shortcuts', () => {
